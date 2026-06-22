@@ -232,6 +232,11 @@
   border: 1px solid var(--border);
 }
 .btn-secondary:hover { background: var(--border); }
+.btn-secondary.is-active {
+  background: var(--accent-light);
+  border-color: var(--accent);
+  color: var(--accent);
+}
 .btn-success {
   background: var(--success);
   color: #fff;

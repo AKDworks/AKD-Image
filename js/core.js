@@ -88,6 +88,24 @@ const FileUtils = {
     return (pct > 0 ? '-' : '+') + Math.abs(pct) + '%';
   },
 
+  formatCount(count, forms) {
+    const abs = Math.abs(count);
+    const mod100 = abs % 100;
+    const mod10 = abs % 10;
+    let form = forms[2];
+
+    if (mod100 < 11 || mod100 > 14) {
+      if (mod10 === 1) form = forms[0];
+      else if (mod10 >= 2 && mod10 <= 4) form = forms[1];
+    }
+
+    return count + ' ' + form;
+  },
+
+  formatFilesCount(count) {
+    return this.formatCount(count, ['файл', 'файла', 'файлов']);
+  },
+
   getExt(name) {
     return name.split('.').pop().toLowerCase();
   },
@@ -167,6 +185,14 @@ const FileUtils = {
     });
 
     return window.__akdJSZipPromise;
+  },
+
+  async downloadZip(entries, filename) {
+    const JSZipCtor = await this.loadJSZip();
+    const zip = new JSZipCtor();
+    entries.forEach(entry => zip.file(entry.filename, entry.blob));
+    const blob = await zip.generateAsync({ type: 'blob' });
+    this.downloadBlob(blob, filename);
   },
 };
 

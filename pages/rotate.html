@@ -90,11 +90,17 @@
   let flipH = false;
   let flipV = false;
 
-  document.getElementById('rot-90').onclick  = () => { rotation = (rotation + 90) % 360; updateStatusLabel(); };
-  document.getElementById('rot-180').onclick = () => { rotation = (rotation + 180) % 360; updateStatusLabel(); };
-  document.getElementById('rot-270').onclick = () => { rotation = (rotation + 270) % 360; updateStatusLabel(); };
-  document.getElementById('flip-h').onclick  = () => { flipH = !flipH; updateStatusLabel(); };
-  document.getElementById('flip-v').onclick  = () => { flipV = !flipV; updateStatusLabel(); };
+  const rot90Btn = document.getElementById('rot-90');
+  const rot180Btn = document.getElementById('rot-180');
+  const rot270Btn = document.getElementById('rot-270');
+  const flipHBtn = document.getElementById('flip-h');
+  const flipVBtn = document.getElementById('flip-v');
+
+  rot90Btn.onclick  = () => { rotation = (rotation + 90) % 360; updateStatusLabel(); };
+  rot180Btn.onclick = () => { rotation = (rotation + 180) % 360; updateStatusLabel(); };
+  rot270Btn.onclick = () => { rotation = (rotation + 270) % 360; updateStatusLabel(); };
+  flipHBtn.onclick  = () => { flipH = !flipH; updateStatusLabel(); };
+  flipVBtn.onclick  = () => { flipV = !flipV; updateStatusLabel(); };
 
   function updateStatusLabel() {
     let statusParts = [];
@@ -102,7 +108,16 @@
     if (flipH) statusParts.push('отражение Г');
     if (flipV) statusParts.push('отражение В');
     const desc = statusParts.join(', ') || 'нет изменений';
+    updateActionButtons();
     Toast.info('Выбрано: ' + desc);
+  }
+
+  function updateActionButtons() {
+    rot90Btn.classList.toggle('is-active', rotation === 90);
+    rot180Btn.classList.toggle('is-active', rotation === 180);
+    rot270Btn.classList.toggle('is-active', rotation === 270);
+    flipHBtn.classList.toggle('is-active', flipH);
+    flipVBtn.classList.toggle('is-active', flipV);
   }
 
   const manager = new FileListManager(fileListEl);
@@ -127,7 +142,7 @@
     fileListEl.classList.toggle('hidden', !has);
     settingsEl.classList.toggle('hidden', !has);
     actionBarEl.classList.toggle('hidden', !has);
-    countEl.textContent = files.length + ' файл(ов)';
+    countEl.textContent = FileUtils.formatFilesCount(files.length);
     resultArea.classList.remove('visible');
     results = []; dlAllBtn.style.display = 'none'; resultStats.innerHTML = '';
     const previewBtn = document.getElementById('preview-btn');
@@ -165,6 +180,7 @@
   clearBtn.addEventListener('click', () => {
     files = []; manager.clear(); updateUI();
     rotation = 0; flipH = false; flipV = false;
+    updateActionButtons();
   });
 
   applyBtn.addEventListener('click', async () => {
@@ -236,11 +252,7 @@
   });
 
   dlAllBtn.addEventListener('click', async () => {
-    await FileUtils.loadJSZip();
-    const zip = new JSZip();
-    results.forEach(r => zip.file(r.filename, r.blob));
-    const z = await zip.generateAsync({ type: 'blob' });
-    FileUtils.downloadBlob(z, 'akd-rotated.zip');
+    await FileUtils.downloadZip(results, 'akd-rotated.zip');
     Toast.success('ZIP архив скачан!');
   });
 

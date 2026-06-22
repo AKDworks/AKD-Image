@@ -137,7 +137,7 @@
     fileListEl.classList.toggle('hidden', !has);
     settingsEl.classList.toggle('hidden', !has);
     actionBarEl.classList.toggle('hidden', !has);
-    countEl.textContent = files.length + ' файл(ов)';
+    countEl.textContent = FileUtils.formatFilesCount(files.length);
     resultArea.classList.remove('visible');
     results = []; dlAllBtn.style.display = 'none'; resultStats.innerHTML = '';
     const previewBtn = document.getElementById('preview-btn');
@@ -246,11 +246,7 @@
   });
 
   dlAllBtn.addEventListener('click', async () => {
-    await FileUtils.loadJSZip();
-    const zip = new JSZip();
-    results.forEach(r => zip.file(r.filename, r.blob));
-    const z = await zip.generateAsync({ type: 'blob' });
-    FileUtils.downloadBlob(z, 'akd-memes.zip');
+    await FileUtils.downloadZip(results, 'akd-memes.zip');
     Toast.success('ZIP архив скачан!');
   });
 

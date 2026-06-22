@@ -120,7 +120,7 @@
     fileListEl.classList.toggle('hidden', !hasFiles);
     settingsEl.classList.toggle('hidden', !hasFiles);
     actionBarEl.classList.toggle('hidden', !hasFiles);
-    countEl.textContent = files.length + ' файл(ов)';
+    countEl.textContent = FileUtils.formatFilesCount(files.length);
     resultArea.classList.remove('visible');
     results = [];
     previewBtn.style.display = hasFiles ? '' : 'none';
@@ -206,11 +206,7 @@
   });
 
   dlAllBtn.addEventListener('click', async () => {
-    await FileUtils.loadJSZip();
-    const zip = new JSZip();
-    results.forEach(r => zip.file(r.filename, r.blob));
-    const z = await zip.generateAsync({ type: 'blob' });
-    FileUtils.downloadBlob(z, 'akd-noexif.zip');
+    await FileUtils.downloadZip(results, 'akd-noexif.zip');
   });
 
 })();
