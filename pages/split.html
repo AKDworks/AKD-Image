@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Разделить изображение — AKD Image</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/main.css">
+</head>
+<body>
+
+<script src="../js/layout.js?v=5"></script>
+
+<main>
+  <div class="container container--narrow tool-page">
+
+    <div class="tool-page__header">
+      <h1 class="tool-page__title">Разделить изображение</h1>
+      <p class="tool-page__subtitle">Нарежьте длинный скриншот на части по вертикали или разделите фото сеткой для соцсетей.</p>
+    </div>
+
+    <!-- Drop Zone -->
+    <div class="dropzone" id="dropzone">
+      <input type="file" accept="image/jpeg,image/png,image/webp">
+      <p class="dropzone__title">Перетащите изображение сюда</p>
+      <p class="dropzone__hint">или нажмите для выбора файла (только 1 файл за раз)</p>
+      <div class="dropzone__formats">
+        <span class="fmt-badge">JPG</span>
+        <span class="fmt-badge">PNG</span>
+        <span class="fmt-badge">WEBP</span>
+      </div>
+    </div>
+
+    <!-- Settings panel -->
+    <div class="tool-panel hidden" id="settings-panel">
+      <div class="tool-panel__head">
+        <h3>Настройки нарезки</h3>
+        <button class="btn btn-sm btn-secondary" id="clear-btn">Очистить</button>
+      </div>
+      <div class="tool-panel__body">
+        
+        <div class="form-group">
+          <label>Режим нарезки</label>
+          <div class="flex gap-16 mt-8">
+            <label class="radio-label">
+              <input type="radio" name="split-mode" value="vertical" checked> По вертикали (скриншоты)
+            </label>
+            <label class="radio-label">
+              <input type="radio" name="split-mode" value="grid"> Сетка (X на Y)
+            </label>
+          </div>
+        </div>
+
+        <div class="form-row mt-16" id="mode-vertical">
+          <div class="form-group">
+            <label>Количество частей</label>
+            <input type="number" id="vert-parts" min="2" max="20" value="3" class="w-full">
+          </div>
+        </div>
+
+        <div class="form-row mt-16 hidden" id="mode-grid">
+          <div class="form-group">
+            <label>Столбцы (по горизонтали)</label>
+            <input type="number" id="grid-cols" min="1" max="10" value="3" class="w-full">
+          </div>
+          <div class="form-group">
+            <label>Строки (по вертикали)</label>
+            <input type="number" id="grid-rows" min="1" max="10" value="3" class="w-full">
+          </div>
+        </div>
+
+        <button class="btn btn-secondary mt-16" id="preview-btn" style="display:none;">Предпросмотр сетки</button>
+        <div style="position:relative; display:none; margin-top:16px; border:1px solid var(--border); border-radius:var(--r-md); overflow:hidden; max-width:100%;" id="preview-wrap">
+          <canvas id="preview-canvas" style="display:block; max-width:100%;"></canvas>
+          <div id="grid-overlay" style="position:absolute; top:0; left:0; width:100%; height:100%; pointer-events:none;"></div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- File list -->
+    <div class="file-list hidden" id="file-list"></div>
+
+    <!-- Action buttons -->
+    <div class="hidden mt-16 flex gap-8 items-center flex-wrap" id="action-bar">
+      <button class="btn btn-primary btn-lg" id="split-btn">
+        Нарезать и скачать (ZIP)
+      </button>
+    </div>
+
+    <!-- Results -->
+    <div class="result-area" id="result-area">
+      <hr class="divider">
+      <div class="result-stats" id="result-stats"></div>
+    </div>
+
+  </div>
+</main>
+
+<script src="../js/core.js"></script>
+<script>
+(function () {
+  const dropzoneEl  = document.getElementById('dropzone');
+  const fileListEl  = document.getElementById('file-list');
+  const settingsEl  = document.getElementById('settings-panel');
+  const actionBarEl = document.getElementById('action-bar');
+  const splitBtn    = document.getElementById('split-btn');
+  const clearBtn    = document.getElementById('clear-btn');
+  const resultArea  = document.getElementById('result-area');
+  const resultStats = document.getElementById('result-stats');
+
+  const modeRadios  = document.querySelectorAll('input[name="split-mode"]');
+  const modeVert    = document.getElementById('mode-vertical');
+  const modeGrid    = document.getElementById('mode-grid');
+  
+  const vertParts   = document.getElementById('vert-parts');
+  const gridCols    = document.getElementById('grid-cols');
+  const gridRows    = document.getElementById('grid-rows');
+
+  const previewBtn  = document.getElementById('preview-btn');
+  const previewWrap = document.getElementById('preview-wrap');
+  const previewCanvas = document.getElementById('preview-canvas');
+  const gridOverlay = document.getElementById('grid-overlay');
+
+  const manager = new FileListManager(fileListEl);
+  let files = [];
+  
+  // Script loaded JSZip dependency for Zip download
+  async function loadJSZip() {
+    if (window.JSZip) return;
+    const s = document.createElement('script');
+    s.src = 'https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js';
+    document.head.appendChild(s);
+    return new Promise(r => s.onload = r);
+  }
+
+  fileListEl.addEventListener('file-removed', (e) => {
+    files = files.filter(f => f.item.id !== e.detail.id);
+    updateUI();
+  });
+
+  modeRadios.forEach(r => {
+    r.addEventListener('change', () => {
+      if (r.value === 'vertical') {
+        modeVert.classList.remove('hidden');
+        modeGrid.classList.add('hidden');
+      } else {
+        modeVert.classList.add('hidden');
+        modeGrid.classList.remove('hidden');
+      }
+      drawPreview();
+    });
+  });
+
+  vertParts.addEventListener('input', drawPreview);
+  gridCols.addEventListener('input', drawPreview);
+  gridRows.addEventListener('input', drawPreview);
+
+  new Dropzone(dropzoneEl, {
+    accept: ['image/jpeg','image/png','image/webp'],
+    multiple: false,
+    onFiles(newFiles) {
+      if (!newFiles.length) return;
+      // Single file only
+      files = [];
+      manager.clear();
+      const f = newFiles[0];
+      files.push({ file: f, item: manager.add(f) });
+      updateUI();
+    }
+  });
+
+  function updateUI() {
+    const hasFiles = files.length > 0;
+    fileListEl.classList.toggle('hidden', !hasFiles);
+    settingsEl.classList.toggle('hidden', !hasFiles);
+    actionBarEl.classList.toggle('hidden', !hasFiles);
+    resultArea.classList.remove('visible');
+    previewBtn.style.display = hasFiles ? '' : 'none';
+    previewWrap.style.display = 'none';
+  }
+
+  clearBtn.addEventListener('click', () => {
+    files = [];
+    manager.clear();
+    updateUI();
+  });
+
+  let cachedImg = null;
+
+  previewBtn.addEventListener('click', async () => {
+    if (!files.length) return;
+    const file = files[0].file;
+    const src = await FileUtils.readAsDataURL(file);
+    cachedImg = await FileUtils.loadImage(src);
+    drawPreview();
+  });
+
+  function drawPreview() {
+    if (!cachedImg) return;
+    previewWrap.style.display = 'block';
+    const ctx = previewCanvas.getContext('2d');
+    
+    // Scale preview to fit screen roughly without breaking canvas size limits
+    let scale = 1;
+    if (cachedImg.naturalWidth > 1200) scale = 1200 / cachedImg.naturalWidth;
+    
+    previewCanvas.width = cachedImg.naturalWidth * scale;
+    previewCanvas.height = cachedImg.naturalHeight * scale;
+    ctx.drawImage(cachedImg, 0, 0, previewCanvas.width, previewCanvas.height);
+
+    const mode = document.querySelector('input[name="split-mode"]:checked').value;
+    let cols = 1, rows = 1;
+    
+    if (mode === 'vertical') {
+      rows = parseInt(vertParts.value) || 3;
+    } else {
+      cols = parseInt(gridCols.value) || 3;
+      rows = parseInt(gridRows.value) || 3;
+    }
+    
+    gridOverlay.innerHTML = '';
+    const cw = 100 / cols;
+    const ch = 100 / rows;
+    
+    for (let i = 1; i < cols; i++) {
+      const line = document.createElement('div');
+      line.style.cssText = `position:absolute; top:0; bottom:0; left:${i * cw}%; width:2px; background:rgba(255,0,0,0.8); transform:translateX(-50%);`;
+      gridOverlay.appendChild(line);
+    }
+    for (let i = 1; i < rows; i++) {
+      const line = document.createElement('div');
+      line.style.cssText = `position:absolute; left:0; right:0; top:${i * ch}%; height:2px; background:rgba(255,0,0,0.8); transform:translateY(-50%);`;
+      gridOverlay.appendChild(line);
+    }
+  }
+
+  splitBtn.addEventListener('click', async () => {
+    if (!files.length) return;
+    await loadJSZip();
+    
+    splitBtn.disabled = true;
+    splitBtn.innerHTML = '<span class="spinner"></span> Обработка...';
+    
+    const { file, item } = files[0];
+    manager.setStatus(item.id, 'Нарезка...', 'status-processing');
+    manager.setProgress(item.id, 20);
+
+    try {
+      const src = await FileUtils.readAsDataURL(file);
+      const img = await FileUtils.loadImage(src);
+      manager.setProgress(item.id, 40);
+
+      const mode = document.querySelector('input[name="split-mode"]:checked').value;
+      let cols = 1, rows = 1;
+      
+      if (mode === 'vertical') {
+        rows = parseInt(vertParts.value) || 3;
+      } else {
+        cols = parseInt(gridCols.value) || 3;
+        rows = parseInt(gridRows.value) || 3;
+      }
+
+      const partW = Math.floor(img.naturalWidth / cols);
+      const partH = Math.floor(img.naturalHeight / rows);
+      
+      const zip = new JSZip();
+      const baseName = file.name.replace(/\.[^.]+$/, '');
+      const ext = FileUtils.getExt(file.name);
+      const mime = file.type;
+
+      const canvas = document.createElement('canvas');
+      canvas.width = partW;
+      canvas.height = partH;
+      const ctx = canvas.getContext('2d');
+      
+      let count = 0;
+      const total = cols * rows;
+
+      for (let y = 0; y < rows; y++) {
+        for (let x = 0; x < cols; x++) {
+          ctx.clearRect(0, 0, partW, partH);
+          ctx.drawImage(img, x * partW, y * partH, partW, partH, 0, 0, partW, partH);
+          
+          const blob = await FileUtils.canvasToBlob(canvas, mime, 0.95);
+          const suffix = mode === 'vertical' ? `_part${y+1}` : `_row${y+1}_col${x+1}`;
+          zip.file(`${baseName}${suffix}.${ext}`, blob);
+          
+          count++;
+          manager.setProgress(item.id, 40 + (count / total) * 50);
+        }
+      }
+
+      manager.setStatus(item.id, 'Архивация...', 'status-processing');
+      const zipBlob = await zip.generateAsync({ type: 'blob' });
+      
+      manager.setProgress(item.id, 100);
+      manager.setStatus(item.id, 'Готово', 'status-done');
+      manager.setMeta(item.id, `${count} фрагментов · ${FileUtils.formatSize(zipBlob.size)}`);
+      
+      FileUtils.downloadBlob(zipBlob, `${baseName}_split.zip`);
+      
+      resultStats.innerHTML = `
+        <div class="stat-card"><div class="stat-card__label">Фрагментов</div><div class="stat-card__value">${count}</div></div>
+        <div class="stat-card stat-green"><div class="stat-card__label">Скачано</div><div class="stat-card__value">ZIP архив</div></div>
+      `;
+      resultArea.classList.add('visible');
+
+    } catch(err) {
+      manager.setStatus(item.id, 'Ошибка', 'status-error');
+      console.error(err);
+    }
+    
+    splitBtn.disabled = false;
+    splitBtn.innerHTML = 'Нарезать и скачать (ZIP)';
+  });
+
+})();
+</script>
+</body>
+</html>

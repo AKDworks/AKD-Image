@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Генератор мемов — AKD Image</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/main.css">
+  <style>
+    #preview-canvas {
+      max-width: 100%;
+      border-radius: var(--r-md);
+      border: 1px solid var(--border);
+      margin-top: 16px;
+      display: none;
+    }
+  </style>
+</head>
+<body>
+
+<script src="../js/layout.js?v=5"></script>
+
+<main>
+  <div class="container container--narrow tool-page">
+
+    <div class="tool-page__header">
+      <h1 class="tool-page__title">Генератор мемов</h1>
+      <p class="tool-page__subtitle">Добавляйте текст сверху и снизу изображения для создания мемов.</p>
+    </div>
+
+    <!-- Drop Zone -->
+    <div class="dropzone" id="dropzone">
+      <input type="file" accept="image/jpeg,image/png,image/gif,image/webp" multiple>
+      <p class="dropzone__title">Перетащите изображения сюда</p>
+      <p class="dropzone__hint">или нажмите для выбора файлов</p>
+      <div class="dropzone__formats">
+        <span class="fmt-badge">JPG</span>
+        <span class="fmt-badge">PNG</span>
+        <span class="fmt-badge">WEBP</span>
+      </div>
+    </div>
+
+    <!-- Settings -->
+    <div class="tool-panel hidden" id="settings-panel">
+      <div class="tool-panel__head">
+        <h3>Настройки</h3>
+        <button class="btn btn-sm btn-secondary" id="clear-btn">Очистить всё</button>
+      </div>
+      <div class="tool-panel__body">
+        <div class="form-row">
+          <div class="form-group flex-1">
+            <label>Верхний текст</label>
+            <textarea id="top-text" rows="2" placeholder="ВЕРХНИЙ ТЕКСТ"></textarea>
+          </div>
+          <div class="form-group flex-1">
+            <label>Нижний текст</label>
+            <textarea id="bottom-text" rows="2" placeholder="НИЖНИЙ ТЕКСТ"></textarea>
+          </div>
+        </div>
+        
+        <div class="form-row mt-16">
+          <div class="form-group">
+            <label>Цвет текста</label>
+            <input type="color" id="text-color" value="#ffffff" style="height:38px;padding:4px;border:1px solid var(--border);border-radius:6px;cursor:pointer;">
+          </div>
+          <div class="form-group">
+            <label>Размер шрифта (px)</label>
+            <input type="number" id="font-size" value="48" min="10" max="300">
+          </div>
+        </div>
+
+        <!-- Live preview button -->
+        <button class="btn btn-secondary mt-16" id="preview-btn" style="display:none;">
+          Предпросмотр
+        </button>
+        <canvas id="preview-canvas"></canvas>
+      </div>
+    </div>
+
+    <!-- File list -->
+    <div class="file-list hidden" id="file-list"></div>
+
+    <!-- Action bar -->
+    <div class="hidden mt-16 flex gap-8 items-center" id="action-bar">
+      <button class="btn btn-primary btn-lg" id="apply-btn">Создать мем</button>
+      <span class="text-muted text-sm" id="file-count"></span>
+    </div>
+
+    <div class="result-area" id="result-area">
+      <hr class="divider">
+      <div class="result-stats" id="result-stats"></div>
+      <button class="btn btn-success" id="download-all-btn" style="display:none;">Скачать всё (ZIP)</button>
+    </div>
+
+  </div>
+</main>
+
+<script src="../js/core.js"></script>
+<script>
+(function () {
+  const dropzoneEl  = document.getElementById('dropzone');
+  const fileListEl  = document.getElementById('file-list');
+  const settingsEl  = document.getElementById('settings-panel');
+  const actionBarEl = document.getElementById('action-bar');
+  const countEl     = document.getElementById('file-count');
+  const applyBtn    = document.getElementById('apply-btn');
+  const clearBtn    = document.getElementById('clear-btn');
+  const resultArea  = document.getElementById('result-area');
+  const resultStats = document.getElementById('result-stats');
+  const dlAllBtn    = document.getElementById('download-all-btn');
+  const previewBtn  = document.getElementById('preview-btn');
+  const previewCanvas = document.getElementById('preview-canvas');
+
+  const topTextInput = document.getElementById('top-text');
+  const bottomTextInput = document.getElementById('bottom-text');
+  const colorInput = document.getElementById('text-color');
+  const fontSizeInput = document.getElementById('font-size');
+
+  const manager = new FileListManager(fileListEl);
+  let files = [], results = [];
+
+  fileListEl.addEventListener('file-removed', (e) => {
+    files = files.filter(f => f.item.id !== e.detail.id);
+    updateUI();
+  });
+
+  new Dropzone(dropzoneEl, {
+    accept: ['image/jpeg','image/png','image/gif','image/webp'],
+    multiple: true,
+    onFiles(newFiles) {
+      newFiles.forEach(f => files.push({ file: f, item: manager.add(f) }));
+      updateUI();
+    }
+  });
+
+  function updateUI() {
+    const has = files.length > 0;
+    fileListEl.classList.toggle('hidden', !has);
+    settingsEl.classList.toggle('hidden', !has);
+    actionBarEl.classList.toggle('hidden', !has);
+    countEl.textContent = files.length + ' файл(ов)';
+    resultArea.classList.remove('visible');
+    results = []; dlAllBtn.style.display = 'none'; resultStats.innerHTML = '';
+    const previewBtn = document.getElementById('preview-btn');
+    if (previewBtn) previewBtn.style.display = has ? '' : 'none';
+    const canvas = document.getElementById('preview-canvas');
+    if (canvas) canvas.style.display = 'none';
+  }
+
+  clearBtn.addEventListener('click', () => { files = []; manager.clear(); updateUI(); });
+
+  async function applyMeme(img) {
+    const canvas = document.createElement('canvas');
+    canvas.width  = img.naturalWidth;
+    canvas.height = img.naturalHeight;
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(img, 0, 0);
+
+    const topText = topTextInput.value.toUpperCase();
+    const bottomText = bottomTextInput.value.toUpperCase();
+    const fontSize = parseInt(fontSizeInput.value) || 48;
+    const color = colorInput.value;
+
+    ctx.font = `bold ${fontSize}px Impact, "Arial Black", sans-serif`;
+    ctx.fillStyle = color;
+    ctx.strokeStyle = 'black';
+    ctx.lineWidth = fontSize / 10;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'top';
+
+    function drawText(text, x, y) {
+      if (!text) return;
+      const lines = text.split('\n');
+      lines.forEach((line, i) => {
+         const yOffset = y + (i * fontSize * 1.2);
+         ctx.strokeText(line, x, yOffset);
+         ctx.fillText(line, x, yOffset);
+      });
+    }
+
+    drawText(topText, canvas.width / 2, 10);
+    
+    if (bottomText) {
+      const bottomLinesCount = bottomText.split('\n').length;
+      drawText(bottomText, canvas.width / 2, canvas.height - (bottomLinesCount * fontSize * 1.2) - 10);
+    }
+
+    return canvas;
+  }
+
+  previewBtn.addEventListener('click', async () => {
+    if (!files.length) return;
+    const dataURL = await FileUtils.readAsDataURL(files[0].file);
+    const img     = await FileUtils.loadImage(dataURL);
+    const canvas  = await applyMeme(img);
+    previewCanvas.width  = canvas.width;
+    previewCanvas.height = canvas.height;
+    previewCanvas.getContext('2d').drawImage(canvas, 0, 0);
+    previewCanvas.style.display = 'block';
+  });
+
+  applyBtn.addEventListener('click', async () => {
+    if (!files.length) return;
+    applyBtn.disabled = true;
+    applyBtn.innerHTML = '<span class="spinner"></span> Обработка...';
+    results = [];
+
+    for (const entry of files) {
+      const { file, item } = entry;
+      manager.setStatus(item.id, 'Обработка...', 'status-processing');
+      manager.setProgress(item.id, 20);
+
+      try {
+        const dataURL = await FileUtils.readAsDataURL(file);
+        const img     = await FileUtils.loadImage(dataURL);
+        manager.setProgress(item.id, 50);
+        const canvas  = await applyMeme(img);
+        
+        const mime = file.type;
+        const blob = await FileUtils.canvasToBlob(canvas, mime, 0.9);
+        const ext = mime.split('/')[1].replace('jpeg','jpg');
+        const filename = file.name.replace(/\.[^.]+$/, '') + '_meme.' + ext;
+        
+        manager.setProgress(item.id, 100);
+        manager.setStatus(item.id, 'Готово', 'status-done');
+        manager.setMeta(item.id, FileUtils.formatSize(blob.size));
+        manager.addDownload(item.id, blob, filename);
+        results.push({ blob, filename });
+      } catch (err) {
+        manager.setStatus(item.id, 'Ошибка', 'status-error');
+        console.error(err);
+      }
+    }
+
+    if (results.length) {
+      resultStats.innerHTML = `
+        <div class="stat-card"><div class="stat-card__label">Обработано</div><div class="stat-card__value">${results.length}</div></div>
+        <div class="stat-card stat-green"><div class="stat-card__label">Статус</div><div class="stat-card__value">Готово</div></div>
+      `;
+      resultArea.classList.add('visible');
+      if (results.length > 1) dlAllBtn.style.display = '';
+      Toast.success('Мемы успешно созданы!');
+    }
+
+    applyBtn.disabled = false;
+    applyBtn.innerHTML = 'Создать мем';
+  });
+
+  dlAllBtn.addEventListener('click', async () => {
+    if (!window.JSZip) {
+      const s = document.createElement('script');
+      s.src = 'https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js';
+      document.head.appendChild(s);
+      await new Promise(r => s.onload = r);
+    }
+    const zip = new JSZip();
+    results.forEach(r => zip.file(r.filename, r.blob));
+    const z = await zip.generateAsync({ type: 'blob' });
+    FileUtils.downloadBlob(z, 'akd-memes.zip');
+    Toast.success('ZIP архив скачан!');
+  });
+
+})();
+</script>
+</body>
+</html>

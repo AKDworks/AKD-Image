@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Водяной знак — AKD Image</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/main.css">
+  <style>
+    .position-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 6px;
+      max-width: 180px;
+    }
+    .pos-btn {
+      aspect-ratio: 1;
+      background: var(--bg);
+      border: 2px solid var(--border);
+      border-radius: var(--r-sm);
+      cursor: pointer;
+      transition: border-color var(--t), background var(--t);
+      font-size: .6rem;
+      color: var(--muted);
+    }
+    .pos-btn:hover   { border-color: #93B4F5; }
+    .pos-btn.active  { border-color: var(--accent); background: var(--accent-light); }
+
+    .wm-tabs { display: flex; gap: 4px; margin-bottom: 16px; }
+    .wm-tab  {
+      padding: 8px 18px;
+      font-size: .85rem;
+      font-weight: 600;
+      border: 1px solid var(--border);
+      border-radius: var(--r-sm);
+      background: var(--bg);
+      cursor: pointer;
+      transition: background var(--t), border-color var(--t), color var(--t);
+      color: var(--muted);
+    }
+    .wm-tab.active {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #fff;
+    }
+
+    #preview-canvas {
+      max-width: 100%;
+      border-radius: var(--r-md);
+      border: 1px solid var(--border);
+      margin-top: 16px;
+      display: none;
+    }
+  </style>
+</head>
+<body>
+
+<script src="../js/layout.js?v=5"></script>
+
+<main>
+  <div class="container container--narrow tool-page">
+
+    <div class="tool-page__header">
+      <h1 class="tool-page__title">
+        Водяной знак
+      </h1>
+      <p class="tool-page__subtitle">Добавьте текст или логотип на изображения. Пакетная обработка поддерживается.</p>
+    </div>
+
+    <!-- Drop Zone -->
+    <div class="dropzone" id="dropzone">
+      <input type="file" accept="image/jpeg,image/png,image/gif,image/webp" multiple>
+      <p class="dropzone__title">Перетащите изображения для обработки</p>
+      <p class="dropzone__hint">или нажмите для выбора файлов</p>
+      <div class="dropzone__formats">
+        <span class="fmt-badge">JPG</span>
+        <span class="fmt-badge">PNG</span>
+        <span class="fmt-badge">WEBP</span>
+      </div>
+    </div>
+
+    <!-- Settings -->
+    <div class="tool-panel hidden" id="settings-panel">
+      <div class="tool-panel__head">
+        <h3>Водяной знак</h3>
+        <button class="btn btn-sm btn-secondary" id="clear-btn">Очистить всё</button>
+      </div>
+      <div class="tool-panel__body">
+
+        <!-- Tabs -->
+        <div class="wm-tabs">
+          <button class="wm-tab active" data-tab="text">Текст</button>
+          <button class="wm-tab" data-tab="image">Изображение / Логотип</button>
+        </div>
+
+        <!-- Text watermark -->
+        <div id="tab-text">
+          <div class="form-row">
+            <div class="form-group flex-1">
+              <label>Текст водяного знака</label>
+              <input type="text" id="wm-text" value="© AKD Image" placeholder="Введите текст...">
+            </div>
+          </div>
+          <div class="form-row mt-8">
+            <div class="form-group">
+              <label>Цвет текста</label>
+              <input type="color" id="wm-color" value="#ffffff" style="height:38px;padding:4px;border:1px solid var(--border);border-radius:6px;cursor:pointer;">
+            </div>
+            <div class="form-group">
+              <label>Размер шрифта (px)</label>
+              <input type="number" id="wm-font-size" value="36" min="8" max="300">
+            </div>
+            <div class="form-group">
+              <label>Шрифт</label>
+              <select id="wm-font">
+                <option value="Inter, sans-serif">Inter (по умолчанию)</option>
+                <option value="serif">Serif</option>
+                <option value="monospace">Monospace</option>
+                <option value="Arial, sans-serif">Arial</option>
+                <option value="Georgia, serif">Georgia</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-group mt-8">
+            <label>Стиль</label>
+            <div class="radio-group">
+              <label class="radio-option"><input type="radio" name="wm-style" value="normal" checked> Обычный</label>
+              <label class="radio-option"><input type="radio" name="wm-style" value="bold"> Жирный</label>
+              <label class="radio-option"><input type="radio" name="wm-style" value="italic"> Курсив</label>
+            </div>
+          </div>
+        </div>
+
+        <!-- Image watermark -->
+        <div id="tab-image" class="hidden">
+          <div class="dropzone" id="logo-dropzone" style="padding:20px 24px;">
+            <input type="file" accept="image/png,image/svg+xml,image/webp" id="logo-input">
+            <p class="dropzone__title" style="font-size:.9rem;">Загрузите файл водяного знака</p>
+            <p class="dropzone__hint">PNG, SVG, WEBP</p>
+          </div>
+
+          <div style="margin-top:12px;border:1px solid var(--border);border-radius:var(--r-sm);padding:12px;background:var(--bg);">
+            <label style="display:block;margin-bottom:6px;font-weight:600;font-size:0.85rem;">Или вставьте ссылку на SVG / картинку</label>
+            <div style="display:flex;gap:8px;">
+              <input type="text" id="logo-url-input" placeholder="https://example.com/logo.svg или data:image..." style="flex:1;">
+              <button class="btn btn-secondary" id="logo-url-add" style="padding:0 12px;">Добавить</button>
+            </div>
+            <div id="saved-logos-container" style="margin-top:12px;">
+              <label style="display:block;margin-bottom:6px;font-size:0.75rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.05em;">Мои ссылки</label>
+              <div id="saved-logos-list" style="display:flex;flex-direction:column;gap:6px;max-height:120px;overflow-y:auto;padding-right:4px;">
+                <!-- Saved items go here -->
+              </div>
+            </div>
+          </div>
+
+          <div id="logo-preview-wrap" class="hidden mt-8" style="background:rgba(0,0,0,0.03);padding:8px;border-radius:6px;display:flex;align-items:center;justify-content:space-between;border:1px dashed var(--border);">
+            <img id="logo-preview" style="max-height:50px;max-width:120px;border-radius:4px;background:#fff;padding:2px;border:1px solid var(--border);">
+            <button class="btn btn-sm btn-secondary" id="remove-logo" style="margin-top:0;">Удалить</button>
+          </div>
+
+          <div class="form-group mt-8">
+            <label>Размер логотипа (% от ширины)</label>
+            <div class="range-row">
+              <input type="range" id="logo-size" min="5" max="80" value="20">
+              <span id="logo-size-val">20%</span>
+            </div>
+          </div>
+        </div>
+
+        <hr class="divider">
+
+        <!-- Position -->
+        <div class="form-row" style="align-items:flex-start;">
+          <div class="form-group">
+            <label>Позиция</label>
+            <div class="position-grid" id="position-grid">
+              <button class="pos-btn" data-pos="top-left"     title="Верх лево">1</button>
+              <button class="pos-btn" data-pos="top-center"   title="Верх центр">2</button>
+              <button class="pos-btn" data-pos="top-right"    title="Верх право">3</button>
+              <button class="pos-btn" data-pos="middle-left"  title="Середина лево">4</button>
+              <button class="pos-btn" data-pos="center"       title="Центр">5</button>
+              <button class="pos-btn" data-pos="middle-right" title="Середина право">6</button>
+              <button class="pos-btn" data-pos="bottom-left"  title="Низ лево">7</button>
+              <button class="pos-btn" data-pos="bottom-center"title="Низ центр">8</button>
+              <button class="pos-btn active" data-pos="bottom-right" title="Низ право">9</button>
+            </div>
+          </div>
+          <div class="form-group flex-1">
+            <label>Прозрачность</label>
+            <div class="range-row">
+              <input type="range" id="wm-opacity" min="5" max="100" value="70">
+              <span id="wm-opacity-val">70%</span>
+            </div>
+            <div class="mt-8">
+              <label>Отступ от края (px)</label>
+              <input type="number" id="wm-padding" value="20" min="0" max="200" style="margin-top:6px;">
+            </div>
+          </div>
+        </div>
+
+        <!-- Tile option -->
+        <div class="toggle-row">
+          <div>
+            <div class="toggle-label">Замостить по всему изображению</div>
+            <div class="toggle-hint">Водяной знак повторяется по диагонали</div>
+          </div>
+          <label class="toggle">
+            <input type="checkbox" id="wm-tile">
+            <span class="toggle-track"></span>
+          </label>
+        </div>
+
+        <hr class="divider">
+        <div class="form-row">
+          <div class="form-group">
+            <label>Формат вывода</label>
+            <select id="output-format">
+              <option value="same">Оставить оригинал</option>
+              <option value="image/jpeg">JPG</option>
+              <option value="image/png">PNG</option>
+              <option value="image/webp">WebP</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Качество</label>
+            <div class="range-row">
+              <input type="range" id="quality" min="10" max="100" value="88">
+              <span id="quality-val">88%</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Live preview button -->
+        <button class="btn btn-secondary mt-16" id="preview-btn" style="display:none;">
+          Предпросмотр (первое изображение)
+        </button>
+        <canvas id="preview-canvas"></canvas>
+      </div>
+    </div>
+
+    <!-- File list -->
+    <div class="file-list hidden" id="file-list"></div>
+
+    <!-- Action bar -->
+    <div class="hidden mt-16 flex gap-8 items-center" id="action-bar">
+      <button class="btn btn-primary btn-lg" id="apply-btn">Добавить водяной знак</button>
+      <span class="text-muted text-sm" id="file-count"></span>
+    </div>
+
+    <div class="result-area" id="result-area">
+      <hr class="divider">
+      <div class="result-stats" id="result-stats"></div>
+      <button class="btn btn-success" id="download-all-btn" style="display:none;"> Скачать всё (ZIP)</button>
+    </div>
+
+  </div>
+</main>
+
+<script src="../js/core.js"></script>
+<script>
+(function () {
+  // UI refs
+  const dropzoneEl  = document.getElementById('dropzone');
+  const fileListEl  = document.getElementById('file-list');
+  const settingsEl  = document.getElementById('settings-panel');
+  const actionBarEl = document.getElementById('action-bar');
+  const countEl     = document.getElementById('file-count');
+  const applyBtn    = document.getElementById('apply-btn');
+  const clearBtn    = document.getElementById('clear-btn');
+  const resultArea  = document.getElementById('result-area');
+  const resultStats = document.getElementById('result-stats');
+  const dlAllBtn    = document.getElementById('download-all-btn');
+  const previewBtn  = document.getElementById('preview-btn');
+  const previewCanvas = document.getElementById('preview-canvas');
+
+  // Text controls
+  const wmText     = document.getElementById('wm-text');
+  const wmColor    = document.getElementById('wm-color');
+  const wmFontSize = document.getElementById('wm-font-size');
+  const wmFont     = document.getElementById('wm-font');
+  const wmOpacity  = document.getElementById('wm-opacity');
+  const wmOpacityVal = document.getElementById('wm-opacity-val');
+  const wmPadding  = document.getElementById('wm-padding');
+  const wmTile     = document.getElementById('wm-tile');
+  const qualityInput = document.getElementById('quality');
+  const qualityVal  = document.getElementById('quality-val');
+  const outputFmt   = document.getElementById('output-format');
+  const logoSizeInput = document.getElementById('logo-size');
+  const logoSizeVal   = document.getElementById('logo-size-val');
+
+  qualityInput.addEventListener('input', () => { qualityVal.textContent = qualityInput.value + '%'; });
+  wmOpacity.addEventListener('input', () => { wmOpacityVal.textContent = wmOpacity.value + '%'; });
+  logoSizeInput.addEventListener('input', () => { logoSizeVal.textContent = logoSizeInput.value + '%'; });
+
+  // Tabs
+  let activeTab = 'text';
+  document.querySelectorAll('.wm-tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      activeTab = tab.dataset.tab;
+      document.querySelectorAll('.wm-tab').forEach(t => t.classList.remove('active'));
+      tab.classList.add('active');
+      document.getElementById('tab-text').classList.toggle('hidden', activeTab !== 'text');
+      document.getElementById('tab-image').classList.toggle('hidden', activeTab !== 'image');
+    });
+  });
+
+  // Position grid
+  let selectedPos = 'bottom-right';
+  document.querySelectorAll('.pos-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.pos-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      selectedPos = btn.dataset.pos;
+    });
+  });
+
+  // Logo upload & URLs
+  let logoImage = null;
+  const logoInput = document.getElementById('logo-input');
+  const logoUrlInput = document.getElementById('logo-url-input');
+  const logoUrlAddBtn = document.getElementById('logo-url-add');
+  const savedLogosList = document.getElementById('saved-logos-list');
+  const logoPreviewWrap = document.getElementById('logo-preview-wrap');
+  const logoPreviewEl   = document.getElementById('logo-preview');
+
+  // Load saved logos from localStorage
+  let savedLogos = [];
+  try {
+    savedLogos = JSON.parse(localStorage.getItem('akd_watermark_svgs') || '[]');
+  } catch(e) {}
+
+  function renderSavedLogos() {
+    savedLogosList.innerHTML = '';
+    if (savedLogos.length === 0) {
+      savedLogosList.innerHTML = '<span style="font-size:0.8rem;color:var(--muted);font-style:italic;">Список пуст</span>';
+      return;
+    }
+    savedLogos.forEach((url, index) => {
+      const item = document.createElement('div');
+      item.style.cssText = 'display:flex;align-items:center;justify-content:space-between;background:var(--surface);padding:4px 8px;border-radius:4px;border:1px solid var(--border);gap:8px;margin-bottom:4px;';
+      
+      const label = document.createElement('span');
+      label.textContent = url.length > 30 ? url.substring(0, 27) + '...' : url;
+      label.title = url;
+      label.style.cssText = 'font-size:0.8rem;cursor:pointer;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text);';
+      label.onclick = () => selectLogoUrl(url);
+
+      const delBtn = document.createElement('button');
+      delBtn.className = 'btn-icon';
+      delBtn.innerHTML = '✕';
+      delBtn.style.fontSize = '0.75rem';
+      delBtn.onclick = (e) => {
+        e.stopPropagation();
+        deleteLogoUrl(index);
+      };
+
+      item.appendChild(label);
+      item.appendChild(delBtn);
+      savedLogosList.appendChild(item);
+    });
+  }
+
+  async function selectLogoUrl(url) {
+    try {
+      logoImage = await FileUtils.loadImage(url);
+      logoPreviewEl.src = url;
+      logoPreviewWrap.classList.remove('hidden');
+      Toast.success('Логотип загружен!');
+    } catch(e) {
+      Toast.error('Не удалось загрузить изображение по ссылке.');
+    }
+  }
+
+  function deleteLogoUrl(index) {
+    savedLogos.splice(index, 1);
+    localStorage.setItem('akd_watermark_svgs', JSON.stringify(savedLogos));
+    renderSavedLogos();
+  }
+
+  logoUrlAddBtn.addEventListener('click', () => {
+    const url = logoUrlInput.value.trim();
+    if (!url) return;
+    if (!savedLogos.includes(url)) {
+      savedLogos.push(url);
+      localStorage.setItem('akd_watermark_svgs', JSON.stringify(savedLogos));
+      renderSavedLogos();
+      logoUrlInput.value = '';
+      selectLogoUrl(url);
+    }
+  });
+
+  logoInput.addEventListener('change', async () => {
+    const f = logoInput.files[0];
+    if (!f) return;
+    const src  = await FileUtils.readAsDataURL(f);
+    logoImage  = await FileUtils.loadImage(src);
+    logoPreviewEl.src = src;
+    logoPreviewWrap.classList.remove('hidden');
+  });
+
+  document.getElementById('remove-logo').addEventListener('click', () => {
+    logoImage = null;
+    logoPreviewWrap.classList.add('hidden');
+    logoInput.value = '';
+  });
+
+  renderSavedLogos();
+
+  // Files
+  const manager = new FileListManager(fileListEl);
+  let files = [], results = [];
+
+  fileListEl.addEventListener('file-removed', (e) => {
+    files = files.filter(f => f.item.id !== e.detail.id);
+    updateUI();
+  });
+
+  new Dropzone(dropzoneEl, {
+    accept: ['image/jpeg','image/png','image/gif','image/webp'],
+    multiple: true,
+    onFiles(newFiles) {
+      newFiles.forEach(f => files.push({ file: f, item: manager.add(f) }));
+      updateUI();
+    }
+  });
+
+  function updateUI() {
+    const has = files.length > 0;
+    fileListEl.classList.toggle('hidden', !has);
+    settingsEl.classList.toggle('hidden', !has);
+    actionBarEl.classList.toggle('hidden', !has);
+    previewBtn.style.display = has ? '' : 'none';
+    countEl.textContent = files.length + ' файл(ов)';
+    resultArea.classList.remove('visible');
+    results = []; dlAllBtn.style.display = 'none'; resultStats.innerHTML = '';
+    const canvas = document.getElementById('preview-canvas');
+    if (canvas) canvas.style.display = 'none';
+  }
+
+  clearBtn.addEventListener('click', () => { files = []; manager.clear(); updateUI(); });
+
+  // === CORE WATERMARK FUNCTION ===
+  async function applyWatermark(img) {
+    const canvas = document.createElement('canvas');
+    canvas.width  = img.naturalWidth;
+    canvas.height = img.naturalHeight;
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(img, 0, 0);
+
+    const opacity = parseInt(wmOpacity.value) / 100;
+    const pad     = parseInt(wmPadding.value) || 0;
+    ctx.globalAlpha = opacity;
+
+    if (activeTab === 'text') {
+      const text     = wmText.value || '© AKD Image';
+      const fontSize = parseInt(wmFontSize.value) || 36;
+      const style    = document.querySelector('input[name="wm-style"]:checked').value;
+      ctx.font       = `${style === 'italic' ? 'italic ' : ''}${style === 'bold' ? 'bold ' : ''}${fontSize}px ${wmFont.value}`;
+      ctx.fillStyle  = wmColor.value;
+      ctx.textBaseline = 'middle';
+
+      if (wmTile.checked) {
+        // Tile diagonally
+        ctx.save();
+        ctx.globalAlpha = Math.min(opacity, 0.3);
+        const metrics = ctx.measureText(text);
+        const tw = metrics.width + 60, th = fontSize + 40;
+        for (let y = -canvas.height; y < canvas.height * 2; y += th) {
+          for (let x = -canvas.width; x < canvas.width * 2; x += tw) {
+            ctx.save();
+            ctx.translate(x + tw/2, y + th/2);
+            ctx.rotate(-Math.PI / 6);
+            ctx.fillText(text, 0, 0);
+            ctx.restore();
+          }
+        }
+        ctx.restore();
+      } else {
+        const metrics = ctx.measureText(text);
+        const tw = metrics.width;
+        const [x, y] = calcPos(canvas.width, canvas.height, tw, fontSize, pad, selectedPos);
+        ctx.fillText(text, x, y);
+      }
+    } else {
+      // Image watermark
+      if (!logoImage) { ctx.globalAlpha = 1; return canvas; }
+      const logoW = Math.round(canvas.width * (parseInt(logoSizeInput.value) / 100));
+      const logoH = Math.round(logoImage.naturalHeight * (logoW / logoImage.naturalWidth));
+
+      if (wmTile.checked) {
+        ctx.globalAlpha = Math.min(opacity, 0.3);
+        const stepX = logoW + 40, stepY = logoH + 40;
+        for (let y = 0; y < canvas.height; y += stepY) {
+          for (let x = 0; x < canvas.width; x += stepX) {
+            ctx.drawImage(logoImage, x, y, logoW, logoH);
+          }
+        }
+      } else {
+        const [x, y] = calcPos(canvas.width, canvas.height, logoW, logoH, pad, selectedPos);
+        ctx.drawImage(logoImage, x, y, logoW, logoH);
+      }
+    }
+
+    ctx.globalAlpha = 1;
+    return canvas;
+  }
+
+  function calcPos(cw, ch, ew, eh, pad, pos) {
+    const positions = {
+      'top-left':      [pad, pad + eh/2],
+      'top-center':    [cw/2 - ew/2, pad + eh/2],
+      'top-right':     [cw - ew - pad, pad + eh/2],
+      'middle-left':   [pad, ch/2],
+      'center':        [cw/2 - ew/2, ch/2],
+      'middle-right':  [cw - ew - pad, ch/2],
+      'bottom-left':   [pad, ch - pad - eh/2],
+      'bottom-center': [cw/2 - ew/2, ch - pad - eh/2],
+      'bottom-right':  [cw - ew - pad, ch - pad - eh/2],
+    };
+    return positions[pos] || positions['bottom-right'];
+  }
+
+  // Preview
+  previewBtn.addEventListener('click', async () => {
+    if (!files.length) return;
+    const dataURL = await FileUtils.readAsDataURL(files[0].file);
+    const img     = await FileUtils.loadImage(dataURL);
+    const canvas  = await applyWatermark(img);
+    previewCanvas.width  = canvas.width;
+    previewCanvas.height = canvas.height;
+    previewCanvas.getContext('2d').drawImage(canvas, 0, 0);
+    previewCanvas.style.display = 'block';
+  });
+
+  // Apply
+  applyBtn.addEventListener('click', async () => {
+    if (!files.length) return;
+    if (activeTab === 'image' && !logoImage) {
+      Toast.error('Загрузите логотип для водяного знака!'); return;
+    }
+    applyBtn.disabled = true;
+    applyBtn.innerHTML = '<span class="spinner"></span> Обработка...';
+    results = [];
+
+    for (const entry of files) {
+      const { file, item } = entry;
+      manager.setStatus(item.id, 'Обработка...', 'status-processing');
+      manager.setProgress(item.id, 20);
+
+      try {
+        const dataURL = await FileUtils.readAsDataURL(file);
+        const img     = await FileUtils.loadImage(dataURL);
+        manager.setProgress(item.id, 50);
+        const canvas  = await applyWatermark(img);
+        const mime    = outputFmt.value === 'same' ? file.type : outputFmt.value;
+        const quality = parseInt(qualityInput.value) / 100;
+        const blob    = await FileUtils.canvasToBlob(canvas, mime, quality);
+        const ext     = mime.split('/')[1].replace('jpeg','jpg');
+        const filename = file.name.replace(/\.[^.]+$/, '') + '_wm.' + ext;
+        manager.setProgress(item.id, 100);
+        manager.setStatus(item.id, 'Готово', 'status-done');
+        manager.setMeta(item.id, FileUtils.formatSize(blob.size));
+        manager.addDownload(item.id, blob, filename);
+        results.push({ blob, filename });
+      } catch (err) {
+        manager.setStatus(item.id, 'Ошибка', 'status-error');
+        console.error(err);
+      }
+    }
+
+    if (results.length) {
+      resultStats.innerHTML = `
+        <div class="stat-card"><div class="stat-card__label">Обработано</div><div class="stat-card__value">${results.length}</div></div>
+        <div class="stat-card stat-green"><div class="stat-card__label">Статус</div><div class="stat-card__value"> Готово</div></div>
+      `;
+      resultArea.classList.add('visible');
+      if (results.length > 1) dlAllBtn.style.display = '';
+      Toast.success('Водяной знак добавлен!');
+    }
+
+    applyBtn.disabled = false;
+    applyBtn.innerHTML = 'Добавить водяной знак';
+  });
+
+  dlAllBtn.addEventListener('click', async () => {
+    if (!window.JSZip) {
+      const s = document.createElement('script');
+      s.src = 'https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js';
+      document.head.appendChild(s);
+      await new Promise(r => s.onload = r);
+    }
+    const zip = new JSZip();
+    results.forEach(r => zip.file(r.filename, r.blob));
+    const z = await zip.generateAsync({ type: 'blob' });
+    FileUtils.downloadBlob(z, 'akd-watermarked.zip');
+    Toast.success('ZIP скачан!');
+  });
+
+})();
+</script>
+</body>
+</html>
