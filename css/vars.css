@@ -1,0 +1,36 @@
+/* ============================================
+   AKD IMAGE — Design System
+   ============================================ */
+
+:root {
+  /* Palette */
+  --bg:         #F7F8FA;
+  --surface:    #FFFFFF;
+  --border:     #E2E6ED;
+  --text:       #1A1D23;
+  --muted:      #6B7280;
+  --accent:     #2563EB;
+  --accent-hover: #1D4ED8;
+  --accent-light: #EFF6FF;
+  --success:    #16A34A;
+  --warn:       #D97706;
+  --danger:     #DC2626;
+
+  /* Type */
+  --font-ui:    'Inter', system-ui, -apple-system, sans-serif;
+  --font-mono:  'JetBrains Mono', monospace;
+
+  /* Scale */
+  --r-sm:  6px;
+  --r-md:  10px;
+  --r-lg:  16px;
+  --r-xl:  24px;
+
+  /* Shadow */
+  --shadow-sm: 0 1px 3px rgba(0,0,0,.08);
+  --shadow-md: 0 4px 16px rgba(0,0,0,.10);
+  --shadow-lg: 0 8px 32px rgba(0,0,0,.12);
+
+  /* Transitions */
+  --t: 160ms ease;
+}

@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Фотоэффекты — AKD Image</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/main.css">
+  <style>
+    .workspace-wrap {
+      display: grid;
+      grid-template-columns: 1fr 280px;
+      gap: 16px;
+      margin-top: 16px;
+    }
+    @media (max-width: 768px) {
+      .workspace-wrap { grid-template-columns: 1fr; }
+    }
+    .preview-box {
+      background: #1e1e24;
+      border: 1px solid var(--border);
+      border-radius: var(--r-md);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 300px;
+      overflow: hidden;
+      padding: 12px;
+    }
+    #preview-canvas {
+      max-width: 100%;
+      max-height: 60vh;
+      border-radius: var(--r-sm);
+      box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+    }
+    .slider-group {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+  </style>
+</head>
+<body>
+
+<script src="../js/layout.js?v=5"></script>
+
+<main>
+  <div class="container tool-page" style="max-width: 960px;">
+
+    <div class="tool-page__header">
+      <h1 class="tool-page__title">
+        Фотоэффекты
+      </h1>
+      <p class="tool-page__subtitle">Корректируйте яркость, контраст, насыщенность, размытие и применяйте фильтры.</p>
+    </div>
+
+    <!-- Drop Zone -->
+    <div class="dropzone" id="dropzone">
+      <input type="file" accept="image/*">
+      <p class="dropzone__title">Перетащите изображение сюда</p>
+      <p class="dropzone__hint">или нажмите для выбора файла</p>
+      <div class="dropzone__formats">
+        <span class="fmt-badge">JPG</span>
+        <span class="fmt-badge">PNG</span>
+        <span class="fmt-badge">WEBP</span>
+      </div>
+    </div>
+
+    <!-- Workspace -->
+    <div class="hidden" id="workspace-panel">
+      <div class="workspace-wrap">
+        
+        <!-- Left Pane: Preview -->
+        <div class="preview-box">
+          <canvas id="preview-canvas"></canvas>
+        </div>
+
+        <!-- Right Pane: Controls -->
+        <div class="tool-panel">
+          <div class="tool-panel__head">
+            <h3>Фильтры</h3>
+            <button class="btn btn-sm btn-secondary" id="reset-btn">Сбросить</button>
+          </div>
+          <div class="tool-panel__body slider-group">
+            
+            <div class="form-group">
+              <label>Яркость</label>
+              <div class="range-row">
+                <input type="range" id="brightness" min="0" max="200" value="100">
+                <span id="brightness-val">100%</span>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label>Контраст</label>
+              <div class="range-row">
+                <input type="range" id="contrast" min="0" max="200" value="100">
+                <span id="contrast-val">100%</span>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label>Насыщенность</label>
+              <div class="range-row">
+                <input type="range" id="saturate" min="0" max="200" value="100">
+                <span id="saturate-val">100%</span>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label>Размытие (Blur)</label>
+              <div class="range-row">
+                <input type="range" id="blur" min="0" max="20" value="0">
+                <span id="blur-val">0px</span>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label>Сепия</label>
+              <div class="range-row">
+                <input type="range" id="sepia" min="0" max="100" value="0">
+                <span id="sepia-val">0%</span>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label>Grayscale (Ч/Б)</label>
+              <div class="range-row">
+                <input type="range" id="grayscale" min="0" max="100" value="0">
+                <span id="grayscale-val">0%</span>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label>Инверсия</label>
+              <div class="range-row">
+                <input type="range" id="invert" min="0" max="100" value="0">
+                <span id="invert-val">0%</span>
+              </div>
+            </div>
+
+            <hr class="divider">
+
+            <div class="form-group">
+              <label>Формат вывода</label>
+              <select id="output-format">
+                <option value="image/jpeg">JPG</option>
+                <option value="image/png">PNG</option>
+                <option value="image/webp">WebP</option>
+              </select>
+            </div>
+
+            <button class="btn btn-primary btn-block mt-16" id="save-btn">Сохранить изображение</button>
+            <button class="btn btn-secondary btn-block mt-8" id="change-img-btn">Выбрать другое</button>
+
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+</main>
+
+<script src="../js/core.js"></script>
+<script>
+(function () {
+  const dropzoneEl  = document.getElementById('dropzone');
+  const workspaceEl = document.getElementById('workspace-panel');
+  const canvas      = document.getElementById('preview-canvas');
+  const ctx         = canvas.getContext('2d');
+  
+  const brightnessInput = document.getElementById('brightness');
+  const contrastInput   = document.getElementById('contrast');
+  const saturateInput   = document.getElementById('saturate');
+  const blurInput       = document.getElementById('blur');
+  const sepiaInput      = document.getElementById('sepia');
+  const grayscaleInput  = document.getElementById('grayscale');
+  const invertInput     = document.getElementById('invert');
+  const outputFormat    = document.getElementById('output-format');
+
+  const saveBtn         = document.getElementById('save-btn');
+  const resetBtn        = document.getElementById('reset-btn');
+  const changeImgBtn    = document.getElementById('change-img-btn');
+
+  let activeImage = null;
+  let activeFile = null;
+
+  // Handle inputs
+  const sliders = [
+    { el: brightnessInput, valEl: document.getElementById('brightness-val'), suffix: '%' },
+    { el: contrastInput,   valEl: document.getElementById('contrast-val'),   suffix: '%' },
+    { el: saturateInput,   valEl: document.getElementById('saturate-val'),   suffix: '%' },
+    { el: blurInput,       valEl: document.getElementById('blur-val'),       suffix: 'px' },
+    { el: sepiaInput,      valEl: document.getElementById('sepia-val'),      suffix: '%' },
+    { el: grayscaleInput,  valEl: document.getElementById('grayscale-val'),  suffix: '%' },
+    { el: invertInput,     valEl: document.getElementById('invert-val'),     suffix: '%' }
+  ];
+
+  sliders.forEach(s => {
+    s.el.addEventListener('input', () => {
+      s.valEl.textContent = s.el.value + s.suffix;
+      applyFilters();
+    });
+  });
+
+  new Dropzone(dropzoneEl, {
+    accept: ['image/*'],
+    multiple: false,
+    onFiles(newFiles) {
+      if (newFiles[0]) loadImage(newFiles[0]);
+    }
+  });
+
+  async function loadImage(file) {
+    activeFile = file;
+    dropzoneEl.classList.add('hidden');
+    workspaceEl.classList.remove('hidden');
+    
+    const src = await FileUtils.readAsDataURL(file);
+    activeImage = await FileUtils.loadImage(src);
+    
+    canvas.width = activeImage.naturalWidth;
+    canvas.height = activeImage.naturalHeight;
+    
+    applyFilters();
+  }
+
+  function applyFilters() {
+    if (!activeImage) return;
+    
+    const brightness = brightnessInput.value;
+    const contrast   = contrastInput.value;
+    const saturate   = saturateInput.value;
+    const blur       = blurInput.value;
+    const sepia      = sepiaInput.value;
+    const grayscale  = grayscaleInput.value;
+    const invert     = invertInput.value;
+
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    
+    // Construct CSS filter string
+    ctx.filter = `
+      brightness(${brightness}%)
+      contrast(${contrast}%)
+      saturate(${saturate}%)
+      blur(${blur}px)
+      sepia(${sepia}%)
+      grayscale(${grayscale}%)
+      invert(${invert}%)
+    `;
+    
+    ctx.drawImage(activeImage, 0, 0);
+  }
+
+  resetBtn.addEventListener('click', () => {
+    brightnessInput.value = 100;
+    contrastInput.value = 100;
+    saturateInput.value = 100;
+    blurInput.value = 0;
+    sepiaInput.value = 0;
+    grayscaleInput.value = 0;
+    invertInput.value = 0;
+
+    sliders.forEach(s => {
+      s.valEl.textContent = s.el.value + s.suffix;
+    });
+
+    applyFilters();
+  });
+
+  changeImgBtn.addEventListener('click', () => {
+    activeImage = null;
+    activeFile = null;
+    dropzoneEl.classList.remove('hidden');
+    workspaceEl.classList.add('hidden');
+  });
+
+  saveBtn.addEventListener('click', async () => {
+    if (!activeImage) return;
+    saveBtn.disabled = true;
+    saveBtn.innerHTML = '<span class="spinner"></span> Сохранение...';
+
+    try {
+      const mime = outputFormat.value;
+      const ext = mime.split('/')[1].replace('jpeg','jpg');
+      const blob = await FileUtils.canvasToBlob(canvas, mime, 0.9);
+      const filename = activeFile.name.replace(/\.[^.]+$/, '') + '_effect.' + ext;
+      FileUtils.downloadBlob(blob, filename);
+      Toast.success('Изображение сохранено!');
+    } catch (err) {
+      console.error(err);
+      Toast.error('Ошибка при сохранении.');
+    }
+
+    saveBtn.disabled = false;
+    saveBtn.innerHTML = 'Сохранить изображение';
+  });
+
+})();
+</script>
+</body>
+</html>

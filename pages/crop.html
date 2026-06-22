@@ -1,0 +1,590 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Обрезать изображение — AKD Image</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/main.css">
+  <style>
+    .crop-workspace {
+      position: relative;
+      max-width: 100%;
+      margin: 20px auto;
+      background: #1e1e24;
+      border-radius: var(--r-md);
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      user-select: none;
+      border: 1px solid var(--border);
+    }
+    .crop-container {
+      position: relative;
+      display: inline-block;
+      max-width: 100%;
+      max-height: 70vh;
+    }
+    .crop-image {
+      display: block;
+      max-width: 100%;
+      max-height: 70vh;
+      pointer-events: none;
+    }
+    /* Shaded area outside crop selection */
+    .crop-shade {
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0, 0, 0, 0.6);
+      pointer-events: none;
+    }
+    /* Active crop box */
+    .crop-box {
+      position: absolute;
+      border: 2px solid var(--accent);
+      box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.5), 0 0 10px rgba(0, 0, 0, 0.3);
+      cursor: move;
+      box-sizing: border-box;
+      touch-action: none;
+    }
+    /* Selection handles */
+    .crop-handle {
+      position: absolute;
+      width: 12px;
+      height: 12px;
+      background: #ffffff;
+      border: 2px solid var(--accent);
+      border-radius: 50%;
+      box-sizing: border-box;
+    }
+    .handle-nw { top: -6px; left: -6px; cursor: nwse-resize; }
+    .handle-ne { top: -6px; right: -6px; cursor: nesw-resize; }
+    .handle-sw { bottom: -6px; left: -6px; cursor: nesw-resize; }
+    .handle-se { bottom: -6px; right: -6px; cursor: nwse-resize; }
+    .handle-n  { top: -6px; left: calc(50% - 6px); cursor: ns-resize; }
+    .handle-s  { bottom: -6px; left: calc(50% - 6px); cursor: ns-resize; }
+    .handle-w  { top: calc(50% - 6px); left: -6px; cursor: ew-resize; }
+    .handle-e  { top: calc(50% - 6px); right: -6px; cursor: ew-resize; }
+
+    .ratio-btn-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-bottom: 12px;
+    }
+    .ratio-btn {
+      font-size: .8rem;
+      font-weight: 600;
+      padding: 6px 12px;
+      border: 1px solid var(--border);
+      border-radius: var(--r-sm);
+      background: var(--bg);
+      cursor: pointer;
+      color: var(--text);
+      transition: background var(--t), border-color var(--t), color var(--t);
+    }
+    .ratio-btn:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+    .ratio-btn.active {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #fff;
+    }
+  </style>
+</head>
+<body>
+
+<script src="../js/layout.js?v=5"></script>
+
+<main>
+  <div class="container container--narrow tool-page">
+
+    <div class="tool-page__header">
+      <h1 class="tool-page__title">
+        Обрезать изображение
+      </h1>
+      <p class="tool-page__subtitle">Обрезайте JPG, PNG, GIF или WebP путем установки прямоугольника в пикселях. Обрезать изображение онлайн.</p>
+    </div>
+
+    <!-- Drop Zone -->
+    <div class="dropzone" id="dropzone">
+      <input type="file" accept="image/jpeg,image/png,image/gif,image/webp">
+      <p class="dropzone__title">Перетащите изображение сюда для обрезки</p>
+      <p class="dropzone__hint">или нажмите для выбора файла</p>
+      <div class="dropzone__formats">
+        <span class="fmt-badge">JPG</span>
+        <span class="fmt-badge">PNG</span>
+        <span class="fmt-badge">WEBP</span>
+      </div>
+    </div>
+
+    <!-- Crop Workspace (hidden until loaded) -->
+    <div class="tool-panel hidden" id="workspace-panel">
+      <div class="tool-panel__head">
+        <h3>Область обрезки</h3>
+        <button class="btn btn-sm btn-secondary" id="change-img-btn">Выбрать другое</button>
+      </div>
+      <div class="tool-panel__body">
+        <div class="crop-workspace">
+          <div class="crop-container" id="crop-container">
+            <img class="crop-image" id="source-img" alt="Редактируемое изображение">
+            <div class="crop-box" id="crop-box">
+              <div class="crop-handle handle-nw" data-handle="nw"></div>
+              <div class="crop-handle handle-ne" data-handle="ne"></div>
+              <div class="crop-handle handle-sw" data-handle="sw"></div>
+              <div class="crop-handle handle-se" data-handle="se"></div>
+              <div class="crop-handle handle-n"  data-handle="n"></div>
+              <div class="crop-handle handle-s"  data-handle="s"></div>
+              <div class="crop-handle handle-w"  data-handle="w"></div>
+              <div class="crop-handle handle-e"  data-handle="e"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Settings -->
+    <div class="tool-panel hidden" id="settings-panel">
+      <div class="tool-panel__head">
+        <h3>Настройки обрезки</h3>
+      </div>
+      <div class="tool-panel__body">
+        <!-- Ratios -->
+        <label style="display:block;margin-bottom:6px;font-weight:600;font-size:0.85rem;">Пропорции (Aspect Ratio)</label>
+        <div class="ratio-btn-grid" id="ratio-grid">
+          <button class="ratio-btn active" data-ratio="free">Свободно</button>
+          <button class="ratio-btn" data-ratio="1">1:1 (Квадрат)</button>
+          <button class="ratio-btn" data-ratio="1.77777777778">16:9</button>
+          <button class="ratio-btn" data-ratio="1.33333333333">4:3</button>
+          <button class="ratio-btn" data-ratio="1.5">3:2</button>
+          <button class="ratio-btn" data-ratio="0.5625">9:16 (Story)</button>
+        </div>
+
+        <!-- Coordinates -->
+        <div class="form-row">
+          <div class="form-group">
+            <label>X (слева, px)</label>
+            <input type="number" id="crop-x" value="0" min="0">
+          </div>
+          <div class="form-group">
+            <label>Y (сверху, px)</label>
+            <input type="number" id="crop-y" value="0" min="0">
+          </div>
+          <div class="form-group">
+            <label>Ширина (px)</label>
+            <input type="number" id="crop-w" value="100" min="1">
+          </div>
+          <div class="form-group">
+            <label>Высота (px)</label>
+            <input type="number" id="crop-h" value="100" min="1">
+          </div>
+        </div>
+
+        <hr class="divider">
+
+        <!-- Output Settings -->
+        <div class="form-row">
+          <div class="form-group">
+            <label>Формат вывода</label>
+            <select id="output-format">
+              <option value="same">Оставить оригинал</option>
+              <option value="image/jpeg">JPG</option>
+              <option value="image/png">PNG</option>
+              <option value="image/webp">WebP</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Качество (JPG / WebP)</label>
+            <div class="range-row">
+              <input type="range" id="quality" min="10" max="100" value="90">
+              <span id="quality-val">90%</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="hidden mt-16 flex gap-8 items-center" id="action-bar">
+      <button class="btn btn-primary btn-lg" id="apply-crop-btn">Обрезать изображение</button>
+    </div>
+
+    <!-- Result Area -->
+    <div class="result-area" id="result-area">
+      <hr class="divider">
+      <div class="result-stats" id="result-stats"></div>
+      <div style="margin-top:16px;text-align:center;">
+        <img id="result-img" style="max-width:100%;border-radius:var(--r-md);border:1px solid var(--border);" alt="Результат обрезки">
+      </div>
+      <div class="flex gap-8 mt-16 flex-wrap">
+        <button class="btn btn-success" id="download-btn">Скачать результат</button>
+        <button class="btn btn-secondary" id="copy-btn">Копировать в буфер</button>
+      </div>
+    </div>
+
+  </div>
+</main>
+
+<script src="../js/core.js"></script>
+<script>
+(function () {
+  const dropzoneEl      = document.getElementById('dropzone');
+  const workspaceEl     = document.getElementById('workspace-panel');
+  const settingsEl      = document.getElementById('settings-panel');
+  const actionBarEl     = document.getElementById('action-bar');
+  const changeImgBtn    = document.getElementById('change-img-btn');
+  const applyCropBtn    = document.getElementById('apply-crop-btn');
+  const resultArea      = document.getElementById('result-area');
+  const resultStats     = document.getElementById('result-stats');
+  const resultImg       = document.getElementById('result-img');
+  const downloadBtn     = document.getElementById('download-btn');
+  const copyBtn         = document.getElementById('copy-btn');
+
+  const sourceImg       = document.getElementById('source-img');
+  const cropBox         = document.getElementById('crop-box');
+  const cropContainer   = document.getElementById('crop-container');
+
+  // Input fields
+  const inpX = document.getElementById('crop-x');
+  const inpY = document.getElementById('crop-y');
+  const inpW = document.getElementById('crop-w');
+  const inpH = document.getElementById('crop-h');
+
+  // Output inputs
+  const qualityInput = document.getElementById('quality');
+  const qualityVal   = document.getElementById('quality-val');
+  const outputFmt    = document.getElementById('output-format');
+
+  qualityInput.addEventListener('input', () => { qualityVal.textContent = qualityInput.value + '%'; });
+
+  let activeFile = null;
+  let imgNaturalW = 0;
+  let imgNaturalH = 0;
+
+  // Active crop state (in original image coordinates)
+  let cropState = { x: 0, y: 0, w: 0, h: 0 };
+  let currentRatio = 'free'; // 'free' or number
+
+  // UI coordinates (rendered dimensions of image)
+  let renderW = 0;
+  let renderH = 0;
+
+  // Dropzone
+  new Dropzone(dropzoneEl, {
+    accept: ['image/jpeg','image/png','image/gif','image/webp'],
+    multiple: false,
+    onFiles(newFiles) {
+      if (newFiles[0]) loadImageFile(newFiles[0]);
+    }
+  });
+
+  changeImgBtn.addEventListener('click', () => {
+    activeFile = null;
+    dropzoneEl.classList.remove('hidden');
+    workspaceEl.classList.add('hidden');
+    settingsEl.classList.add('hidden');
+    actionBarEl.classList.add('hidden');
+    resultArea.classList.remove('visible');
+  });
+
+  async function loadImageFile(file) {
+    activeFile = file;
+    dropzoneEl.classList.add('hidden');
+    workspaceEl.classList.remove('hidden');
+    settingsEl.classList.remove('hidden');
+    actionBarEl.classList.remove('hidden');
+    resultArea.classList.remove('visible');
+
+    const dataURL = await FileUtils.readAsDataURL(file);
+    sourceImg.src = dataURL;
+
+    sourceImg.onload = () => {
+      imgNaturalW = sourceImg.naturalWidth;
+      imgNaturalH = sourceImg.naturalHeight;
+
+      // Update max inputs
+      inpX.max = imgNaturalW;
+      inpY.max = imgNaturalH;
+      inpW.max = imgNaturalW;
+      inpH.max = imgNaturalH;
+
+      // Reset cropState to default (80% centered box)
+      let w = Math.round(imgNaturalW * 0.8);
+      let h = Math.round(imgNaturalH * 0.8);
+
+      if (currentRatio !== 'free') {
+        const ratio = parseFloat(currentRatio);
+        if (w / h > ratio) {
+          w = Math.round(h * ratio);
+        } else {
+          h = Math.round(w / ratio);
+        }
+      }
+
+      const x = Math.round((imgNaturalW - w) / 2);
+      const y = Math.round((imgNaturalH - h) / 2);
+
+      cropState = { x, y, w, h };
+
+      setTimeout(updateUIFromState, 50);
+    };
+  }
+
+  // Handle resized window
+  window.addEventListener('resize', () => {
+    if (activeFile) updateUIFromState();
+  });
+
+  function updateUIFromState() {
+    renderW = sourceImg.offsetWidth;
+    renderH = sourceImg.offsetHeight;
+
+    if (!renderW || !renderH) return;
+
+    const scale = renderW / imgNaturalW;
+
+    // Set crop box style
+    cropBox.style.left   = (cropState.x * scale) + 'px';
+    cropBox.style.top    = (cropState.y * scale) + 'px';
+    cropBox.style.width  = (cropState.w * scale) + 'px';
+    cropBox.style.height = (cropState.h * scale) + 'px';
+
+    // Set inputs
+    inpX.value = Math.round(cropState.x);
+    inpY.value = Math.round(cropState.y);
+    inpW.value = Math.round(cropState.w);
+    inpH.value = Math.round(cropState.h);
+  }
+
+  // Update State from Inputs
+  function updateStateFromInputs() {
+    let x = parseInt(inpX.value) || 0;
+    let y = parseInt(inpY.value) || 0;
+    let w = parseInt(inpW.value) || 100;
+    let h = parseInt(inpH.value) || 100;
+
+    // Bounds checking
+    x = Math.max(0, Math.min(imgNaturalW - 1, x));
+    y = Math.max(0, Math.min(imgNaturalH - 1, y));
+    w = Math.max(1, Math.min(imgNaturalW - x, w));
+    h = Math.max(1, Math.min(imgNaturalH - y, h));
+
+    if (currentRatio !== 'free') {
+      const ratio = parseFloat(currentRatio);
+      h = Math.round(w / ratio);
+      if (y + h > imgNaturalH) {
+        h = imgNaturalH - y;
+        w = Math.round(h * ratio);
+      }
+    }
+
+    cropState = { x, y, w, h };
+    updateUIFromState();
+  }
+
+  [inpX, inpY, inpW, inpH].forEach(input => {
+    input.addEventListener('change', updateStateFromInputs);
+  });
+
+  // Handle aspect ratios
+  document.getElementById('ratio-grid').querySelectorAll('.ratio-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.getElementById('ratio-grid').querySelectorAll('.ratio-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      currentRatio = btn.dataset.ratio;
+
+      // Adjust box to match ratio
+      if (currentRatio !== 'free') {
+        const ratio = parseFloat(currentRatio);
+        let w = cropState.w;
+        let h = Math.round(w / ratio);
+
+        if (cropState.y + h > imgNaturalH) {
+          h = imgNaturalH - cropState.y;
+          w = Math.round(h * ratio);
+        }
+        if (cropState.x + w > imgNaturalW) {
+          w = imgNaturalW - cropState.x;
+          h = Math.round(w / ratio);
+        }
+        cropState.w = w;
+        cropState.h = h;
+      }
+      updateUIFromState();
+    });
+  });
+
+  // DRAGGING AND RESIZING LOGIC
+  let isDragging = false;
+  let dragMode = 'move'; // 'move' or 'nw', 'ne', 'sw', 'se', 'n', 's', 'w', 'e'
+  let startX = 0, startY = 0;
+  let startCrop = {};
+
+  cropBox.addEventListener('mousedown', startDrag);
+  cropBox.addEventListener('touchstart', startDrag, { passive: false });
+
+  function startDrag(e) {
+    e.preventDefault();
+    isDragging = true;
+
+    const event = e.type.startsWith('touch') ? e.touches[0] : e;
+    startX = event.clientX;
+    startY = event.clientY;
+
+    startCrop = { ...cropState };
+
+    const handle = e.target.dataset.handle;
+    dragMode = handle ? handle : 'move';
+
+    window.addEventListener('mousemove', drag);
+    window.addEventListener('touchmove', drag, { passive: false });
+    window.addEventListener('mouseup', endDrag);
+    window.addEventListener('touchend', endDrag);
+  }
+
+  function drag(e) {
+    if (!isDragging) return;
+    e.preventDefault();
+
+    const event = e.type.startsWith('touch') ? e.touches[0] : e;
+    const dx = (event.clientX - startX) * (imgNaturalW / renderW);
+    const dy = (event.clientY - startY) * (imgNaturalH / renderH);
+
+    let x = startCrop.x;
+    let y = startCrop.y;
+    let w = startCrop.w;
+    let h = startCrop.h;
+
+    const ratio = currentRatio !== 'free' ? parseFloat(currentRatio) : null;
+
+    if (dragMode === 'move') {
+      x = Math.max(0, Math.min(imgNaturalW - w, x + dx));
+      y = Math.max(0, Math.min(imgNaturalH - h, y + dy));
+    } else {
+      // Resizing
+      if (dragMode.includes('e')) {
+        w = Math.max(10, Math.min(imgNaturalW - x, w + dx));
+        if (ratio) h = w / ratio;
+      }
+      if (dragMode.includes('s')) {
+        h = Math.max(10, Math.min(imgNaturalH - y, h + dy));
+        if (ratio) w = h * ratio;
+      }
+      if (dragMode.includes('w')) {
+        const nx = Math.max(0, Math.min(x + w - 10, x + dx));
+        w = w + (x - nx);
+        x = nx;
+        if (ratio) h = w / ratio;
+      }
+      if (dragMode.includes('n')) {
+        const ny = Math.max(0, Math.min(y + h - 10, y + dy));
+        h = h + (y - ny);
+        y = ny;
+        if (ratio) w = h * ratio;
+      }
+
+      // Check bounds again if aspect ratio is locked
+      if (ratio) {
+        if (x + w > imgNaturalW) {
+          w = imgNaturalW - x;
+          h = w / ratio;
+        }
+        if (y + h > imgNaturalH) {
+          h = imgNaturalH - y;
+          w = h * ratio;
+        }
+      }
+    }
+
+    cropState = {
+      x: Math.round(x),
+      y: Math.round(y),
+      w: Math.round(w),
+      h: Math.round(h)
+    };
+
+    updateUIFromState();
+  }
+
+  function endDrag() {
+    isDragging = false;
+    window.removeEventListener('mousemove', drag);
+    window.removeEventListener('touchmove', drag);
+    window.removeEventListener('mouseup', endDrag);
+    window.removeEventListener('touchend', endDrag);
+  }
+
+  // EXECUTE CROP
+  let croppedBlob = null;
+  applyCropBtn.addEventListener('click', async () => {
+    if (!activeFile) return;
+
+    applyCropBtn.disabled = true;
+    applyCropBtn.innerHTML = '<span class="spinner"></span> Обрезаю...';
+
+    try {
+      const canvas = document.createElement('canvas');
+      canvas.width  = cropState.w;
+      canvas.height = cropState.h;
+      const ctx = canvas.getContext('2d');
+
+      const mime = outputFmt.value === 'same' ? activeFile.type : outputFmt.value;
+      const quality = parseInt(qualityInput.value) / 100;
+
+      if (mime !== 'image/png') {
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+      }
+
+      ctx.drawImage(
+        sourceImg,
+        cropState.x, cropState.y, cropState.w, cropState.h, // source
+        0, 0, cropState.w, cropState.h // dest
+      );
+
+      croppedBlob = await FileUtils.canvasToBlob(canvas, mime, quality);
+      const url = URL.createObjectURL(croppedBlob);
+      const ext = mime.split('/')[1].replace('jpeg','jpg');
+
+      resultImg.src = url;
+      resultStats.innerHTML = `
+        <div class="stat-card"><div class="stat-card__label">Размер</div><div class="stat-card__value">${cropState.w}×${cropState.h}px</div></div>
+        <div class="stat-card"><div class="stat-card__label">Формат</div><div class="stat-card__value">${ext.toUpperCase()}</div></div>
+        <div class="stat-card stat-green"><div class="stat-card__label">Размер файла</div><div class="stat-card__value">${FileUtils.formatSize(croppedBlob.size)}</div></div>
+      `;
+
+      resultArea.classList.add('visible');
+
+      const croppedFilename = activeFile.name.replace(/\.[^.]+$/, '') + '_crop.' + ext;
+
+      downloadBtn.onclick = () => FileUtils.downloadBlob(croppedBlob, croppedFilename);
+      copyBtn.onclick = async () => {
+        try {
+          const item = new ClipboardItem({ [mime]: croppedBlob });
+          await navigator.clipboard.write([item]);
+          Toast.success('Изображение скопировано в буфер!');
+        } catch (e) {
+          Toast.error('Копирование не поддерживается браузером, скачайте изображение.');
+        }
+      };
+
+      Toast.success('Обрезка успешно завершена!');
+      resultArea.scrollIntoView({ behavior: 'smooth' });
+
+    } catch (err) {
+      console.error(err);
+      Toast.error('Ошибка при обрезке изображения.');
+    }
+
+    applyCropBtn.disabled = false;
+    applyCropBtn.innerHTML = 'Обрезать изображение';
+  });
+
+})();
+</script>
+</body>
+</html>

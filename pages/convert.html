@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Конвертировать изображение — AKD Image</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/main.css">
+</head>
+<body>
+
+<script src="../js/layout.js?v=5"></script>
+
+<main>
+  <div class="container container--narrow tool-page">
+
+    <div class="tool-page__header">
+      <h1 class="tool-page__title">
+        Конвертировать изображение
+      </h1>
+      <p class="tool-page__subtitle">Конвертируйте изображения между форматами: JPG, PNG, WebP, BMP и другими.</p>
+    </div>
+
+    <!-- Drop Zone -->
+    <div class="dropzone" id="dropzone">
+      <input type="file" accept="image/*" multiple>
+      <p class="dropzone__title">Перетащите изображения сюда</p>
+      <p class="dropzone__hint">или нажмите для выбора файлов</p>
+      <div class="dropzone__formats">
+        <span class="fmt-badge">JPG</span>
+        <span class="fmt-badge">PNG</span>
+        <span class="fmt-badge">WEBP</span>
+        <span class="fmt-badge">BMP</span>
+      </div>
+    </div>
+
+    <!-- Settings -->
+    <div class="tool-panel hidden" id="settings-panel">
+      <div class="tool-panel__head">
+        <h3>Параметры конвертации</h3>
+        <button class="btn btn-sm btn-secondary" id="clear-btn">Очистить всё</button>
+      </div>
+      <div class="tool-panel__body">
+        <div class="form-row">
+          <div class="form-group">
+            <label>Целевой формат</label>
+            <select id="target-format">
+              <option value="image/jpeg">JPG</option>
+              <option value="image/png">PNG</option>
+              <option value="image/webp">WebP</option>
+              <option value="image/bmp">BMP</option>
+              <option value="image/gif">GIF (без анимации)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Качество (JPG / WebP)</label>
+            <div class="range-row">
+              <input type="range" id="quality" min="10" max="100" value="90">
+              <span id="quality-val">90%</span>
+            </div>
+          </div>
+        </div>
+
+        <button class="btn btn-secondary mt-16" id="preview-btn" style="display:none;">Предпросмотр (первое изображение)</button>
+        <canvas id="preview-canvas" style="display:none; max-width:100%; border:1px solid var(--border); border-radius:var(--r-md); margin-top:16px;"></canvas>
+
+      </div>
+    </div>
+
+    <!-- File list -->
+    <div class="file-list hidden" id="file-list"></div>
+
+    <!-- Action bar -->
+    <div class="hidden mt-16 flex gap-8 items-center" id="action-bar">
+      <button class="btn btn-primary btn-lg" id="convert-btn">Конвертировать всё</button>
+      <span class="text-muted text-sm" id="file-count"></span>
+    </div>
+
+    <!-- Results -->
+    <div class="result-area" id="result-area">
+      <hr class="divider">
+      <div class="result-stats" id="result-stats"></div>
+      <button class="btn btn-success" id="download-all-btn" style="display:none;"> Скачать всё (ZIP)</button>
+    </div>
+
+  </div>
+</main>
+
+<script src="../js/core.js"></script>
+<script>
+(function () {
+  const dropzoneEl  = document.getElementById('dropzone');
+  const fileListEl  = document.getElementById('file-list');
+  const settingsEl  = document.getElementById('settings-panel');
+  const actionBarEl = document.getElementById('action-bar');
+  const countEl     = document.getElementById('file-count');
+  const convertBtn  = document.getElementById('convert-btn');
+  const clearBtn    = document.getElementById('clear-btn');
+  const resultArea  = document.getElementById('result-area');
+  const resultStats = document.getElementById('result-stats');
+  const dlAllBtn    = document.getElementById('download-all-btn');
+  const targetFormat= document.getElementById('target-format');
+  const qualityInput = document.getElementById('quality');
+  const qualityVal   = document.getElementById('quality-val');
+
+  qualityInput.addEventListener('input', () => { qualityVal.textContent = qualityInput.value + '%'; });
+
+  const manager = new FileListManager(fileListEl);
+  let files = [], results = [];
+
+  fileListEl.addEventListener('file-removed', (e) => {
+    files = files.filter(f => f.item.id !== e.detail.id);
+    updateUI();
+  });
+
+  new Dropzone(dropzoneEl, {
+    accept: ['image/*'],
+    multiple: true,
+    onFiles(newFiles) {
+      newFiles.forEach(f => files.push({ file: f, item: manager.add(f) }));
+      updateUI();
+    }
+  });
+
+  function updateUI() {
+    const has = files.length > 0;
+    fileListEl.classList.toggle('hidden', !has);
+    settingsEl.classList.toggle('hidden', !has);
+    actionBarEl.classList.toggle('hidden', !has);
+    countEl.textContent = files.length + ' файл(ов)';
+    resultArea.classList.remove('visible');
+    results = []; dlAllBtn.style.display = 'none'; resultStats.innerHTML = '';
+    const previewBtn = document.getElementById('preview-btn');
+    if (previewBtn) previewBtn.style.display = has ? '' : 'none';
+    const canvas = document.getElementById('preview-canvas');
+    if (canvas) canvas.style.display = 'none';
+  }
+
+  document.getElementById('preview-btn').addEventListener('click', async () => {
+    if (!files.length) return;
+    const file = files[0].file;
+    const src = await FileUtils.readAsDataURL(file);
+    const img = await FileUtils.loadImage(src);
+    const canvas = document.getElementById('preview-canvas');
+    canvas.width = img.naturalWidth;
+    canvas.height = img.naturalHeight;
+    canvas.getContext('2d').drawImage(img, 0, 0);
+    canvas.style.display = 'block';
+  });
+
+  clearBtn.addEventListener('click', () => { files = []; manager.clear(); updateUI(); });
+
+  convertBtn.addEventListener('click', async () => {
+    if (!files.length) return;
+    convertBtn.disabled = true;
+    convertBtn.innerHTML = '<span class="spinner"></span> Конвертирую...';
+    results = [];
+
+    const mime = targetFormat.value;
+    const q = parseInt(qualityInput.value) / 100;
+    const ext = mime.split('/')[1].replace('jpeg','jpg');
+
+    for (const entry of files) {
+      const { file, item } = entry;
+      manager.setStatus(item.id, 'Обработка...', 'status-processing');
+      manager.setProgress(item.id, 20);
+
+      try {
+        const dataURL = await FileUtils.readAsDataURL(file);
+        manager.setProgress(item.id, 50);
+        const img = await FileUtils.loadImage(dataURL);
+        
+        const canvas = document.createElement('canvas');
+        canvas.width = img.naturalWidth;
+        canvas.height = img.naturalHeight;
+        const ctx = canvas.getContext('2d');
+        
+        if (mime !== 'image/png') {
+          ctx.fillStyle = '#ffffff';
+          ctx.fillRect(0, 0, canvas.width, canvas.height);
+        }
+        ctx.drawImage(img, 0, 0);
+        
+        manager.setProgress(item.id, 80);
+        const blob = await FileUtils.canvasToBlob(canvas, mime, q);
+        const newFilename = file.name.replace(/\.[^.]+$/, '') + '.' + ext;
+        
+        manager.setProgress(item.id, 100);
+        manager.setStatus(item.id, ext.toUpperCase(), 'status-done');
+        manager.setMeta(item.id, FileUtils.formatSize(blob.size));
+        manager.addDownload(item.id, blob, newFilename);
+        results.push({ blob, filename: newFilename });
+      } catch (err) {
+        manager.setStatus(item.id, 'Ошибка', 'status-error');
+        console.error(err);
+      }
+    }
+
+    if (results.length) {
+      resultStats.innerHTML = `
+        <div class="stat-card"><div class="stat-card__label">Конвертировано</div><div class="stat-card__value">${results.length}</div></div>
+        <div class="stat-card stat-green"><div class="stat-card__label">Статус</div><div class="stat-card__value"> Завершено</div></div>
+      `;
+      resultArea.classList.add('visible');
+      if (results.length > 1) dlAllBtn.style.display = '';
+      Toast.success('Конвертация завершена!');
+    }
+
+    convertBtn.disabled = false;
+    convertBtn.innerHTML = 'Конвертировать всё';
+  });
+
+  dlAllBtn.addEventListener('click', async () => {
+    if (!window.JSZip) {
+      const s = document.createElement('script');
+      s.src = 'https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js';
+      document.head.appendChild(s);
+      await new Promise(r => s.onload = r);
+    }
+    const zip = new JSZip();
+    results.forEach(r => zip.file(r.filename, r.blob));
+    const z = await zip.generateAsync({ type: 'blob' });
+    FileUtils.downloadBlob(z, 'akd-converted.zip');
+    Toast.success('ZIP архив скачан!');
+  });
+
+})();
+</script>
+</body>
+</html>

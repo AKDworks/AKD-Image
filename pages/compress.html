@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Сжать изображение — AKD Image</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/main.css">
+</head>
+<body>
+
+<script src="../js/layout.js?v=5"></script>
+
+<main>
+  <div class="container container--narrow tool-page">
+
+    <div class="tool-page__header">
+      <h1 class="tool-page__title">
+        Сжать изображение
+      </h1>
+      <p class="tool-page__subtitle">Уменьшите размер JPG, PNG, WEBP или SVG без потери визуального качества.</p>
+    </div>
+
+    <!-- Drop Zone -->
+    <div class="dropzone" id="dropzone">
+      <input type="file" accept="image/jpeg,image/png,image/gif,image/svg+xml,image/webp" multiple>
+      <p class="dropzone__title">Перетащите изображения сюда</p>
+      <p class="dropzone__hint">или нажмите для выбора файлов</p>
+      <div class="dropzone__formats">
+        <span class="fmt-badge">JPG</span>
+        <span class="fmt-badge">PNG</span>
+        <span class="fmt-badge">SVG</span>
+        <span class="fmt-badge">WEBP</span>
+      </div>
+    </div>
+
+    <!-- Settings panel (hidden until files added) -->
+    <div class="tool-panel hidden" id="settings-panel">
+      <div class="tool-panel__head">
+        <h3>Настройки сжатия</h3>
+        <button class="btn btn-sm btn-secondary" id="clear-btn">Очистить всё</button>
+      </div>
+      <div class="tool-panel__body">
+        <div class="form-row">
+          <div class="form-group">
+            <label>Качество (JPG / WebP)</label>
+            <div class="range-row">
+              <input type="range" id="quality" min="10" max="100" value="82">
+              <span id="quality-val">82%</span>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Формат вывода</label>
+            <select id="output-format">
+              <option value="same">Оставить оригинал</option>
+              <option value="image/jpeg">JPG</option>
+              <option value="image/png">PNG</option>
+              <option value="image/webp">WebP</option>
+            </select>
+          </div>
+        </div>
+
+        <button class="btn btn-secondary mt-16" id="preview-btn" style="display:none;">Предпросмотр (первое изображение)</button>
+        <canvas id="preview-canvas" style="display:none; max-width:100%; border:1px solid var(--border); border-radius:var(--r-md); margin-top:16px;"></canvas>
+
+      </div>
+    </div>
+
+    <!-- File list -->
+    <div class="file-list hidden" id="file-list"></div>
+
+    <!-- Action buttons -->
+    <div class="hidden mt-16 flex gap-8 items-center" id="action-bar">
+      <button class="btn btn-primary btn-lg" id="compress-btn">
+        Сжать всё
+      </button>
+      <span class="text-muted text-sm" id="file-count"></span>
+    </div>
+
+    <!-- Results -->
+    <div class="result-area" id="result-area">
+      <hr class="divider">
+      <div class="result-stats" id="result-stats"></div>
+      <button class="btn btn-success" id="download-all-btn" style="display:none;">
+        Скачать всё (ZIP)
+      </button>
+    </div>
+
+  </div>
+</main>
+
+<script src="../js/core.js"></script>
+<script>
+(function () {
+  const dropzoneEl   = document.getElementById('dropzone');
+  const fileListEl   = document.getElementById('file-list');
+  const settingsEl   = document.getElementById('settings-panel');
+  const actionBarEl  = document.getElementById('action-bar');
+  const countEl      = document.getElementById('file-count');
+  const compressBtn  = document.getElementById('compress-btn');
+  const clearBtn     = document.getElementById('clear-btn');
+  const resultArea   = document.getElementById('result-area');
+  const resultStats  = document.getElementById('result-stats');
+  const dlAllBtn     = document.getElementById('download-all-btn');
+  const qualityInput = document.getElementById('quality');
+  const qualityVal   = document.getElementById('quality-val');
+  const outputFmt    = document.getElementById('output-format');
+
+  const manager = new FileListManager(fileListEl);
+  let files = [];
+  let results = []; // { blob, filename }
+
+  fileListEl.addEventListener('file-removed', (e) => {
+    files = files.filter(f => f.item.id !== e.detail.id);
+    updateUI();
+  });
+
+  // Quality display
+  qualityInput.addEventListener('input', () => {
+    qualityVal.textContent = qualityInput.value + '%';
+  });
+
+  // Dropzone
+  new Dropzone(dropzoneEl, {
+    accept: ['image/jpeg','image/png','image/gif','image/svg+xml','image/webp'],
+    multiple: true,
+    onFiles(newFiles) {
+      newFiles.forEach(f => {
+        files.push({ file: f, item: manager.add(f) });
+      });
+      updateUI();
+    }
+  });
+
+  function updateUI() {
+    const hasFiles = files.length > 0;
+    fileListEl.classList.toggle('hidden', !hasFiles);
+    settingsEl.classList.toggle('hidden', !hasFiles);
+    actionBarEl.classList.toggle('hidden', !hasFiles);
+    countEl.textContent = files.length + ' ' + (files.length === 1 ? 'файл' : 'файлов');
+    resultArea.classList.remove('visible');
+    results = [];
+    const previewBtn = document.getElementById('preview-btn');
+    if (previewBtn) previewBtn.style.display = hasFiles ? '' : 'none';
+    const canvas = document.getElementById('preview-canvas');
+    if (canvas) canvas.style.display = 'none';
+    dlAllBtn.style.display = 'none';
+    resultStats.innerHTML = '';
+  }
+
+  document.getElementById('preview-btn').addEventListener('click', async () => {
+    if (!files.length) return;
+    const file = files[0].file;
+    const src = await FileUtils.readAsDataURL(file);
+    const img = await FileUtils.loadImage(src);
+    const canvas = document.getElementById('preview-canvas');
+    canvas.width = img.naturalWidth;
+    canvas.height = img.naturalHeight;
+    canvas.getContext('2d').drawImage(img, 0, 0);
+    canvas.style.display = 'block';
+  });
+
+  function plural(n, a, b, c) {
+    const m = n % 10;
+    if (n % 100 >= 11 && n % 100 <= 19) return c;
+    if (m === 1) return a;
+    if (m >= 2 && m <= 4) return b;
+    return c;
+  }
+
+  clearBtn.addEventListener('click', () => {
+    files = [];
+    manager.clear();
+    updateUI();
+  });
+
+  compressBtn.addEventListener('click', async () => {
+    if (!files.length) return;
+    compressBtn.disabled = true;
+    compressBtn.innerHTML = '<span class="spinner"></span> Сжимаю...';
+    results = [];
+    let totalBefore = 0, totalAfter = 0;
+
+    for (const entry of files) {
+      const { file, item } = entry;
+      manager.setStatus(item.id, 'Обработка...', 'status-processing');
+      manager.setProgress(item.id, 10);
+
+      try {
+        let blob;
+        const mime  = outputFmt.value === 'same' ? file.type : outputFmt.value;
+        const q     = parseInt(qualityInput.value) / 100;
+
+        if (file.type === 'image/svg+xml') {
+          // SVG: return as-is (no canvas compress)
+          blob = new Blob([await file.text()], { type: 'image/svg+xml' });
+        } else {
+          const dataURL = await FileUtils.readAsDataURL(file);
+          manager.setProgress(item.id, 40);
+          const img    = await FileUtils.loadImage(dataURL);
+          const canvas = document.createElement('canvas');
+          canvas.width  = img.naturalWidth;
+          canvas.height = img.naturalHeight;
+          const ctx    = canvas.getContext('2d');
+          if (mime === 'image/png') {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+          } else {
+            ctx.fillStyle = '#fff';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+          }
+          ctx.drawImage(img, 0, 0);
+          manager.setProgress(item.id, 70);
+          blob = await FileUtils.canvasToBlob(canvas, mime, q);
+        }
+
+        manager.setProgress(item.id, 100);
+        const ext      = mime.split('/')[1].replace('jpeg','jpg');
+        const filename = file.name.replace(/\.[^.]+$/, '') + '_akd.' + ext;
+        const saving   = file.size - blob.size;
+        const pct      = file.size > 0 ? ((saving / file.size) * 100).toFixed(1) : '0';
+
+        manager.setStatus(item.id, `−${pct}%`, 'status-done');
+        manager.setMeta(item.id,
+          FileUtils.formatSize(file.size) + '  ' + FileUtils.formatSize(blob.size));
+        manager.addDownload(item.id, blob, filename);
+
+        results.push({ blob, filename });
+        totalBefore += file.size;
+        totalAfter  += blob.size;
+
+      } catch (err) {
+        manager.setStatus(item.id, 'Ошибка', 'status-error');
+        console.error(err);
+      }
+    }
+
+    // Show summary
+    if (results.length) {
+      const saved = totalBefore - totalAfter;
+      const pct   = totalBefore > 0 ? ((saved / totalBefore) * 100).toFixed(1) : '0';
+      resultStats.innerHTML = `
+        <div class="stat-card"><div class="stat-card__label">До</div><div class="stat-card__value">${FileUtils.formatSize(totalBefore)}</div></div>
+        <div class="stat-card"><div class="stat-card__label">После</div><div class="stat-card__value">${FileUtils.formatSize(totalAfter)}</div></div>
+        <div class="stat-card stat-green"><div class="stat-card__label">Сэкономлено</div><div class="stat-card__value">−${pct}%</div></div>
+      `;
+      resultArea.classList.add('visible');
+      if (results.length > 1) dlAllBtn.style.display = '';
+      Toast.success('Сжатие завершено!');
+    }
+
+    compressBtn.disabled = false;
+    compressBtn.innerHTML = 'Сжать всё';
+  });
+
+  // Download all as ZIP (uses JSZip from CDN)
+  dlAllBtn.addEventListener('click', async () => {
+    if (!window.JSZip) {
+      const s = document.createElement('script');
+      s.src   = 'https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js';
+      document.head.appendChild(s);
+      await new Promise(r => s.onload = r);
+    }
+    const zip = new JSZip();
+    results.forEach(r => zip.file(r.filename, r.blob));
+    const z = await zip.generateAsync({ type: 'blob' });
+    FileUtils.downloadBlob(z, 'akd-compressed.zip');
+    Toast.success('ZIP скачан!');
+  });
+
+})();
+</script>
+</body>
+</html>
