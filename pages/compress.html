@@ -4,8 +4,6 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Сжать изображение — AKD Image</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../css/main.css">
 </head>
 <body>
@@ -19,18 +17,17 @@
       <h1 class="tool-page__title">
         Сжать изображение
       </h1>
-      <p class="tool-page__subtitle">Уменьшите размер JPG, PNG, WEBP или SVG без потери визуального качества.</p>
+      <p class="tool-page__subtitle">Уменьшите размер JPG, PNG или WebP без потери визуального качества.</p>
     </div>
 
     <!-- Drop Zone -->
     <div class="dropzone" id="dropzone">
-      <input type="file" accept="image/jpeg,image/png,image/gif,image/svg+xml,image/webp" multiple>
+      <input type="file" accept="image/jpeg,image/png,image/webp" multiple>
       <p class="dropzone__title">Перетащите изображения сюда</p>
       <p class="dropzone__hint">или нажмите для выбора файлов</p>
       <div class="dropzone__formats">
         <span class="fmt-badge">JPG</span>
         <span class="fmt-badge">PNG</span>
-        <span class="fmt-badge">SVG</span>
         <span class="fmt-badge">WEBP</span>
       </div>
     </div>
@@ -123,7 +120,7 @@
 
   // Dropzone
   new Dropzone(dropzoneEl, {
-    accept: ['image/jpeg','image/png','image/gif','image/svg+xml','image/webp'],
+    accept: ['image/jpeg','image/png','image/webp'],
     multiple: true,
     onFiles(newFiles) {
       newFiles.forEach(f => {
@@ -192,27 +189,22 @@
         const mime  = outputFmt.value === 'same' ? file.type : outputFmt.value;
         const q     = parseInt(qualityInput.value) / 100;
 
-        if (file.type === 'image/svg+xml') {
-          // SVG: return as-is (no canvas compress)
-          blob = new Blob([await file.text()], { type: 'image/svg+xml' });
+        const dataURL = await FileUtils.readAsDataURL(file);
+        manager.setProgress(item.id, 40);
+        const img    = await FileUtils.loadImage(dataURL);
+        const canvas = document.createElement('canvas');
+        canvas.width  = img.naturalWidth;
+        canvas.height = img.naturalHeight;
+        const ctx    = canvas.getContext('2d');
+        if (mime === 'image/png') {
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
         } else {
-          const dataURL = await FileUtils.readAsDataURL(file);
-          manager.setProgress(item.id, 40);
-          const img    = await FileUtils.loadImage(dataURL);
-          const canvas = document.createElement('canvas');
-          canvas.width  = img.naturalWidth;
-          canvas.height = img.naturalHeight;
-          const ctx    = canvas.getContext('2d');
-          if (mime === 'image/png') {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-          } else {
-            ctx.fillStyle = '#fff';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-          }
-          ctx.drawImage(img, 0, 0);
-          manager.setProgress(item.id, 70);
-          blob = await FileUtils.canvasToBlob(canvas, mime, q);
+          ctx.fillStyle = '#fff';
+          ctx.fillRect(0, 0, canvas.width, canvas.height);
         }
+        ctx.drawImage(img, 0, 0);
+        manager.setProgress(item.id, 70);
+        blob = await FileUtils.canvasToBlob(canvas, mime, q);
 
         manager.setProgress(item.id, 100);
         const ext      = mime.split('/')[1].replace('jpeg','jpg');
@@ -255,12 +247,7 @@
 
   // Download all as ZIP (uses JSZip from CDN)
   dlAllBtn.addEventListener('click', async () => {
-    if (!window.JSZip) {
-      const s = document.createElement('script');
-      s.src   = 'https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js';
-      document.head.appendChild(s);
-      await new Promise(r => s.onload = r);
-    }
+    await FileUtils.loadJSZip();
     const zip = new JSZip();
     results.forEach(r => zip.file(r.filename, r.blob));
     const z = await zip.generateAsync({ type: 'blob' });

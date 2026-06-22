@@ -93,7 +93,7 @@ const FileUtils = {
   },
 
   isSupportedImage(file) {
-    return ['image/jpeg', 'image/png', 'image/gif', 'image/svg+xml', 'image/webp'].includes(file.type);
+    return ['image/jpeg', 'image/png', 'image/webp'].includes(file.type);
   },
 
   readAsDataURL(file) {
@@ -148,6 +148,25 @@ const FileUtils = {
     return new Promise((res, rej) => {
       canvas.toBlob(b => b ? res(b) : rej(new Error('Ошибка canvas')), mimeType, quality);
     });
+  },
+
+  loadJSZip() {
+    if (window.JSZip) return Promise.resolve(window.JSZip);
+    if (window.__akdJSZipPromise) return window.__akdJSZipPromise;
+
+    window.__akdJSZipPromise = new Promise((resolve, reject) => {
+      const script = document.createElement('script');
+      const prefix = location.pathname.includes('/pages/') ? '../' : '';
+      script.src = prefix + 'js/vendor/jszip.min.js';
+      script.onload = () => resolve(window.JSZip);
+      script.onerror = () => {
+        window.__akdJSZipPromise = null;
+        reject(new Error('Не удалось загрузить JSZip'));
+      };
+      document.head.appendChild(script);
+    });
+
+    return window.__akdJSZipPromise;
   },
 };
 

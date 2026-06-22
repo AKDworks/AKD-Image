@@ -4,8 +4,6 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Обрезать изображение — AKD Image</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../css/main.css">
   <style>
     .crop-workspace {
@@ -107,12 +105,12 @@
       <h1 class="tool-page__title">
         Обрезать изображение
       </h1>
-      <p class="tool-page__subtitle">Обрезайте JPG, PNG, GIF или WebP путем установки прямоугольника в пикселях. Обрезать изображение онлайн.</p>
+      <p class="tool-page__subtitle">Обрезайте JPG, PNG или WebP путем установки прямоугольника в пикселях. Обрезать изображение онлайн.</p>
     </div>
 
     <!-- Drop Zone -->
     <div class="dropzone" id="dropzone">
-      <input type="file" accept="image/jpeg,image/png,image/gif,image/webp">
+      <input type="file" accept="image/jpeg,image/png,image/webp">
       <p class="dropzone__title">Перетащите изображение сюда для обрезки</p>
       <p class="dropzone__hint">или нажмите для выбора файла</p>
       <div class="dropzone__formats">
@@ -275,7 +273,7 @@
 
   // Dropzone
   new Dropzone(dropzoneEl, {
-    accept: ['image/jpeg','image/png','image/gif','image/webp'],
+    accept: ['image/jpeg','image/png','image/webp'],
     multiple: false,
     onFiles(newFiles) {
       if (newFiles[0]) loadImageFile(newFiles[0]);

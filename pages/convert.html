@@ -4,8 +4,6 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Конвертировать изображение — AKD Image</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../css/main.css">
 </head>
 <body>
@@ -19,19 +17,18 @@
       <h1 class="tool-page__title">
         Конвертировать изображение
       </h1>
-      <p class="tool-page__subtitle">Конвертируйте изображения между форматами: JPG, PNG, WebP, BMP и другими.</p>
+      <p class="tool-page__subtitle">Конвертируйте изображения между форматами JPG, PNG и WebP.</p>
     </div>
 
     <!-- Drop Zone -->
     <div class="dropzone" id="dropzone">
-      <input type="file" accept="image/*" multiple>
+      <input type="file" accept="image/jpeg,image/png,image/webp" multiple>
       <p class="dropzone__title">Перетащите изображения сюда</p>
       <p class="dropzone__hint">или нажмите для выбора файлов</p>
       <div class="dropzone__formats">
         <span class="fmt-badge">JPG</span>
         <span class="fmt-badge">PNG</span>
         <span class="fmt-badge">WEBP</span>
-        <span class="fmt-badge">BMP</span>
       </div>
     </div>
 
@@ -49,8 +46,6 @@
               <option value="image/jpeg">JPG</option>
               <option value="image/png">PNG</option>
               <option value="image/webp">WebP</option>
-              <option value="image/bmp">BMP</option>
-              <option value="image/gif">GIF (без анимации)</option>
             </select>
           </div>
           <div class="form-group">
@@ -115,7 +110,7 @@
   });
 
   new Dropzone(dropzoneEl, {
-    accept: ['image/*'],
+    accept: ['image/jpeg','image/png','image/webp'],
     multiple: true,
     onFiles(newFiles) {
       newFiles.forEach(f => files.push({ file: f, item: manager.add(f) }));
@@ -212,12 +207,7 @@
   });
 
   dlAllBtn.addEventListener('click', async () => {
-    if (!window.JSZip) {
-      const s = document.createElement('script');
-      s.src = 'https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js';
-      document.head.appendChild(s);
-      await new Promise(r => s.onload = r);
-    }
+    await FileUtils.loadJSZip();
     const zip = new JSZip();
     results.forEach(r => zip.file(r.filename, r.blob));
     const z = await zip.generateAsync({ type: 'blob' });

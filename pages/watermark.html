@@ -4,8 +4,6 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Водяной знак — AKD Image</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../css/main.css">
   <style>
     .position-grid {
@@ -70,7 +68,7 @@
 
     <!-- Drop Zone -->
     <div class="dropzone" id="dropzone">
-      <input type="file" accept="image/jpeg,image/png,image/gif,image/webp" multiple>
+      <input type="file" accept="image/jpeg,image/png,image/webp" multiple>
       <p class="dropzone__title">Перетащите изображения для обработки</p>
       <p class="dropzone__hint">или нажмите для выбора файлов</p>
       <div class="dropzone__formats">
@@ -417,7 +415,7 @@
   });
 
   new Dropzone(dropzoneEl, {
-    accept: ['image/jpeg','image/png','image/gif','image/webp'],
+    accept: ['image/jpeg','image/png','image/webp'],
     multiple: true,
     onFiles(newFiles) {
       newFiles.forEach(f => files.push({ file: f, item: manager.add(f) }));
@@ -584,12 +582,7 @@
   });
 
   dlAllBtn.addEventListener('click', async () => {
-    if (!window.JSZip) {
-      const s = document.createElement('script');
-      s.src = 'https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js';
-      document.head.appendChild(s);
-      await new Promise(r => s.onload = r);
-    }
+    await FileUtils.loadJSZip();
     const zip = new JSZip();
     results.forEach(r => zip.file(r.filename, r.blob));
     const z = await zip.generateAsync({ type: 'blob' });

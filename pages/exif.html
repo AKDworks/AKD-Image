@@ -4,8 +4,6 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Удаление метаданных (EXIF) — AKD Image</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../css/main.css">
 </head>
 <body>
@@ -208,12 +206,7 @@
   });
 
   dlAllBtn.addEventListener('click', async () => {
-    if (!window.JSZip) {
-      const s = document.createElement('script');
-      s.src = 'https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js';
-      document.head.appendChild(s);
-      await new Promise(r => s.onload = r);
-    }
+    await FileUtils.loadJSZip();
     const zip = new JSZip();
     results.forEach(r => zip.file(r.filename, r.blob));
     const z = await zip.generateAsync({ type: 'blob' });

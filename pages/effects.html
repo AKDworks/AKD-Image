@@ -4,8 +4,6 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Фотоэффекты — AKD Image</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../css/main.css">
   <style>
     .workspace-wrap {
@@ -57,7 +55,7 @@
 
     <!-- Drop Zone -->
     <div class="dropzone" id="dropzone">
-      <input type="file" accept="image/*">
+      <input type="file" accept="image/jpeg,image/png,image/webp">
       <p class="dropzone__title">Перетащите изображение сюда</p>
       <p class="dropzone__hint">или нажмите для выбора файла</p>
       <div class="dropzone__formats">
@@ -206,7 +204,7 @@
   });
 
   new Dropzone(dropzoneEl, {
-    accept: ['image/*'],
+    accept: ['image/jpeg','image/png','image/webp'],
     multiple: false,
     onFiles(newFiles) {
       if (newFiles[0]) loadImage(newFiles[0]);

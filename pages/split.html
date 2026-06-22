@@ -4,8 +4,6 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Разделить изображение — AKD Image</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../css/main.css">
 </head>
 <body>
@@ -126,15 +124,6 @@
   const manager = new FileListManager(fileListEl);
   let files = [];
   
-  // Script loaded JSZip dependency for Zip download
-  async function loadJSZip() {
-    if (window.JSZip) return;
-    const s = document.createElement('script');
-    s.src = 'https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js';
-    document.head.appendChild(s);
-    return new Promise(r => s.onload = r);
-  }
-
   fileListEl.addEventListener('file-removed', (e) => {
     files = files.filter(f => f.item.id !== e.detail.id);
     updateUI();
@@ -238,7 +227,7 @@
 
   splitBtn.addEventListener('click', async () => {
     if (!files.length) return;
-    await loadJSZip();
+    await FileUtils.loadJSZip();
     
     splitBtn.disabled = true;
     splitBtn.innerHTML = '<span class="spinner"></span> Обработка...';
