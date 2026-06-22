@@ -180,6 +180,7 @@
   const manager = new FileListManager(fileListEl);
   let files   = [];
   let results = [];
+  let dimensionsInitialized = false;
 
   fileListEl.addEventListener('file-removed', (e) => {
     files = files.filter(f => f.item.id !== e.detail.id);
@@ -218,12 +219,32 @@
     accept: ['image/jpeg','image/png','image/webp'],
     multiple: true,
     onFiles(newFiles) {
+      const hadFiles = files.length > 0;
       newFiles.forEach(f => {
         files.push({ file: f, item: manager.add(f) });
       });
       updateUI();
+      if (!hadFiles && files.length) setReferenceSizeFromFile(files[0].file);
     }
   });
+
+  async function setReferenceSizeFromFile(file) {
+    try {
+      const dataURL = await FileUtils.readAsDataURL(file);
+      const img = await FileUtils.loadImage(dataURL);
+      lastW = img.naturalWidth;
+      lastH = img.naturalHeight;
+
+      if (!dimensionsInitialized) {
+        widthInput.value = lastW;
+        heightInput.value = lastH;
+        longestPx.value = Math.max(lastW, lastH);
+        dimensionsInitialized = true;
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  }
 
   function updateUI() {
     const has = files.length > 0;
@@ -273,7 +294,14 @@
     canvas.style.display = 'block';
   });
 
-  clearBtn.addEventListener('click', () => { files = []; manager.clear(); updateUI(); });
+  clearBtn.addEventListener('click', () => {
+    files = [];
+    manager.clear();
+    dimensionsInitialized = false;
+    lastW = 800;
+    lastH = 600;
+    updateUI();
+  });
 
   resizeBtn.addEventListener('click', async () => {
     if (!files.length) return;
@@ -361,8 +389,9 @@
   });
 
   dlAllBtn.addEventListener('click', async () => {
-    await FileUtils.downloadZip(results, 'akd-resized.zip');
-    Toast.success('ZIP скачан!');
+    if (await FileUtils.downloadZip(results, 'akd-resized.zip')) {
+      Toast.success('ZIP скачан!');
+    }
   });
 
 })();

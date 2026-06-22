@@ -247,8 +247,9 @@
 
   // Download all as ZIP (uses JSZip from CDN)
   dlAllBtn.addEventListener('click', async () => {
-    await FileUtils.downloadZip(results, 'akd-compressed.zip');
-    Toast.success('ZIP скачан!');
+    if (await FileUtils.downloadZip(results, 'akd-compressed.zip')) {
+      Toast.success('ZIP скачан!');
+    }
   });
 
 })();

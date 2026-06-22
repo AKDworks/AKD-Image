@@ -246,8 +246,9 @@
   });
 
   dlAllBtn.addEventListener('click', async () => {
-    await FileUtils.downloadZip(results, 'akd-memes.zip');
-    Toast.success('ZIP архив скачан!');
+    if (await FileUtils.downloadZip(results, 'akd-memes.zip')) {
+      Toast.success('ZIP архив скачан!');
+    }
   });
 
 })();

@@ -582,8 +582,9 @@
   });
 
   dlAllBtn.addEventListener('click', async () => {
-    await FileUtils.downloadZip(results, 'akd-watermarked.zip');
-    Toast.success('ZIP скачан!');
+    if (await FileUtils.downloadZip(results, 'akd-watermarked.zip')) {
+      Toast.success('ZIP скачан!');
+    }
   });
 
 })();

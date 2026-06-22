@@ -227,8 +227,7 @@
 
   splitBtn.addEventListener('click', async () => {
     if (!files.length) return;
-    await FileUtils.loadJSZip();
-    
+
     splitBtn.disabled = true;
     splitBtn.innerHTML = '<span class="spinner"></span> Обработка...';
     
@@ -254,7 +253,8 @@
       const partW = Math.floor(img.naturalWidth / cols);
       const partH = Math.floor(img.naturalHeight / rows);
       
-      const zip = new JSZip();
+      const JSZipCtor = await FileUtils.loadJSZip();
+      const zip = new JSZipCtor();
       const baseName = file.name.replace(/\.[^.]+$/, '');
       const ext = FileUtils.getExt(file.name);
       const mime = file.type;

@@ -188,11 +188,18 @@ const FileUtils = {
   },
 
   async downloadZip(entries, filename) {
-    const JSZipCtor = await this.loadJSZip();
-    const zip = new JSZipCtor();
-    entries.forEach(entry => zip.file(entry.filename, entry.blob));
-    const blob = await zip.generateAsync({ type: 'blob' });
-    this.downloadBlob(blob, filename);
+    try {
+      const JSZipCtor = await this.loadJSZip();
+      const zip = new JSZipCtor();
+      entries.forEach(entry => zip.file(entry.filename, entry.blob));
+      const blob = await zip.generateAsync({ type: 'blob' });
+      this.downloadBlob(blob, filename);
+      return true;
+    } catch (err) {
+      console.error(err);
+      Toast.error('Не удалось подготовить ZIP-архив.');
+      return false;
+    }
   },
 };
 
