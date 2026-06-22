@@ -52,9 +52,7 @@ const headerHTML = `
       <div class="container inner">
         <p class="footer-copy">© 2026 AKD Image — Бесплатные инструменты для работы с изображениями. Все права защищены.</p>
         <ul class="footer-links">
-          <li><a href="#">О сервисе</a></li>
           <li><a href="${prefix}pages/privacy.html">Конфиденциальность</a></li>
-          <li><a href="#">Контакты</a></li>
         </ul>
       </div>
     </footer>
