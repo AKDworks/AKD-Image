@@ -67,7 +67,7 @@
     <div class="result-area" id="result-area">
       <hr class="divider">
       <div class="result-stats" id="result-stats"></div>
-      <button class="btn btn-success" id="download-all-btn" style="display:none;"> Скачать всё (ZIP)</button>
+      <button class="btn btn-success" id="download-all-btn" style="display:none;">Скачать всё (ZIP)</button>
     </div>
 
   </div>
@@ -186,7 +186,7 @@
     if (results.length) {
       resultStats.innerHTML = `
         <div class="stat-card"><div class="stat-card__label">Конвертировано</div><div class="stat-card__value">${results.length}</div></div>
-        <div class="stat-card stat-green"><div class="stat-card__label">Статус</div><div class="stat-card__value"> Завершено</div></div>
+        <div class="stat-card stat-green"><div class="stat-card__label">Статус</div><div class="stat-card__value">Готово</div></div>
       `;
       resultArea.classList.add('visible');
       if (results.length > 1) dlAllBtn.style.display = '';
