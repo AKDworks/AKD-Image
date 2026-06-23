@@ -174,13 +174,14 @@ const FileUtils = {
     return window.__akdJSZipPromise;
   },
 
-  async downloadZip(entries, filename) {
+  async downloadZip(entries, filename, successMessage = 'ZIP скачан!') {
     try {
       const JSZipCtor = await this.loadJSZip();
       const zip = new JSZipCtor();
       entries.forEach(entry => zip.file(entry.filename, entry.blob));
       const blob = await zip.generateAsync({ type: 'blob' });
       this.downloadBlob(blob, filename);
+      if (successMessage) Toast.success(successMessage);
       return true;
     } catch (err) {
       console.error(err);

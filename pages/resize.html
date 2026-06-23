@@ -371,9 +371,7 @@
   });
 
   dlAllBtn.addEventListener('click', async () => {
-    if (await FileUtils.downloadZip(results, 'akd-resized.zip')) {
-      Toast.success('ZIP скачан!');
-    }
+    await FileUtils.downloadZip(results, 'akd-resized.zip');
   });
 
 })();

@@ -240,9 +240,7 @@
   });
 
   dlAllBtn.addEventListener('click', async () => {
-    if (await FileUtils.downloadZip(results, 'akd-rotated.zip')) {
-      Toast.success('ZIP архив скачан!');
-    }
+    await FileUtils.downloadZip(results, 'akd-rotated.zip');
   });
 
 })();
