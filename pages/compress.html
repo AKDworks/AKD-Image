@@ -128,7 +128,6 @@
     countEl.textContent = FileUtils.formatFilesCount(files.length);
     resultArea.classList.remove('visible');
     results = [];
-    const previewBtn = document.getElementById('preview-btn');
     if (previewBtn) previewBtn.style.display = hasFiles ? '' : 'none';
     const canvas = document.getElementById('preview-canvas');
     if (canvas) canvas.style.display = 'none';
@@ -165,10 +164,7 @@
   compressBtn.addEventListener('click', async () => {
     if (!files.length) return;
     compressBtn.disabled = true;
-    clearBtn.disabled = true;
-    dlAllBtn.disabled = true;
-    previewBtn.disabled = true;
-    manager.setLocked(true);
+    UIUtils.setBatchLocked(manager, [clearBtn, dlAllBtn, previewBtn], true);
     compressBtn.innerHTML = '<span class="spinner"></span> Сжимаю...';
     results = [];
     let errors = 0;
@@ -238,10 +234,7 @@
     }
 
     compressBtn.disabled = false;
-    clearBtn.disabled = false;
-    dlAllBtn.disabled = false;
-    previewBtn.disabled = false;
-    manager.setLocked(false);
+    UIUtils.setBatchLocked(manager, [clearBtn, dlAllBtn, previewBtn], false);
     compressBtn.innerHTML = 'Сжать всё';
   });
 

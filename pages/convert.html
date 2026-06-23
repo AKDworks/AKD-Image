@@ -118,7 +118,6 @@
     countEl.textContent = FileUtils.formatFilesCount(files.length);
     resultArea.classList.remove('visible');
     results = []; dlAllBtn.style.display = 'none'; resultStats.innerHTML = '';
-    const previewBtn = document.getElementById('preview-btn');
     if (previewBtn) previewBtn.style.display = has ? '' : 'none';
     const canvas = document.getElementById('preview-canvas');
     if (canvas) canvas.style.display = 'none';
@@ -141,10 +140,7 @@
   convertBtn.addEventListener('click', async () => {
     if (!files.length) return;
     convertBtn.disabled = true;
-    clearBtn.disabled = true;
-    dlAllBtn.disabled = true;
-    previewBtn.disabled = true;
-    manager.setLocked(true);
+    UIUtils.setBatchLocked(manager, [clearBtn, dlAllBtn, previewBtn], true);
     convertBtn.innerHTML = '<span class="spinner"></span> Конвертирую...';
     results = [];
     let errors = 0;
@@ -204,10 +200,7 @@
     }
 
     convertBtn.disabled = false;
-    clearBtn.disabled = false;
-    dlAllBtn.disabled = false;
-    previewBtn.disabled = false;
-    manager.setLocked(false);
+    UIUtils.setBatchLocked(manager, [clearBtn, dlAllBtn, previewBtn], false);
     convertBtn.innerHTML = 'Конвертировать всё';
   });
 

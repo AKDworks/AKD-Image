@@ -170,10 +170,7 @@
   pixelateBtn.addEventListener('click', async () => {
     if (!files.length) return;
     pixelateBtn.disabled = true;
-    clearBtn.disabled = true;
-    dlAllBtn.disabled = true;
-    previewBtn.disabled = true;
-    manager.setLocked(true);
+    UIUtils.setBatchLocked(manager, [clearBtn, dlAllBtn, previewBtn], true);
     pixelateBtn.innerHTML = '<span class="spinner"></span> Обработка...';
     results = [];
     let errors = 0;
@@ -225,10 +222,7 @@
     }
 
     pixelateBtn.disabled = false;
-    clearBtn.disabled = false;
-    dlAllBtn.disabled = false;
-    previewBtn.disabled = false;
-    manager.setLocked(false);
+    UIUtils.setBatchLocked(manager, [clearBtn, dlAllBtn, previewBtn], false);
     pixelateBtn.innerHTML = 'Пикселизировать';
   });
 

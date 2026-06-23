@@ -151,10 +151,7 @@
   cleanBtn.addEventListener('click', async () => {
     if (!files.length) return;
     cleanBtn.disabled = true;
-    clearBtn.disabled = true;
-    dlAllBtn.disabled = true;
-    previewBtn.disabled = true;
-    manager.setLocked(true);
+    UIUtils.setBatchLocked(manager, [clearBtn, dlAllBtn, previewBtn], true);
     cleanBtn.innerHTML = '<span class="spinner"></span> Обработка...';
     results = [];
     let errors = 0;
@@ -212,10 +209,7 @@
     }
 
     cleanBtn.disabled = false;
-    clearBtn.disabled = false;
-    dlAllBtn.disabled = false;
-    previewBtn.disabled = false;
-    manager.setLocked(false);
+    UIUtils.setBatchLocked(manager, [clearBtn, dlAllBtn, previewBtn], false);
     cleanBtn.innerHTML = 'Удалить метаданные';
   });
 

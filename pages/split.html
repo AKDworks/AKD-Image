@@ -221,9 +221,7 @@
     if (!files.length) return;
 
     splitBtn.disabled = true;
-    clearBtn.disabled = true;
-    previewBtn.disabled = true;
-    manager.setLocked(true);
+    UIUtils.setBatchLocked(manager, [clearBtn, previewBtn], true);
     splitBtn.innerHTML = '<span class="spinner"></span> Обработка...';
     
     const { file, item } = files[0];
@@ -299,9 +297,7 @@
     }
     
     splitBtn.disabled = false;
-    clearBtn.disabled = false;
-    previewBtn.disabled = false;
-    manager.setLocked(false);
+    UIUtils.setBatchLocked(manager, [clearBtn, previewBtn], false);
     splitBtn.innerHTML = 'Нарезать и скачать (ZIP)';
   });
 

@@ -63,6 +63,21 @@ const Modal = (() => {
 })();
 
 
+/* UI helpers */
+const UIUtils = {
+  setDisabled(elements, disabled) {
+    elements.forEach(el => {
+      if (el) el.disabled = disabled;
+    });
+  },
+
+  setBatchLocked(manager, elements, locked) {
+    this.setDisabled(elements, locked);
+    if (manager) manager.setLocked(locked);
+  },
+};
+
+
 /* File utilities */
 const FileUtils = {
   formatSize(bytes) {

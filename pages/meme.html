@@ -192,10 +192,7 @@
   applyBtn.addEventListener('click', async () => {
     if (!files.length) return;
     applyBtn.disabled = true;
-    clearBtn.disabled = true;
-    dlAllBtn.disabled = true;
-    previewBtn.disabled = true;
-    manager.setLocked(true);
+    UIUtils.setBatchLocked(manager, [clearBtn, dlAllBtn, previewBtn], true);
     applyBtn.innerHTML = '<span class="spinner"></span> Обработка...';
     results = [];
     let errors = 0;
@@ -242,10 +239,7 @@
     }
 
     applyBtn.disabled = false;
-    clearBtn.disabled = false;
-    dlAllBtn.disabled = false;
-    previewBtn.disabled = false;
-    manager.setLocked(false);
+    UIUtils.setBatchLocked(manager, [clearBtn, dlAllBtn, previewBtn], false);
     applyBtn.innerHTML = 'Создать мем';
   });
 
