@@ -171,6 +171,7 @@
     manager.setLocked(true);
     compressBtn.innerHTML = '<span class="spinner"></span> Сжимаю...';
     results = [];
+    let errors = 0;
     let totalBefore = 0, totalAfter = 0;
 
     for (const entry of files) {
@@ -216,6 +217,7 @@
         totalAfter  += blob.size;
 
       } catch (err) {
+        errors++;
         manager.setStatus(item.id, 'Ошибка', 'status-error');
         console.error(err);
       }
@@ -232,6 +234,9 @@
       resultArea.classList.add('visible');
       if (results.length > 1) dlAllBtn.style.display = '';
       Toast.success('Сжатие завершено!');
+    }
+    if (errors) {
+      Toast.error('Не удалось обработать ' + FileUtils.formatFilesCount(errors) + '.');
     }
 
     compressBtn.disabled = false;

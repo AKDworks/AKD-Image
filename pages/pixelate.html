@@ -176,6 +176,7 @@
     manager.setLocked(true);
     pixelateBtn.innerHTML = '<span class="spinner"></span> Обработка...';
     results = [];
+    let errors = 0;
 
     const pSize = parseInt(pixelSizeInput.value) || 10;
 
@@ -205,6 +206,7 @@
         results.push({ blob, filename });
 
       } catch (err) {
+        errors++;
         manager.setStatus(item.id, 'Ошибка', 'status-error');
         console.error(err);
       }
@@ -217,6 +219,9 @@
       `;
       resultArea.classList.add('visible');
       if (results.length > 1) dlAllBtn.style.display = '';
+    }
+    if (errors) {
+      Toast.error('Не удалось обработать ' + FileUtils.formatFilesCount(errors) + '.');
     }
 
     pixelateBtn.disabled = false;

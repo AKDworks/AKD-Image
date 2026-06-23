@@ -295,6 +295,7 @@
     manager.setLocked(true);
     resizeBtn.innerHTML = '<span class="spinner"></span> Обработка...';
     results = [];
+    let errors = 0;
 
     const mode    = document.querySelector('input[name="resize-mode"]:checked').value;
     const mime    = outputFmt.value === 'same' ? null : outputFmt.value;
@@ -356,6 +357,7 @@
         results.push({ blob, filename });
 
       } catch (err) {
+        errors++;
         manager.setStatus(item.id, 'Ошибка', 'status-error');
         console.error(err);
       }
@@ -369,6 +371,9 @@
       resultArea.classList.add('visible');
       if (results.length > 1) dlAllBtn.style.display = '';
       Toast.success('Размер изменён!');
+    }
+    if (errors) {
+      Toast.error('Не удалось обработать ' + FileUtils.formatFilesCount(errors) + '.');
     }
 
     resizeBtn.disabled = false;

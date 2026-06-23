@@ -184,6 +184,7 @@
     manager.setLocked(true);
     applyBtn.innerHTML = '<span class="spinner"></span> Обработка...';
     results = [];
+    let errors = 0;
 
     for (const entry of files) {
       const { file, item } = entry;
@@ -225,6 +226,7 @@
         manager.addDownload(item.id, blob, newFilename);
         results.push({ blob, filename: newFilename });
       } catch (err) {
+        errors++;
         manager.setStatus(item.id, 'Ошибка', 'status-error');
         console.error(err);
       }
@@ -238,6 +240,9 @@
       resultArea.classList.add('visible');
       if (results.length > 1) dlAllBtn.style.display = '';
       Toast.success('Изображения успешно сохранены!');
+    }
+    if (errors) {
+      Toast.error('Не удалось обработать ' + FileUtils.formatFilesCount(errors) + '.');
     }
 
     applyBtn.disabled = false;

@@ -147,6 +147,7 @@
     manager.setLocked(true);
     convertBtn.innerHTML = '<span class="spinner"></span> Конвертирую...';
     results = [];
+    let errors = 0;
 
     const mime = targetFormat.value;
     const q = parseInt(qualityInput.value) / 100;
@@ -183,6 +184,7 @@
         manager.addDownload(item.id, blob, newFilename);
         results.push({ blob, filename: newFilename });
       } catch (err) {
+        errors++;
         manager.setStatus(item.id, 'Ошибка', 'status-error');
         console.error(err);
       }
@@ -196,6 +198,9 @@
       resultArea.classList.add('visible');
       if (results.length > 1) dlAllBtn.style.display = '';
       Toast.success('Конвертация завершена!');
+    }
+    if (errors) {
+      Toast.error('Не удалось обработать ' + FileUtils.formatFilesCount(errors) + '.');
     }
 
     convertBtn.disabled = false;

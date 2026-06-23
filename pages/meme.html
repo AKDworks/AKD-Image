@@ -198,6 +198,7 @@
     manager.setLocked(true);
     applyBtn.innerHTML = '<span class="spinner"></span> Обработка...';
     results = [];
+    let errors = 0;
 
     for (const entry of files) {
       const { file, item } = entry;
@@ -221,6 +222,7 @@
         manager.addDownload(item.id, blob, filename);
         results.push({ blob, filename });
       } catch (err) {
+        errors++;
         manager.setStatus(item.id, 'Ошибка', 'status-error');
         console.error(err);
       }
@@ -234,6 +236,9 @@
       resultArea.classList.add('visible');
       if (results.length > 1) dlAllBtn.style.display = '';
       Toast.success('Мемы успешно созданы!');
+    }
+    if (errors) {
+      Toast.error('Не удалось обработать ' + FileUtils.formatFilesCount(errors) + '.');
     }
 
     applyBtn.disabled = false;

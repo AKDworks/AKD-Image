@@ -157,6 +157,7 @@
     manager.setLocked(true);
     cleanBtn.innerHTML = '<span class="spinner"></span> Обработка...';
     results = [];
+    let errors = 0;
 
     const q = parseInt(qualityInput.value) / 100;
 
@@ -192,6 +193,7 @@
         results.push({ blob, filename });
 
       } catch (err) {
+        errors++;
         manager.setStatus(item.id, 'Ошибка', 'status-error');
         console.error(err);
       }
@@ -204,6 +206,9 @@
       `;
       resultArea.classList.add('visible');
       if (results.length > 1) dlAllBtn.style.display = '';
+    }
+    if (errors) {
+      Toast.error('Не удалось очистить ' + FileUtils.formatFilesCount(errors) + '.');
     }
 
     cleanBtn.disabled = false;
