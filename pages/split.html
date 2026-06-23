@@ -4,8 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Разделить изображение — AKD Image</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <meta name="description" content="Разделяйте JPG, PNG и WebP на части по вертикали или сеткой и скачивайте результат ZIP-архивом.">
   <link rel="stylesheet" href="../css/main.css">
 </head>
 <body>
@@ -19,8 +18,6 @@
       <h1 class="tool-page__title">Разделить изображение</h1>
       <p class="tool-page__subtitle">Нарежьте длинный скриншот на части по вертикали или разделите фото сеткой для соцсетей.</p>
     </div>
-
-    <!-- Drop Zone -->
     <div class="dropzone" id="dropzone">
       <input type="file" accept="image/jpeg,image/png,image/webp">
       <p class="dropzone__title">Перетащите изображение сюда</p>
@@ -31,8 +28,6 @@
         <span class="fmt-badge">WEBP</span>
       </div>
     </div>
-
-    <!-- Settings panel -->
     <div class="tool-panel hidden" id="settings-panel">
       <div class="tool-panel__head">
         <h3>Настройки нарезки</h3>
@@ -78,18 +73,12 @@
 
       </div>
     </div>
-
-    <!-- File list -->
     <div class="file-list hidden" id="file-list"></div>
-
-    <!-- Action buttons -->
     <div class="hidden mt-16 flex gap-8 items-center flex-wrap" id="action-bar">
       <button class="btn btn-primary btn-lg" id="split-btn">
         Нарезать и скачать (ZIP)
       </button>
     </div>
-
-    <!-- Results -->
     <div class="result-area" id="result-area">
       <hr class="divider">
       <div class="result-stats" id="result-stats"></div>
@@ -125,16 +114,8 @@
 
   const manager = new FileListManager(fileListEl);
   let files = [];
+  let cachedImg = null;
   
-  // Script loaded JSZip dependency for Zip download
-  async function loadJSZip() {
-    if (window.JSZip) return;
-    const s = document.createElement('script');
-    s.src = 'https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js';
-    document.head.appendChild(s);
-    return new Promise(r => s.onload = r);
-  }
-
   fileListEl.addEventListener('file-removed', (e) => {
     files = files.filter(f => f.item.id !== e.detail.id);
     updateUI();
@@ -162,7 +143,6 @@
     multiple: false,
     onFiles(newFiles) {
       if (!newFiles.length) return;
-      // Single file only
       files = [];
       manager.clear();
       const f = newFiles[0];
@@ -177,6 +157,9 @@
     settingsEl.classList.toggle('hidden', !hasFiles);
     actionBarEl.classList.toggle('hidden', !hasFiles);
     resultArea.classList.remove('visible');
+    resultStats.innerHTML = '';
+    cachedImg = null;
+    gridOverlay.innerHTML = '';
     previewBtn.style.display = hasFiles ? '' : 'none';
     previewWrap.style.display = 'none';
   }
@@ -186,8 +169,6 @@
     manager.clear();
     updateUI();
   });
-
-  let cachedImg = null;
 
   previewBtn.addEventListener('click', async () => {
     if (!files.length) return;
@@ -202,7 +183,7 @@
     previewWrap.style.display = 'block';
     const ctx = previewCanvas.getContext('2d');
     
-    // Scale preview to fit screen roughly without breaking canvas size limits
+    // Keep preview light while preserving the source canvas for export.
     let scale = 1;
     if (cachedImg.naturalWidth > 1200) scale = 1200 / cachedImg.naturalWidth;
     
@@ -238,9 +219,11 @@
 
   splitBtn.addEventListener('click', async () => {
     if (!files.length) return;
-    await loadJSZip();
-    
+
     splitBtn.disabled = true;
+    clearBtn.disabled = true;
+    previewBtn.disabled = true;
+    manager.setLocked(true);
     splitBtn.innerHTML = '<span class="spinner"></span> Обработка...';
     
     const { file, item } = files[0];
@@ -265,7 +248,8 @@
       const partW = Math.floor(img.naturalWidth / cols);
       const partH = Math.floor(img.naturalHeight / rows);
       
-      const zip = new JSZip();
+      const JSZipCtor = await FileUtils.loadJSZip();
+      const zip = new JSZipCtor();
       const baseName = file.name.replace(/\.[^.]+$/, '');
       const ext = FileUtils.getExt(file.name);
       const mime = file.type;
@@ -300,19 +284,24 @@
       manager.setMeta(item.id, `${count} фрагментов · ${FileUtils.formatSize(zipBlob.size)}`);
       
       FileUtils.downloadBlob(zipBlob, `${baseName}_split.zip`);
+      Toast.success('ZIP-архив скачан!');
       
       resultStats.innerHTML = `
         <div class="stat-card"><div class="stat-card__label">Фрагментов</div><div class="stat-card__value">${count}</div></div>
-        <div class="stat-card stat-green"><div class="stat-card__label">Скачано</div><div class="stat-card__value">ZIP архив</div></div>
+        <div class="stat-card stat-green"><div class="stat-card__label">Скачано</div><div class="stat-card__value">ZIP-архив</div></div>
       `;
       resultArea.classList.add('visible');
 
     } catch(err) {
       manager.setStatus(item.id, 'Ошибка', 'status-error');
       console.error(err);
+      Toast.error('Не удалось разделить изображение.');
     }
     
     splitBtn.disabled = false;
+    clearBtn.disabled = false;
+    previewBtn.disabled = false;
+    manager.setLocked(false);
     splitBtn.innerHTML = 'Нарезать и скачать (ZIP)';
   });
 

@@ -4,8 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Генератор мемов — AKD Image</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <meta name="description" content="Создавайте мемы из JPG, PNG и WebP: добавляйте верхний и нижний текст и скачивайте готовые изображения.">
   <link rel="stylesheet" href="../css/main.css">
   <style>
     #preview-canvas {
@@ -28,10 +27,8 @@
       <h1 class="tool-page__title">Генератор мемов</h1>
       <p class="tool-page__subtitle">Добавляйте текст сверху и снизу изображения для создания мемов.</p>
     </div>
-
-    <!-- Drop Zone -->
     <div class="dropzone" id="dropzone">
-      <input type="file" accept="image/jpeg,image/png,image/gif,image/webp" multiple>
+      <input type="file" accept="image/jpeg,image/png,image/webp" multiple>
       <p class="dropzone__title">Перетащите изображения сюда</p>
       <p class="dropzone__hint">или нажмите для выбора файлов</p>
       <div class="dropzone__formats">
@@ -40,8 +37,6 @@
         <span class="fmt-badge">WEBP</span>
       </div>
     </div>
-
-    <!-- Settings -->
     <div class="tool-panel hidden" id="settings-panel">
       <div class="tool-panel__head">
         <h3>Настройки</h3>
@@ -69,19 +64,13 @@
             <input type="number" id="font-size" value="48" min="10" max="300">
           </div>
         </div>
-
-        <!-- Live preview button -->
         <button class="btn btn-secondary mt-16" id="preview-btn" style="display:none;">
           Предпросмотр
         </button>
         <canvas id="preview-canvas"></canvas>
       </div>
     </div>
-
-    <!-- File list -->
     <div class="file-list hidden" id="file-list"></div>
-
-    <!-- Action bar -->
     <div class="hidden mt-16 flex gap-8 items-center" id="action-bar">
       <button class="btn btn-primary btn-lg" id="apply-btn">Создать мем</button>
       <span class="text-muted text-sm" id="file-count"></span>
@@ -126,7 +115,7 @@
   });
 
   new Dropzone(dropzoneEl, {
-    accept: ['image/jpeg','image/png','image/gif','image/webp'],
+    accept: ['image/jpeg','image/png','image/webp'],
     multiple: true,
     onFiles(newFiles) {
       newFiles.forEach(f => files.push({ file: f, item: manager.add(f) }));
@@ -139,7 +128,7 @@
     fileListEl.classList.toggle('hidden', !has);
     settingsEl.classList.toggle('hidden', !has);
     actionBarEl.classList.toggle('hidden', !has);
-    countEl.textContent = files.length + ' файл(ов)';
+    countEl.textContent = FileUtils.formatFilesCount(files.length);
     resultArea.classList.remove('visible');
     results = []; dlAllBtn.style.display = 'none'; resultStats.innerHTML = '';
     const previewBtn = document.getElementById('preview-btn');
@@ -203,8 +192,13 @@
   applyBtn.addEventListener('click', async () => {
     if (!files.length) return;
     applyBtn.disabled = true;
+    clearBtn.disabled = true;
+    dlAllBtn.disabled = true;
+    previewBtn.disabled = true;
+    manager.setLocked(true);
     applyBtn.innerHTML = '<span class="spinner"></span> Обработка...';
     results = [];
+    let errors = 0;
 
     for (const entry of files) {
       const { file, item } = entry;
@@ -228,6 +222,7 @@
         manager.addDownload(item.id, blob, filename);
         results.push({ blob, filename });
       } catch (err) {
+        errors++;
         manager.setStatus(item.id, 'Ошибка', 'status-error');
         console.error(err);
       }
@@ -242,23 +237,20 @@
       if (results.length > 1) dlAllBtn.style.display = '';
       Toast.success('Мемы успешно созданы!');
     }
+    if (errors) {
+      Toast.error('Не удалось обработать ' + FileUtils.formatFilesCount(errors) + '.');
+    }
 
     applyBtn.disabled = false;
+    clearBtn.disabled = false;
+    dlAllBtn.disabled = false;
+    previewBtn.disabled = false;
+    manager.setLocked(false);
     applyBtn.innerHTML = 'Создать мем';
   });
 
   dlAllBtn.addEventListener('click', async () => {
-    if (!window.JSZip) {
-      const s = document.createElement('script');
-      s.src = 'https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js';
-      document.head.appendChild(s);
-      await new Promise(r => s.onload = r);
-    }
-    const zip = new JSZip();
-    results.forEach(r => zip.file(r.filename, r.blob));
-    const z = await zip.generateAsync({ type: 'blob' });
-    FileUtils.downloadBlob(z, 'akd-memes.zip');
-    Toast.success('ZIP архив скачан!');
+    await FileUtils.downloadZip(results, 'akd-memes.zip');
   });
 
 })();

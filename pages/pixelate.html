@@ -4,8 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Пикселизатор — AKD Image</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <meta name="description" content="Пикселизируйте JPG, PNG и WebP в стиле pixel art с настраиваемым размером пикселя.">
   <link rel="stylesheet" href="../css/main.css">
 </head>
 <body>
@@ -19,8 +18,6 @@
       <h1 class="tool-page__title">Пикселизатор</h1>
       <p class="tool-page__subtitle">Стилизуйте JPG, PNG или WebP под пиксель-арт с настраиваемым размером пикселя.</p>
     </div>
-
-    <!-- Drop Zone -->
     <div class="dropzone" id="dropzone">
       <input type="file" accept="image/jpeg,image/png,image/webp" multiple>
       <p class="dropzone__title">Перетащите изображения сюда</p>
@@ -31,8 +28,6 @@
         <span class="fmt-badge">WEBP</span>
       </div>
     </div>
-
-    <!-- Settings panel -->
     <div class="tool-panel hidden" id="settings-panel">
       <div class="tool-panel__head">
         <h3>Настройки</h3>
@@ -53,19 +48,13 @@
 
       </div>
     </div>
-
-    <!-- File list -->
     <div class="file-list hidden" id="file-list"></div>
-
-    <!-- Action buttons -->
     <div class="hidden mt-16 flex gap-8 items-center flex-wrap" id="action-bar">
       <button class="btn btn-primary btn-lg" id="pixelate-btn">
         Пикселизировать
       </button>
       <span class="text-muted text-sm" id="file-count"></span>
     </div>
-
-    <!-- Results -->
     <div class="result-area" id="result-area">
       <hr class="divider">
       <div class="result-stats" id="result-stats"></div>
@@ -126,7 +115,7 @@
     fileListEl.classList.toggle('hidden', !hasFiles);
     settingsEl.classList.toggle('hidden', !hasFiles);
     actionBarEl.classList.toggle('hidden', !hasFiles);
-    countEl.textContent = files.length + ' файл(ов)';
+    countEl.textContent = FileUtils.formatFilesCount(files.length);
     resultArea.classList.remove('visible');
     results = [];
     previewBtn.style.display = hasFiles ? '' : 'none';
@@ -146,21 +135,18 @@
     canvas.height = img.naturalHeight;
     const ctx = canvas.getContext('2d');
     
-    // Disable smoothing
     ctx.imageSmoothingEnabled = false;
 
-    // Calc small sizes
+    // Downscale, then upscale without smoothing for a pixelated look.
     const w = Math.max(1, Math.floor(canvas.width / pSize));
     const h = Math.max(1, Math.floor(canvas.height / pSize));
 
-    // Draw small
     const offCanvas = document.createElement('canvas');
     offCanvas.width = w;
     offCanvas.height = h;
     const offCtx = offCanvas.getContext('2d');
     offCtx.drawImage(img, 0, 0, w, h);
 
-    // Draw big
     ctx.drawImage(offCanvas, 0, 0, w, h, 0, 0, canvas.width, canvas.height);
     return canvas;
   }
@@ -184,8 +170,13 @@
   pixelateBtn.addEventListener('click', async () => {
     if (!files.length) return;
     pixelateBtn.disabled = true;
+    clearBtn.disabled = true;
+    dlAllBtn.disabled = true;
+    previewBtn.disabled = true;
+    manager.setLocked(true);
     pixelateBtn.innerHTML = '<span class="spinner"></span> Обработка...';
     results = [];
+    let errors = 0;
 
     const pSize = parseInt(pixelSizeInput.value) || 10;
 
@@ -215,6 +206,7 @@
         results.push({ blob, filename });
 
       } catch (err) {
+        errors++;
         manager.setStatus(item.id, 'Ошибка', 'status-error');
         console.error(err);
       }
@@ -223,27 +215,25 @@
     if (results.length) {
       resultStats.innerHTML = `
         <div class="stat-card"><div class="stat-card__label">Обработано</div><div class="stat-card__value">${results.length}</div></div>
-        <div class="stat-card stat-green"><div class="stat-card__label">Статус</div><div class="stat-card__value"> Завершено</div></div>
+        <div class="stat-card stat-green"><div class="stat-card__label">Статус</div><div class="stat-card__value">Готово</div></div>
       `;
       resultArea.classList.add('visible');
       if (results.length > 1) dlAllBtn.style.display = '';
     }
+    if (errors) {
+      Toast.error('Не удалось обработать ' + FileUtils.formatFilesCount(errors) + '.');
+    }
 
     pixelateBtn.disabled = false;
+    clearBtn.disabled = false;
+    dlAllBtn.disabled = false;
+    previewBtn.disabled = false;
+    manager.setLocked(false);
     pixelateBtn.innerHTML = 'Пикселизировать';
   });
 
   dlAllBtn.addEventListener('click', async () => {
-    if (!window.JSZip) {
-      const s = document.createElement('script');
-      s.src = 'https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js';
-      document.head.appendChild(s);
-      await new Promise(r => s.onload = r);
-    }
-    const zip = new JSZip();
-    results.forEach(r => zip.file(r.filename, r.blob));
-    const z = await zip.generateAsync({ type: 'blob' });
-    FileUtils.downloadBlob(z, 'akd-pixelated.zip');
+    await FileUtils.downloadZip(results, 'akd-pixelated.zip');
   });
 
 })();

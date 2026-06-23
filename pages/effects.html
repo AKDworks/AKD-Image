@@ -4,8 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Фотоэффекты — AKD Image</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <meta name="description" content="Настраивайте яркость, контраст, насыщенность, размытие и другие эффекты для изображений прямо в браузере.">
   <link rel="stylesheet" href="../css/main.css">
   <style>
     .workspace-wrap {
@@ -54,10 +53,8 @@
       </h1>
       <p class="tool-page__subtitle">Корректируйте яркость, контраст, насыщенность, размытие и применяйте фильтры.</p>
     </div>
-
-    <!-- Drop Zone -->
     <div class="dropzone" id="dropzone">
-      <input type="file" accept="image/*">
+      <input type="file" accept="image/jpeg,image/png,image/webp">
       <p class="dropzone__title">Перетащите изображение сюда</p>
       <p class="dropzone__hint">или нажмите для выбора файла</p>
       <div class="dropzone__formats">
@@ -66,17 +63,11 @@
         <span class="fmt-badge">WEBP</span>
       </div>
     </div>
-
-    <!-- Workspace -->
     <div class="hidden" id="workspace-panel">
       <div class="workspace-wrap">
-        
-        <!-- Left Pane: Preview -->
         <div class="preview-box">
           <canvas id="preview-canvas"></canvas>
         </div>
-
-        <!-- Right Pane: Controls -->
         <div class="tool-panel">
           <div class="tool-panel__head">
             <h3>Фильтры</h3>
@@ -187,7 +178,6 @@
   let activeImage = null;
   let activeFile = null;
 
-  // Handle inputs
   const sliders = [
     { el: brightnessInput, valEl: document.getElementById('brightness-val'), suffix: '%' },
     { el: contrastInput,   valEl: document.getElementById('contrast-val'),   suffix: '%' },
@@ -206,7 +196,7 @@
   });
 
   new Dropzone(dropzoneEl, {
-    accept: ['image/*'],
+    accept: ['image/jpeg','image/png','image/webp'],
     multiple: false,
     onFiles(newFiles) {
       if (newFiles[0]) loadImage(newFiles[0]);
@@ -240,7 +230,6 @@
 
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     
-    // Construct CSS filter string
     ctx.filter = `
       brightness(${brightness}%)
       contrast(${contrast}%)
@@ -285,7 +274,8 @@
     try {
       const mime = outputFormat.value;
       const ext = mime.split('/')[1].replace('jpeg','jpg');
-      const blob = await FileUtils.canvasToBlob(canvas, mime, 0.9);
+      const outputCanvas = FileUtils.canvasForMime(canvas, mime);
+      const blob = await FileUtils.canvasToBlob(outputCanvas, mime, 0.9);
       const filename = activeFile.name.replace(/\.[^.]+$/, '') + '_effect.' + ext;
       FileUtils.downloadBlob(blob, filename);
       Toast.success('Изображение сохранено!');

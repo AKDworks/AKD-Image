@@ -4,8 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Скругление углов — AKD Image</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <meta name="description" content="Скругляйте углы JPG, PNG и WebP и сохраняйте результат как PNG с прозрачными краями.">
   <link rel="stylesheet" href="../css/main.css">
 </head>
 <body>
@@ -19,8 +18,6 @@
       <h1 class="tool-page__title">Скругление углов</h1>
       <p class="tool-page__subtitle">Сделайте углы изображений плавно закругленными. На выходе — прозрачный PNG.</p>
     </div>
-
-    <!-- Drop Zone -->
     <div class="dropzone" id="dropzone">
       <input type="file" accept="image/jpeg,image/png,image/webp" multiple>
       <p class="dropzone__title">Перетащите изображения сюда</p>
@@ -31,8 +28,6 @@
         <span class="fmt-badge">WEBP</span>
       </div>
     </div>
-
-    <!-- Settings panel -->
     <div class="tool-panel hidden" id="settings-panel">
       <div class="tool-panel__head">
         <h3>Настройки</h3>
@@ -53,19 +48,13 @@
 
       </div>
     </div>
-
-    <!-- File list -->
     <div class="file-list hidden" id="file-list"></div>
-
-    <!-- Action buttons -->
     <div class="hidden mt-16 flex gap-8 items-center flex-wrap" id="action-bar">
       <button class="btn btn-primary btn-lg" id="round-btn">
         Скруглить углы
       </button>
       <span class="text-muted text-sm" id="file-count"></span>
     </div>
-
-    <!-- Results -->
     <div class="result-area" id="result-area">
       <hr class="divider">
       <div class="result-stats" id="result-stats"></div>
@@ -127,7 +116,7 @@
     fileListEl.classList.toggle('hidden', !hasFiles);
     settingsEl.classList.toggle('hidden', !hasFiles);
     actionBarEl.classList.toggle('hidden', !hasFiles);
-    countEl.textContent = files.length + ' файл(ов)';
+    countEl.textContent = FileUtils.formatFilesCount(files.length);
     resultArea.classList.remove('visible');
     results = [];
     previewBtn.style.display = hasFiles ? '' : 'none';
@@ -190,8 +179,13 @@
   roundBtn.addEventListener('click', async () => {
     if (!files.length) return;
     roundBtn.disabled = true;
+    clearBtn.disabled = true;
+    dlAllBtn.disabled = true;
+    previewBtn.disabled = true;
+    manager.setLocked(true);
     roundBtn.innerHTML = '<span class="spinner"></span> Обработка...';
     results = [];
+    let errors = 0;
 
     const percent = parseInt(radiusInput.value) || 0;
 
@@ -220,6 +214,7 @@
         results.push({ blob, filename });
 
       } catch (err) {
+        errors++;
         manager.setStatus(item.id, 'Ошибка', 'status-error');
         console.error(err);
       }
@@ -233,22 +228,20 @@
       resultArea.classList.add('visible');
       if (results.length > 1) dlAllBtn.style.display = '';
     }
+    if (errors) {
+      Toast.error('Не удалось обработать ' + FileUtils.formatFilesCount(errors) + '.');
+    }
 
     roundBtn.disabled = false;
+    clearBtn.disabled = false;
+    dlAllBtn.disabled = false;
+    previewBtn.disabled = false;
+    manager.setLocked(false);
     roundBtn.innerHTML = 'Скруглить углы';
   });
 
   dlAllBtn.addEventListener('click', async () => {
-    if (!window.JSZip) {
-      const s = document.createElement('script');
-      s.src = 'https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js';
-      document.head.appendChild(s);
-      await new Promise(r => s.onload = r);
-    }
-    const zip = new JSZip();
-    results.forEach(r => zip.file(r.filename, r.blob));
-    const z = await zip.generateAsync({ type: 'blob' });
-    FileUtils.downloadBlob(z, 'akd-rounded.zip');
+    await FileUtils.downloadZip(results, 'akd-rounded.zip');
   });
 
 })();

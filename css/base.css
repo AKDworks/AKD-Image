@@ -1,6 +1,4 @@
-/* ============================================
-   RESET & BASE
-   ============================================ */
+/* Reset and base */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 html { font-size: 16px; scroll-behavior: smooth; }
 body {
@@ -18,9 +16,7 @@ a:hover { text-decoration: underline; }
 button { cursor: pointer; font-family: inherit; }
 input, select, textarea { font-family: inherit; }
 
-/* ============================================
-   UTILITIES
-   ============================================ */
+/* Utilities */
 .hidden  { display: none !important; }
 .mt-8  { margin-top: 8px; }
 .mt-16 { margin-top: 16px; }

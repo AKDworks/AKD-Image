@@ -1,11 +1,4 @@
-/**
- * AKD IMAGE — Core Utilities
- * Shared across all tool pages
- */
-
-/* ============================================
-   TOAST NOTIFICATIONS
-   ============================================ */
+/* Toast notifications */
 const Toast = (() => {
   let container = null;
 
@@ -39,9 +32,7 @@ const Toast = (() => {
 })();
 
 
-/* ============================================
-   MODAL
-   ============================================ */
+/* Modal */
 const Modal = (() => {
   let overlay = null;
 
@@ -72,9 +63,7 @@ const Modal = (() => {
 })();
 
 
-/* ============================================
-   FILE UTILITIES
-   ============================================ */
+/* File utilities */
 const FileUtils = {
   formatSize(bytes) {
     if (bytes < 1024)       return bytes + ' B';
@@ -88,12 +77,30 @@ const FileUtils = {
     return (pct > 0 ? '-' : '+') + Math.abs(pct) + '%';
   },
 
+  formatCount(count, forms) {
+    const abs = Math.abs(count);
+    const mod100 = abs % 100;
+    const mod10 = abs % 10;
+    let form = forms[2];
+
+    if (mod100 < 11 || mod100 > 14) {
+      if (mod10 === 1) form = forms[0];
+      else if (mod10 >= 2 && mod10 <= 4) form = forms[1];
+    }
+
+    return count + ' ' + form;
+  },
+
+  formatFilesCount(count) {
+    return this.formatCount(count, ['файл', 'файла', 'файлов']);
+  },
+
   getExt(name) {
     return name.split('.').pop().toLowerCase();
   },
 
   isSupportedImage(file) {
-    return ['image/jpeg', 'image/png', 'image/gif', 'image/svg+xml', 'image/webp'].includes(file.type);
+    return ['image/jpeg', 'image/png', 'image/webp'].includes(file.type);
   },
 
   readAsDataURL(file) {
@@ -133,7 +140,6 @@ const FileUtils = {
     setTimeout(() => document.body.removeChild(a), 300);
   },
 
-  // Загрузка изображения как HTMLImageElement
   loadImage(src) {
     return new Promise((res, rej) => {
       const img = new Image();
@@ -143,26 +149,64 @@ const FileUtils = {
     });
   },
 
-  // Нарисовать img на canvas и получить Blob
   canvasToBlob(canvas, mimeType = 'image/jpeg', quality = 0.85) {
     return new Promise((res, rej) => {
       canvas.toBlob(b => b ? res(b) : rej(new Error('Ошибка canvas')), mimeType, quality);
     });
   },
+
+  canvasForMime(canvas, mimeType) {
+    if (mimeType !== 'image/jpeg') return canvas;
+
+    const out = document.createElement('canvas');
+    out.width = canvas.width;
+    out.height = canvas.height;
+    const ctx = out.getContext('2d');
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, out.width, out.height);
+    ctx.drawImage(canvas, 0, 0);
+    return out;
+  },
+
+  loadJSZip() {
+    if (window.JSZip) return Promise.resolve(window.JSZip);
+    if (window.__akdJSZipPromise) return window.__akdJSZipPromise;
+
+    window.__akdJSZipPromise = new Promise((resolve, reject) => {
+      const script = document.createElement('script');
+      const prefix = location.pathname.includes('/pages/') ? '../' : '';
+      script.src = prefix + 'js/vendor/jszip.min.js';
+      script.onload = () => resolve(window.JSZip);
+      script.onerror = () => {
+        window.__akdJSZipPromise = null;
+        reject(new Error('Не удалось загрузить JSZip'));
+      };
+      document.head.appendChild(script);
+    });
+
+    return window.__akdJSZipPromise;
+  },
+
+  async downloadZip(entries, filename, successMessage = 'ZIP скачан!') {
+    try {
+      const JSZipCtor = await this.loadJSZip();
+      const zip = new JSZipCtor();
+      entries.forEach(entry => zip.file(entry.filename, entry.blob));
+      const blob = await zip.generateAsync({ type: 'blob' });
+      this.downloadBlob(blob, filename);
+      if (successMessage) Toast.success(successMessage);
+      return true;
+    } catch (err) {
+      console.error(err);
+      Toast.error('Не удалось подготовить ZIP-архив.');
+      return false;
+    }
+  },
 };
 
 
-/* ============================================
-   DROPZONE HELPER
-   ============================================ */
+/* Dropzone helper */
 class Dropzone {
-  /**
-   * @param {HTMLElement} el
-   * @param {Object} opts
-   * @param {Function} opts.onFiles - called with FileList
-   * @param {string[]} opts.accept  - mime types
-   * @param {boolean} opts.multiple
-   */
   constructor(el, opts = {}) {
     this.el   = el;
     this.opts = { multiple: true, accept: [], ...opts };
@@ -186,7 +230,6 @@ class Dropzone {
       if (files.length) this._handle(files);
     });
 
-    // Native file input inside dropzone
     const input = el.querySelector('input[type="file"]');
     if (input) {
       input.multiple = this.opts.multiple;
@@ -197,7 +240,6 @@ class Dropzone {
       });
     }
 
-    // Click anywhere on dropzone triggers input
     el.addEventListener('click', e => {
       if (e.target === el || e.target.closest('.dropzone__icon, .dropzone__title, .dropzone__hint')) {
         input && input.click();
@@ -222,9 +264,7 @@ class Dropzone {
 }
 
 
-/* ============================================
-   FILE LIST MANAGER
-   ============================================ */
+/* File list manager */
 class FileListManager {
   constructor(containerEl) {
     this.container = containerEl;
@@ -263,7 +303,6 @@ class FileListManager {
       this.container.dispatchEvent(new CustomEvent('file-removed', { detail: { id } }));
     };
 
-    // Load thumbnail
     if (file.type.startsWith('image/') && file.type !== 'image/svg+xml') {
       FileUtils.readAsDataURL(file).then(src => {
         const thumb = row.querySelector('.file-item__thumb');
@@ -298,6 +337,12 @@ class FileListManager {
     row.querySelector('.file-item__meta').textContent = text;
   }
 
+  setLocked(locked) {
+    this.container.querySelectorAll('.remove-btn').forEach(btn => {
+      btn.disabled = locked;
+    });
+  }
+
   addDownload(id, blob, filename) {
     const row = this.container.querySelector(`[data-id="${id}"]`);
     if (!row) return;
@@ -314,9 +359,7 @@ class FileListManager {
 }
 
 
-/* ============================================
-   NAVIGATION MOBILE
-   ============================================ */
+/* Mobile navigation */
 document.addEventListener('DOMContentLoaded', () => {
   const toggle = document.querySelector('.nav-toggle');
   const nav    = document.querySelector('.site-nav');
@@ -324,7 +367,6 @@ document.addEventListener('DOMContentLoaded', () => {
     toggle.addEventListener('click', () => nav.classList.toggle('open'));
   }
 
-  // Mark active nav link
   const current = location.pathname.split('/').pop() || 'index.html';
   document.querySelectorAll('.site-nav a').forEach(a => {
     const href = a.getAttribute('href').split('/').pop();

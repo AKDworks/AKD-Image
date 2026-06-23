@@ -4,8 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Конвертировать изображение — AKD Image</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <meta name="description" content="Конвертируйте изображения между JPG, PNG и WebP локально в браузере без отправки файлов на сервер.">
   <link rel="stylesheet" href="../css/main.css">
 </head>
 <body>
@@ -19,23 +18,18 @@
       <h1 class="tool-page__title">
         Конвертировать изображение
       </h1>
-      <p class="tool-page__subtitle">Конвертируйте изображения между форматами: JPG, PNG, WebP, BMP и другими.</p>
+      <p class="tool-page__subtitle">Конвертируйте изображения между форматами JPG, PNG и WebP.</p>
     </div>
-
-    <!-- Drop Zone -->
     <div class="dropzone" id="dropzone">
-      <input type="file" accept="image/*" multiple>
+      <input type="file" accept="image/jpeg,image/png,image/webp" multiple>
       <p class="dropzone__title">Перетащите изображения сюда</p>
       <p class="dropzone__hint">или нажмите для выбора файлов</p>
       <div class="dropzone__formats">
         <span class="fmt-badge">JPG</span>
         <span class="fmt-badge">PNG</span>
         <span class="fmt-badge">WEBP</span>
-        <span class="fmt-badge">BMP</span>
       </div>
     </div>
-
-    <!-- Settings -->
     <div class="tool-panel hidden" id="settings-panel">
       <div class="tool-panel__head">
         <h3>Параметры конвертации</h3>
@@ -49,8 +43,6 @@
               <option value="image/jpeg">JPG</option>
               <option value="image/png">PNG</option>
               <option value="image/webp">WebP</option>
-              <option value="image/bmp">BMP</option>
-              <option value="image/gif">GIF (без анимации)</option>
             </select>
           </div>
           <div class="form-group">
@@ -67,21 +59,15 @@
 
       </div>
     </div>
-
-    <!-- File list -->
     <div class="file-list hidden" id="file-list"></div>
-
-    <!-- Action bar -->
     <div class="hidden mt-16 flex gap-8 items-center" id="action-bar">
       <button class="btn btn-primary btn-lg" id="convert-btn">Конвертировать всё</button>
       <span class="text-muted text-sm" id="file-count"></span>
     </div>
-
-    <!-- Results -->
     <div class="result-area" id="result-area">
       <hr class="divider">
       <div class="result-stats" id="result-stats"></div>
-      <button class="btn btn-success" id="download-all-btn" style="display:none;"> Скачать всё (ZIP)</button>
+      <button class="btn btn-success" id="download-all-btn" style="display:none;">Скачать всё (ZIP)</button>
     </div>
 
   </div>
@@ -100,6 +86,7 @@
   const resultArea  = document.getElementById('result-area');
   const resultStats = document.getElementById('result-stats');
   const dlAllBtn    = document.getElementById('download-all-btn');
+  const previewBtn  = document.getElementById('preview-btn');
   const targetFormat= document.getElementById('target-format');
   const qualityInput = document.getElementById('quality');
   const qualityVal   = document.getElementById('quality-val');
@@ -115,7 +102,7 @@
   });
 
   new Dropzone(dropzoneEl, {
-    accept: ['image/*'],
+    accept: ['image/jpeg','image/png','image/webp'],
     multiple: true,
     onFiles(newFiles) {
       newFiles.forEach(f => files.push({ file: f, item: manager.add(f) }));
@@ -128,7 +115,7 @@
     fileListEl.classList.toggle('hidden', !has);
     settingsEl.classList.toggle('hidden', !has);
     actionBarEl.classList.toggle('hidden', !has);
-    countEl.textContent = files.length + ' файл(ов)';
+    countEl.textContent = FileUtils.formatFilesCount(files.length);
     resultArea.classList.remove('visible');
     results = []; dlAllBtn.style.display = 'none'; resultStats.innerHTML = '';
     const previewBtn = document.getElementById('preview-btn');
@@ -154,8 +141,13 @@
   convertBtn.addEventListener('click', async () => {
     if (!files.length) return;
     convertBtn.disabled = true;
+    clearBtn.disabled = true;
+    dlAllBtn.disabled = true;
+    previewBtn.disabled = true;
+    manager.setLocked(true);
     convertBtn.innerHTML = '<span class="spinner"></span> Конвертирую...';
     results = [];
+    let errors = 0;
 
     const mime = targetFormat.value;
     const q = parseInt(qualityInput.value) / 100;
@@ -176,7 +168,7 @@
         canvas.height = img.naturalHeight;
         const ctx = canvas.getContext('2d');
         
-        if (mime !== 'image/png') {
+        if (mime === 'image/jpeg') {
           ctx.fillStyle = '#ffffff';
           ctx.fillRect(0, 0, canvas.width, canvas.height);
         }
@@ -192,6 +184,7 @@
         manager.addDownload(item.id, blob, newFilename);
         results.push({ blob, filename: newFilename });
       } catch (err) {
+        errors++;
         manager.setStatus(item.id, 'Ошибка', 'status-error');
         console.error(err);
       }
@@ -200,29 +193,26 @@
     if (results.length) {
       resultStats.innerHTML = `
         <div class="stat-card"><div class="stat-card__label">Конвертировано</div><div class="stat-card__value">${results.length}</div></div>
-        <div class="stat-card stat-green"><div class="stat-card__label">Статус</div><div class="stat-card__value"> Завершено</div></div>
+        <div class="stat-card stat-green"><div class="stat-card__label">Статус</div><div class="stat-card__value">Готово</div></div>
       `;
       resultArea.classList.add('visible');
       if (results.length > 1) dlAllBtn.style.display = '';
       Toast.success('Конвертация завершена!');
     }
+    if (errors) {
+      Toast.error('Не удалось обработать ' + FileUtils.formatFilesCount(errors) + '.');
+    }
 
     convertBtn.disabled = false;
+    clearBtn.disabled = false;
+    dlAllBtn.disabled = false;
+    previewBtn.disabled = false;
+    manager.setLocked(false);
     convertBtn.innerHTML = 'Конвертировать всё';
   });
 
   dlAllBtn.addEventListener('click', async () => {
-    if (!window.JSZip) {
-      const s = document.createElement('script');
-      s.src = 'https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js';
-      document.head.appendChild(s);
-      await new Promise(r => s.onload = r);
-    }
-    const zip = new JSZip();
-    results.forEach(r => zip.file(r.filename, r.blob));
-    const z = await zip.generateAsync({ type: 'blob' });
-    FileUtils.downloadBlob(z, 'akd-converted.zip');
-    Toast.success('ZIP архив скачан!');
+    await FileUtils.downloadZip(results, 'akd-converted.zip');
   });
 
 })();
