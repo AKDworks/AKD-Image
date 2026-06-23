@@ -152,16 +152,11 @@
   });
 
   function updateUI() {
-    const hasFiles = files.length > 0;
-    fileListEl.classList.toggle('hidden', !hasFiles);
-    settingsEl.classList.toggle('hidden', !hasFiles);
-    actionBarEl.classList.toggle('hidden', !hasFiles);
-    resultArea.classList.remove('visible');
-    resultStats.innerHTML = '';
+    const hasFiles = UIUtils.updateBatchLayout({ fileListEl, settingsEl, actionBarEl }, files.length);
+    UIUtils.resetBatchResult({ resultArea, resultStats });
+    UIUtils.resetPreview({ previewBtn, previewCanvas: previewWrap }, hasFiles);
     cachedImg = null;
     gridOverlay.innerHTML = '';
-    previewBtn.classList.toggle('hidden', !hasFiles);
-    previewWrap.classList.add('hidden');
   }
 
   clearBtn.addEventListener('click', () => {
@@ -290,7 +285,7 @@
         <div class="stat-card"><div class="stat-card__label">Фрагментов</div><div class="stat-card__value">${count}</div></div>
         <div class="stat-card stat-green"><div class="stat-card__label">Скачано</div><div class="stat-card__value">ZIP-архив</div></div>
       `;
-      resultArea.classList.add('visible');
+      UIUtils.showBatchResult({ resultArea }, 1);
 
     } catch(err) {
       manager.setStatus(item.id, 'Ошибка', 'status-error');
