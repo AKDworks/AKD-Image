@@ -94,6 +94,11 @@
   font-weight: 600;
   color: var(--muted);
 }
+.label-note {
+  color: var(--muted);
+  font-size: 0.85rem;
+  font-weight: 400;
+}
 .form-group input[type="text"],
 .form-group input[type="number"],
 .form-group select,
@@ -390,6 +395,27 @@
   border: none;
   border-top: 1px solid var(--border);
   margin: 24px 0;
+}
+
+/* Preview canvases */
+.preview-canvas {
+  max-width: 100%;
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  margin-top: 16px;
+}
+.preview-canvas--pixelated {
+  image-rendering: pixelated;
+}
+.preview-canvas--checker {
+  background:
+    linear-gradient(45deg, #e5e7eb 25%, transparent 25%),
+    linear-gradient(-45deg, #e5e7eb 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, #e5e7eb 75%),
+    linear-gradient(-45deg, transparent 75%, #e5e7eb 75%);
+  background-color: #fff;
+  background-position: 0 0, 0 8px, 8px -8px, -8px 0;
+  background-size: 16px 16px;
 }
 
 /* Spinners and modals */

@@ -115,8 +115,8 @@
           </label>
         </div>
 
-        <button class="btn btn-secondary mt-16" id="preview-btn" style="display:none;">Предпросмотр (первое изображение)</button>
-        <canvas id="preview-canvas" style="display:none; max-width:100%; border:1px solid var(--border); border-radius:var(--r-md); margin-top:16px;"></canvas>
+        <button class="btn btn-secondary mt-16 hidden" id="preview-btn">Предпросмотр (первое изображение)</button>
+        <canvas class="preview-canvas hidden" id="preview-canvas"></canvas>
 
       </div>
     </div>
@@ -129,7 +129,7 @@
     <div class="result-area" id="result-area">
       <hr class="divider">
       <div class="result-stats" id="result-stats"></div>
-      <button class="btn btn-success" id="download-all-btn" style="display:none;">
+      <button class="btn btn-success hidden" id="download-all-btn">
         Скачать всё (ZIP)
       </button>
     </div>
@@ -236,10 +236,10 @@
     actionBarEl.classList.toggle('hidden', !has);
     countEl.textContent = FileUtils.formatFilesCount(files.length);
     resultArea.classList.remove('visible');
-    results = []; dlAllBtn.style.display = 'none'; resultStats.innerHTML = '';
-    if (previewBtn) previewBtn.style.display = has ? '' : 'none';
+    results = []; dlAllBtn.classList.add('hidden'); resultStats.innerHTML = '';
+    if (previewBtn) previewBtn.classList.toggle('hidden', !(has));
     const canvas = document.getElementById('preview-canvas');
-    if (canvas) canvas.style.display = 'none';
+    if (canvas) canvas.classList.add('hidden');
   }
 
   document.getElementById('preview-btn').addEventListener('click', async () => {
@@ -273,7 +273,7 @@
     canvas.height = nh;
     const ctx = canvas.getContext('2d');
     ctx.drawImage(img, 0, 0, nw, nh);
-    canvas.style.display = 'block';
+    canvas.classList.remove('hidden');
   });
 
   clearBtn.addEventListener('click', () => {
@@ -365,7 +365,7 @@
         <div class="stat-card stat-green"><div class="stat-card__label">Статус</div><div class="stat-card__value">Готово</div></div>
       `;
       resultArea.classList.add('visible');
-      if (results.length > 1) dlAllBtn.style.display = '';
+      dlAllBtn.classList.toggle('hidden', results.length <= 1);
       Toast.success('Размер изменён!');
     }
     if (errors) {
