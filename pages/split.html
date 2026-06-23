@@ -114,6 +114,7 @@
 
   const manager = new FileListManager(fileListEl);
   let files = [];
+  let cachedImg = null;
   
   fileListEl.addEventListener('file-removed', (e) => {
     files = files.filter(f => f.item.id !== e.detail.id);
@@ -156,6 +157,9 @@
     settingsEl.classList.toggle('hidden', !hasFiles);
     actionBarEl.classList.toggle('hidden', !hasFiles);
     resultArea.classList.remove('visible');
+    resultStats.innerHTML = '';
+    cachedImg = null;
+    gridOverlay.innerHTML = '';
     previewBtn.style.display = hasFiles ? '' : 'none';
     previewWrap.style.display = 'none';
   }
@@ -165,8 +169,6 @@
     manager.clear();
     updateUI();
   });
-
-  let cachedImg = null;
 
   previewBtn.addEventListener('click', async () => {
     if (!files.length) return;
@@ -279,6 +281,7 @@
       manager.setMeta(item.id, `${count} фрагментов · ${FileUtils.formatSize(zipBlob.size)}`);
       
       FileUtils.downloadBlob(zipBlob, `${baseName}_split.zip`);
+      Toast.success('ZIP-архив скачан!');
       
       resultStats.innerHTML = `
         <div class="stat-card"><div class="stat-card__label">Фрагментов</div><div class="stat-card__value">${count}</div></div>
@@ -289,6 +292,7 @@
     } catch(err) {
       manager.setStatus(item.id, 'Ошибка', 'status-error');
       console.error(err);
+      Toast.error('Не удалось разделить изображение.');
     }
     
     splitBtn.disabled = false;
