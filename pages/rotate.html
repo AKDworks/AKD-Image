@@ -77,6 +77,7 @@
   const resultStats = document.getElementById('result-stats');
   const dlAllBtn    = document.getElementById('download-all-btn');
   const previewBtn  = document.getElementById('preview-btn');
+  const previewCanvas = document.getElementById('preview-canvas');
 
   let rotation = 0;
   let flipH = false;
@@ -130,34 +131,26 @@
   });
 
   function updateUI() {
-    const has = files.length > 0;
-    fileListEl.classList.toggle('hidden', !has);
-    settingsEl.classList.toggle('hidden', !has);
-    actionBarEl.classList.toggle('hidden', !has);
-    countEl.textContent = FileUtils.formatFilesCount(files.length);
-    resultArea.classList.remove('visible');
-    results = []; dlAllBtn.classList.add('hidden'); resultStats.innerHTML = '';
-    const previewBtn = document.getElementById('preview-btn');
-    if (previewBtn) previewBtn.classList.toggle('hidden', !(has));
-    const canvas = document.getElementById('preview-canvas');
-    if (canvas) canvas.classList.add('hidden');
+    const has = UIUtils.updateBatchLayout({ fileListEl, settingsEl, actionBarEl, countEl }, files.length);
+    UIUtils.resetBatchResult({ resultArea, resultStats, downloadAllBtn: dlAllBtn });
+    UIUtils.resetPreview({ previewBtn, previewCanvas }, has);
+    results = [];
   }
 
-  document.getElementById('preview-btn').addEventListener('click', async () => {
+  previewBtn.addEventListener('click', async () => {
     if (!files.length) return;
     const file = files[0].file;
     const src = await FileUtils.readAsDataURL(file);
     const img = await FileUtils.loadImage(src);
     
-    const canvas = document.getElementById('preview-canvas');
-    const ctx = canvas.getContext('2d');
+    const ctx = previewCanvas.getContext('2d');
     
     const isSwapped = rotation === 90 || rotation === 270;
     const w = isSwapped ? img.naturalHeight : img.naturalWidth;
     const h = isSwapped ? img.naturalWidth : img.naturalHeight;
     
-    canvas.width = w;
-    canvas.height = h;
+    previewCanvas.width = w;
+    previewCanvas.height = h;
     
     ctx.translate(w / 2, h / 2);
     ctx.rotate((rotation * Math.PI) / 180);
@@ -166,7 +159,7 @@
     ctx.scale(scaleX, scaleY);
     ctx.drawImage(img, -img.naturalWidth / 2, -img.naturalHeight / 2);
     
-    canvas.classList.remove('hidden');
+    previewCanvas.classList.remove('hidden');
   });
 
   clearBtn.addEventListener('click', () => {
@@ -234,8 +227,7 @@
         <div class="stat-card"><div class="stat-card__label">Обработано</div><div class="stat-card__value">${results.length}</div></div>
         <div class="stat-card stat-green"><div class="stat-card__label">Статус</div><div class="stat-card__value">Готово</div></div>
       `;
-      resultArea.classList.add('visible');
-      dlAllBtn.classList.toggle('hidden', results.length <= 1);
+      UIUtils.showBatchResult({ resultArea, downloadAllBtn: dlAllBtn }, results.length);
       Toast.success('Поворот завершён.');
     }
     if (errors) {

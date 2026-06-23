@@ -75,6 +75,35 @@ const UIUtils = {
     this.setDisabled(elements, locked);
     if (manager) manager.setLocked(locked);
   },
+
+  setVisible(el, visible) {
+    if (el) el.classList.toggle('hidden', !visible);
+  },
+
+  updateBatchLayout(parts, count) {
+    const hasFiles = count > 0;
+    this.setVisible(parts.fileListEl, hasFiles);
+    this.setVisible(parts.settingsEl, hasFiles);
+    this.setVisible(parts.actionBarEl, hasFiles);
+    if (parts.countEl) parts.countEl.textContent = FileUtils.formatFilesCount(count);
+    return hasFiles;
+  },
+
+  resetBatchResult(parts) {
+    if (parts.resultArea) parts.resultArea.classList.remove('visible');
+    if (parts.resultStats) parts.resultStats.innerHTML = '';
+    this.setVisible(parts.downloadAllBtn, false);
+  },
+
+  resetPreview(parts, hasFiles) {
+    this.setVisible(parts.previewBtn, hasFiles);
+    this.setVisible(parts.previewCanvas, false);
+  },
+
+  showBatchResult(parts, count) {
+    if (parts.resultArea) parts.resultArea.classList.add('visible');
+    this.setVisible(parts.downloadAllBtn, count > 1);
+  },
 };
 
 

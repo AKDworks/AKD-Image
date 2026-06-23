@@ -92,6 +92,7 @@
   const resultStats  = document.getElementById('result-stats');
   const dlAllBtn     = document.getElementById('download-all-btn');
   const previewBtn   = document.getElementById('preview-btn');
+  const previewCanvas = document.getElementById('preview-canvas');
   const qualityInput = document.getElementById('quality');
   const qualityVal   = document.getElementById('quality-val');
   const outputFmt    = document.getElementById('output-format');
@@ -121,30 +122,21 @@
   });
 
   function updateUI() {
-    const hasFiles = files.length > 0;
-    fileListEl.classList.toggle('hidden', !hasFiles);
-    settingsEl.classList.toggle('hidden', !hasFiles);
-    actionBarEl.classList.toggle('hidden', !hasFiles);
-    countEl.textContent = FileUtils.formatFilesCount(files.length);
-    resultArea.classList.remove('visible');
+    const hasFiles = UIUtils.updateBatchLayout({ fileListEl, settingsEl, actionBarEl, countEl }, files.length);
+    UIUtils.resetBatchResult({ resultArea, resultStats, downloadAllBtn: dlAllBtn });
+    UIUtils.resetPreview({ previewBtn, previewCanvas }, hasFiles);
     results = [];
-    if (previewBtn) previewBtn.classList.toggle('hidden', !(hasFiles));
-    const canvas = document.getElementById('preview-canvas');
-    if (canvas) canvas.classList.add('hidden');
-    dlAllBtn.classList.add('hidden');
-    resultStats.innerHTML = '';
   }
 
-  document.getElementById('preview-btn').addEventListener('click', async () => {
+  previewBtn.addEventListener('click', async () => {
     if (!files.length) return;
     const file = files[0].file;
     const src = await FileUtils.readAsDataURL(file);
     const img = await FileUtils.loadImage(src);
-    const canvas = document.getElementById('preview-canvas');
-    canvas.width = img.naturalWidth;
-    canvas.height = img.naturalHeight;
-    canvas.getContext('2d').drawImage(img, 0, 0);
-    canvas.classList.remove('hidden');
+    previewCanvas.width = img.naturalWidth;
+    previewCanvas.height = img.naturalHeight;
+    previewCanvas.getContext('2d').drawImage(img, 0, 0);
+    previewCanvas.classList.remove('hidden');
   });
 
   function plural(n, a, b, c) {
@@ -225,8 +217,7 @@
         <div class="stat-card"><div class="stat-card__label">После</div><div class="stat-card__value">${FileUtils.formatSize(totalAfter)}</div></div>
         <div class="stat-card stat-green"><div class="stat-card__label">Сэкономлено</div><div class="stat-card__value">−${pct}%</div></div>
       `;
-      resultArea.classList.add('visible');
-      dlAllBtn.classList.toggle('hidden', results.length <= 1);
+      UIUtils.showBatchResult({ resultArea, downloadAllBtn: dlAllBtn }, results.length);
       Toast.success('Сжатие завершено.');
     }
     if (errors) {

@@ -87,6 +87,7 @@
   const resultStats = document.getElementById('result-stats');
   const dlAllBtn    = document.getElementById('download-all-btn');
   const previewBtn  = document.getElementById('preview-btn');
+  const previewCanvas = document.getElementById('preview-canvas');
   const targetFormat= document.getElementById('target-format');
   const qualityInput = document.getElementById('quality');
   const qualityVal   = document.getElementById('quality-val');
@@ -111,28 +112,21 @@
   });
 
   function updateUI() {
-    const has = files.length > 0;
-    fileListEl.classList.toggle('hidden', !has);
-    settingsEl.classList.toggle('hidden', !has);
-    actionBarEl.classList.toggle('hidden', !has);
-    countEl.textContent = FileUtils.formatFilesCount(files.length);
-    resultArea.classList.remove('visible');
-    results = []; dlAllBtn.classList.add('hidden'); resultStats.innerHTML = '';
-    if (previewBtn) previewBtn.classList.toggle('hidden', !(has));
-    const canvas = document.getElementById('preview-canvas');
-    if (canvas) canvas.classList.add('hidden');
+    const has = UIUtils.updateBatchLayout({ fileListEl, settingsEl, actionBarEl, countEl }, files.length);
+    UIUtils.resetBatchResult({ resultArea, resultStats, downloadAllBtn: dlAllBtn });
+    UIUtils.resetPreview({ previewBtn, previewCanvas }, has);
+    results = [];
   }
 
-  document.getElementById('preview-btn').addEventListener('click', async () => {
+  previewBtn.addEventListener('click', async () => {
     if (!files.length) return;
     const file = files[0].file;
     const src = await FileUtils.readAsDataURL(file);
     const img = await FileUtils.loadImage(src);
-    const canvas = document.getElementById('preview-canvas');
-    canvas.width = img.naturalWidth;
-    canvas.height = img.naturalHeight;
-    canvas.getContext('2d').drawImage(img, 0, 0);
-    canvas.classList.remove('hidden');
+    previewCanvas.width = img.naturalWidth;
+    previewCanvas.height = img.naturalHeight;
+    previewCanvas.getContext('2d').drawImage(img, 0, 0);
+    previewCanvas.classList.remove('hidden');
   });
 
   clearBtn.addEventListener('click', () => { files = []; manager.clear(); updateUI(); });
@@ -191,8 +185,7 @@
         <div class="stat-card"><div class="stat-card__label">Конвертировано</div><div class="stat-card__value">${results.length}</div></div>
         <div class="stat-card stat-green"><div class="stat-card__label">Статус</div><div class="stat-card__value">Готово</div></div>
       `;
-      resultArea.classList.add('visible');
-      dlAllBtn.classList.toggle('hidden', results.length <= 1);
+      UIUtils.showBatchResult({ resultArea, downloadAllBtn: dlAllBtn }, results.length);
       Toast.success('Конвертация завершена.');
     }
     if (errors) {
