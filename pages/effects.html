@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Фотоэффекты — AKD Image</title>
+  <meta name="description" content="Настраивайте яркость, контраст, насыщенность, размытие и другие эффекты для изображений прямо в браузере.">
   <link rel="stylesheet" href="../css/main.css">
   <style>
     .workspace-wrap {
@@ -52,8 +53,6 @@
       </h1>
       <p class="tool-page__subtitle">Корректируйте яркость, контраст, насыщенность, размытие и применяйте фильтры.</p>
     </div>
-
-    <!-- Drop Zone -->
     <div class="dropzone" id="dropzone">
       <input type="file" accept="image/jpeg,image/png,image/webp">
       <p class="dropzone__title">Перетащите изображение сюда</p>
@@ -64,17 +63,11 @@
         <span class="fmt-badge">WEBP</span>
       </div>
     </div>
-
-    <!-- Workspace -->
     <div class="hidden" id="workspace-panel">
       <div class="workspace-wrap">
-        
-        <!-- Left Pane: Preview -->
         <div class="preview-box">
           <canvas id="preview-canvas"></canvas>
         </div>
-
-        <!-- Right Pane: Controls -->
         <div class="tool-panel">
           <div class="tool-panel__head">
             <h3>Фильтры</h3>
@@ -185,7 +178,6 @@
   let activeImage = null;
   let activeFile = null;
 
-  // Handle inputs
   const sliders = [
     { el: brightnessInput, valEl: document.getElementById('brightness-val'), suffix: '%' },
     { el: contrastInput,   valEl: document.getElementById('contrast-val'),   suffix: '%' },
@@ -238,7 +230,6 @@
 
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     
-    // Construct CSS filter string
     ctx.filter = `
       brightness(${brightness}%)
       contrast(${contrast}%)

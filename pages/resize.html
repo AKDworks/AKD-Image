@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Изменить размер изображения — AKD Image</title>
+  <meta name="description" content="Изменяйте размер JPG, PNG и WebP по пикселям, процентам или длинной стороне без загрузки файлов на сервер.">
   <link rel="stylesheet" href="../css/main.css">
 </head>
 <body>
@@ -19,8 +20,6 @@
       </h1>
       <p class="tool-page__subtitle">Задайте точные размеры в пикселях или процентах. Обрабатывайте сразу несколько изображений.</p>
     </div>
-
-    <!-- Drop Zone -->
     <div class="dropzone" id="dropzone">
       <input type="file" accept="image/jpeg,image/png,image/webp" multiple>
       <p class="dropzone__title">Перетащите изображения сюда</p>
@@ -31,16 +30,12 @@
         <span class="fmt-badge">WEBP</span>
       </div>
     </div>
-
-    <!-- Settings -->
     <div class="tool-panel hidden" id="settings-panel">
       <div class="tool-panel__head">
         <h3>Параметры размера</h3>
         <button class="btn btn-sm btn-secondary" id="clear-btn">Очистить всё</button>
       </div>
       <div class="tool-panel__body">
-
-        <!-- Mode selector -->
         <div class="form-group mb-16">
           <label>Режим изменения размера</label>
           <div class="radio-group" id="mode-group">
@@ -49,8 +44,6 @@
             <label class="radio-option"><input type="radio" name="resize-mode" value="longest"> По длинной стороне</label>
           </div>
         </div>
-
-        <!-- Pixel mode -->
         <div id="mode-px">
           <div class="form-row">
             <div class="form-group">
@@ -73,8 +66,6 @@
             </label>
           </div>
         </div>
-
-        <!-- Percent mode -->
         <div id="mode-pct" class="hidden">
           <div class="form-group">
             <label>Масштаб (%)</label>
@@ -84,8 +75,6 @@
             </div>
           </div>
         </div>
-
-        <!-- Longest side mode -->
         <div id="mode-longest" class="hidden">
           <div class="form-group">
             <label>Длинная сторона (px)</label>
@@ -131,16 +120,12 @@
 
       </div>
     </div>
-
-    <!-- File list -->
     <div class="file-list hidden" id="file-list"></div>
 
     <div class="hidden mt-16 flex gap-8 items-center" id="action-bar">
       <button class="btn btn-primary btn-lg" id="resize-btn">Изменить размер</button>
       <span class="text-muted text-sm" id="file-count"></span>
     </div>
-
-    <!-- Results -->
     <div class="result-area" id="result-area">
       <hr class="divider">
       <div class="result-stats" id="result-stats"></div>
@@ -187,11 +172,9 @@
     updateUI();
   });
 
-  // Quality display
   qualityInput.addEventListener('input', () => { qualityVal.textContent = qualityInput.value + '%'; });
   scalePct.addEventListener('input', () => { scalePctVal.textContent = scalePct.value + '%'; });
 
-  // Mode switching
   document.querySelectorAll('input[name="resize-mode"]').forEach(r => {
     r.addEventListener('change', () => {
       const v = r.value;
@@ -201,7 +184,7 @@
     });
   });
 
-  // Keep ratio: sync width <-> height
+  // Keep width and height in the original ratio.
   let lastW = 800, lastH = 600;
   widthInput.addEventListener('input', () => {
     if (!keepRatio.checked) return;
@@ -214,7 +197,6 @@
     widthInput.value = Math.round(parseInt(heightInput.value) * ratio) || 1;
   });
 
-  // Dropzone
   new Dropzone(dropzoneEl, {
     accept: ['image/jpeg','image/png','image/webp'],
     multiple: true,
@@ -339,7 +321,7 @@
           const s = parseInt(scalePct.value) / 100;
           targetW = Math.round(origW * s);
           targetH = Math.round(origH * s);
-        } else { // longest
+        } else {
           const lp = parseInt(longestPx.value) || 1200;
           const r  = origW > origH ? lp / origW : lp / origH;
           const nr = noEnlarge.checked ? Math.min(r, 1) : r;

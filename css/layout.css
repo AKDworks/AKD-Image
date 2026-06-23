@@ -1,6 +1,4 @@
-/* ============================================
-   LAYOUT
-   ============================================ */
+/* Layout */
 main {
   display: block;
   flex: 1;
@@ -13,9 +11,7 @@ main {
 .container--narrow { max-width: 760px; }
 .container--wide   { max-width: 1280px; }
 
-/* ============================================
-   HEADER / NAV
-   ============================================ */
+/* Header and navigation */
 .site-header {
   background: var(--surface);
   border-bottom: 1px solid var(--border);
@@ -94,9 +90,7 @@ main {
 }
 .nav-toggle svg { width: 24px; height: 24px; }
 
-/* ============================================
-   FOOTER
-   ============================================ */
+/* Footer */
 .site-footer {
   border-top: 1px solid var(--border);
   padding: 32px 0;

@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Пикселизатор — AKD Image</title>
+  <meta name="description" content="Пикселизируйте JPG, PNG и WebP в стиле pixel art с настраиваемым размером пикселя.">
   <link rel="stylesheet" href="../css/main.css">
 </head>
 <body>
@@ -17,8 +18,6 @@
       <h1 class="tool-page__title">Пикселизатор</h1>
       <p class="tool-page__subtitle">Стилизуйте JPG, PNG или WebP под пиксель-арт с настраиваемым размером пикселя.</p>
     </div>
-
-    <!-- Drop Zone -->
     <div class="dropzone" id="dropzone">
       <input type="file" accept="image/jpeg,image/png,image/webp" multiple>
       <p class="dropzone__title">Перетащите изображения сюда</p>
@@ -29,8 +28,6 @@
         <span class="fmt-badge">WEBP</span>
       </div>
     </div>
-
-    <!-- Settings panel -->
     <div class="tool-panel hidden" id="settings-panel">
       <div class="tool-panel__head">
         <h3>Настройки</h3>
@@ -51,19 +48,13 @@
 
       </div>
     </div>
-
-    <!-- File list -->
     <div class="file-list hidden" id="file-list"></div>
-
-    <!-- Action buttons -->
     <div class="hidden mt-16 flex gap-8 items-center flex-wrap" id="action-bar">
       <button class="btn btn-primary btn-lg" id="pixelate-btn">
         Пикселизировать
       </button>
       <span class="text-muted text-sm" id="file-count"></span>
     </div>
-
-    <!-- Results -->
     <div class="result-area" id="result-area">
       <hr class="divider">
       <div class="result-stats" id="result-stats"></div>
@@ -144,21 +135,18 @@
     canvas.height = img.naturalHeight;
     const ctx = canvas.getContext('2d');
     
-    // Disable smoothing
     ctx.imageSmoothingEnabled = false;
 
-    // Calc small sizes
+    // Downscale, then upscale without smoothing for a pixelated look.
     const w = Math.max(1, Math.floor(canvas.width / pSize));
     const h = Math.max(1, Math.floor(canvas.height / pSize));
 
-    // Draw small
     const offCanvas = document.createElement('canvas');
     offCanvas.width = w;
     offCanvas.height = h;
     const offCtx = offCanvas.getContext('2d');
     offCtx.drawImage(img, 0, 0, w, h);
 
-    // Draw big
     ctx.drawImage(offCanvas, 0, 0, w, h, 0, 0, canvas.width, canvas.height);
     return canvas;
   }

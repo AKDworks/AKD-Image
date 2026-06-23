@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Обрезать изображение — AKD Image</title>
+  <meta name="description" content="Обрезайте JPG, PNG и WebP по выбранной области или точным координатам. Файлы остаются на вашем устройстве.">
   <link rel="stylesheet" href="../css/main.css">
   <style>
     .crop-workspace {
@@ -31,14 +32,12 @@
       max-height: 70vh;
       pointer-events: none;
     }
-    /* Shaded area outside crop selection */
     .crop-shade {
       position: absolute;
       top: 0; left: 0; right: 0; bottom: 0;
       background: rgba(0, 0, 0, 0.6);
       pointer-events: none;
     }
-    /* Active crop box */
     .crop-box {
       position: absolute;
       border: 2px solid var(--accent);
@@ -47,7 +46,6 @@
       box-sizing: border-box;
       touch-action: none;
     }
-    /* Selection handles */
     .crop-handle {
       position: absolute;
       width: 12px;
@@ -107,8 +105,6 @@
       </h1>
       <p class="tool-page__subtitle">Обрезайте JPG, PNG или WebP путем установки прямоугольника в пикселях. Обрезать изображение онлайн.</p>
     </div>
-
-    <!-- Drop Zone -->
     <div class="dropzone" id="dropzone">
       <input type="file" accept="image/jpeg,image/png,image/webp">
       <p class="dropzone__title">Перетащите изображение сюда для обрезки</p>
@@ -119,8 +115,6 @@
         <span class="fmt-badge">WEBP</span>
       </div>
     </div>
-
-    <!-- Crop Workspace (hidden until loaded) -->
     <div class="tool-panel hidden" id="workspace-panel">
       <div class="tool-panel__head">
         <h3>Область обрезки</h3>
@@ -144,14 +138,11 @@
         </div>
       </div>
     </div>
-
-    <!-- Settings -->
     <div class="tool-panel hidden" id="settings-panel">
       <div class="tool-panel__head">
         <h3>Настройки обрезки</h3>
       </div>
       <div class="tool-panel__body">
-        <!-- Ratios -->
         <label style="display:block;margin-bottom:6px;font-weight:600;font-size:0.85rem;">Пропорции (Aspect Ratio)</label>
         <div class="ratio-btn-grid" id="ratio-grid">
           <button class="ratio-btn active" data-ratio="free">Свободно</button>
@@ -161,8 +152,6 @@
           <button class="ratio-btn" data-ratio="1.5">3:2</button>
           <button class="ratio-btn" data-ratio="0.5625">9:16 (Story)</button>
         </div>
-
-        <!-- Coordinates -->
         <div class="form-row">
           <div class="form-group">
             <label>X (слева, px)</label>
@@ -183,8 +172,6 @@
         </div>
 
         <hr class="divider">
-
-        <!-- Output Settings -->
         <div class="form-row">
           <div class="form-group">
             <label>Формат вывода</label>
@@ -205,13 +192,9 @@
         </div>
       </div>
     </div>
-
-    <!-- Actions -->
     <div class="hidden mt-16 flex gap-8 items-center" id="action-bar">
       <button class="btn btn-primary btn-lg" id="apply-crop-btn">Обрезать изображение</button>
     </div>
-
-    <!-- Result Area -->
     <div class="result-area" id="result-area">
       <hr class="divider">
       <div class="result-stats" id="result-stats"></div>
@@ -246,13 +229,11 @@
   const cropBox         = document.getElementById('crop-box');
   const cropContainer   = document.getElementById('crop-container');
 
-  // Input fields
   const inpX = document.getElementById('crop-x');
   const inpY = document.getElementById('crop-y');
   const inpW = document.getElementById('crop-w');
   const inpH = document.getElementById('crop-h');
 
-  // Output inputs
   const qualityInput = document.getElementById('quality');
   const qualityVal   = document.getElementById('quality-val');
   const outputFmt    = document.getElementById('output-format');
@@ -263,15 +244,13 @@
   let imgNaturalW = 0;
   let imgNaturalH = 0;
 
-  // Active crop state (in original image coordinates)
+  // Crop rectangle is stored in original image pixels.
   let cropState = { x: 0, y: 0, w: 0, h: 0 };
-  let currentRatio = 'free'; // 'free' or number
+  let currentRatio = 'free';
 
-  // UI coordinates (rendered dimensions of image)
   let renderW = 0;
   let renderH = 0;
 
-  // Dropzone
   new Dropzone(dropzoneEl, {
     accept: ['image/jpeg','image/png','image/webp'],
     multiple: false,
@@ -304,13 +283,12 @@
       imgNaturalW = sourceImg.naturalWidth;
       imgNaturalH = sourceImg.naturalHeight;
 
-      // Update max inputs
       inpX.max = imgNaturalW;
       inpY.max = imgNaturalH;
       inpW.max = imgNaturalW;
       inpH.max = imgNaturalH;
 
-      // Reset cropState to default (80% centered box)
+      // Start with an 80% centered crop box.
       let w = Math.round(imgNaturalW * 0.8);
       let h = Math.round(imgNaturalH * 0.8);
 
@@ -332,7 +310,6 @@
     };
   }
 
-  // Handle resized window
   window.addEventListener('resize', () => {
     if (activeFile) updateUIFromState();
   });
@@ -345,27 +322,23 @@
 
     const scale = renderW / imgNaturalW;
 
-    // Set crop box style
     cropBox.style.left   = (cropState.x * scale) + 'px';
     cropBox.style.top    = (cropState.y * scale) + 'px';
     cropBox.style.width  = (cropState.w * scale) + 'px';
     cropBox.style.height = (cropState.h * scale) + 'px';
 
-    // Set inputs
     inpX.value = Math.round(cropState.x);
     inpY.value = Math.round(cropState.y);
     inpW.value = Math.round(cropState.w);
     inpH.value = Math.round(cropState.h);
   }
 
-  // Update State from Inputs
   function updateStateFromInputs() {
     let x = parseInt(inpX.value) || 0;
     let y = parseInt(inpY.value) || 0;
     let w = parseInt(inpW.value) || 100;
     let h = parseInt(inpH.value) || 100;
 
-    // Bounds checking
     x = Math.max(0, Math.min(imgNaturalW - 1, x));
     y = Math.max(0, Math.min(imgNaturalH - 1, y));
     w = Math.max(1, Math.min(imgNaturalW - x, w));
@@ -388,14 +361,12 @@
     input.addEventListener('change', updateStateFromInputs);
   });
 
-  // Handle aspect ratios
   document.getElementById('ratio-grid').querySelectorAll('.ratio-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       document.getElementById('ratio-grid').querySelectorAll('.ratio-btn').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
       currentRatio = btn.dataset.ratio;
 
-      // Adjust box to match ratio
       if (currentRatio !== 'free') {
         const ratio = parseFloat(currentRatio);
         let w = cropState.w;
@@ -416,9 +387,9 @@
     });
   });
 
-  // DRAGGING AND RESIZING LOGIC
+  // Drag and resize the crop box.
   let isDragging = false;
-  let dragMode = 'move'; // 'move' or 'nw', 'ne', 'sw', 'se', 'n', 's', 'w', 'e'
+  let dragMode = 'move';
   let startX = 0, startY = 0;
   let startCrop = {};
 
@@ -463,7 +434,6 @@
       x = Math.max(0, Math.min(imgNaturalW - w, x + dx));
       y = Math.max(0, Math.min(imgNaturalH - h, y + dy));
     } else {
-      // Resizing
       if (dragMode.includes('e')) {
         w = Math.max(10, Math.min(imgNaturalW - x, w + dx));
         if (ratio) h = w / ratio;
@@ -485,7 +455,6 @@
         if (ratio) w = h * ratio;
       }
 
-      // Check bounds again if aspect ratio is locked
       if (ratio) {
         if (x + w > imgNaturalW) {
           w = imgNaturalW - x;
@@ -516,7 +485,6 @@
     window.removeEventListener('touchend', endDrag);
   }
 
-  // EXECUTE CROP
   let croppedBlob = null;
   applyCropBtn.addEventListener('click', async () => {
     if (!activeFile) return;
@@ -540,8 +508,8 @@
 
       ctx.drawImage(
         sourceImg,
-        cropState.x, cropState.y, cropState.w, cropState.h, // source
-        0, 0, cropState.w, cropState.h // dest
+        cropState.x, cropState.y, cropState.w, cropState.h,
+        0, 0, cropState.w, cropState.h
       );
 
       croppedBlob = await FileUtils.canvasToBlob(canvas, mime, quality);

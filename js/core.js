@@ -1,11 +1,4 @@
-/**
- * AKD IMAGE — Core Utilities
- * Shared across all tool pages
- */
-
-/* ============================================
-   TOAST NOTIFICATIONS
-   ============================================ */
+/* Toast notifications */
 const Toast = (() => {
   let container = null;
 
@@ -39,9 +32,7 @@ const Toast = (() => {
 })();
 
 
-/* ============================================
-   MODAL
-   ============================================ */
+/* Modal */
 const Modal = (() => {
   let overlay = null;
 
@@ -72,9 +63,7 @@ const Modal = (() => {
 })();
 
 
-/* ============================================
-   FILE UTILITIES
-   ============================================ */
+/* File utilities */
 const FileUtils = {
   formatSize(bytes) {
     if (bytes < 1024)       return bytes + ' B';
@@ -151,7 +140,6 @@ const FileUtils = {
     setTimeout(() => document.body.removeChild(a), 300);
   },
 
-  // Загрузка изображения как HTMLImageElement
   loadImage(src) {
     return new Promise((res, rej) => {
       const img = new Image();
@@ -161,7 +149,6 @@ const FileUtils = {
     });
   },
 
-  // Нарисовать img на canvas и получить Blob
   canvasToBlob(canvas, mimeType = 'image/jpeg', quality = 0.85) {
     return new Promise((res, rej) => {
       canvas.toBlob(b => b ? res(b) : rej(new Error('Ошибка canvas')), mimeType, quality);
@@ -204,17 +191,8 @@ const FileUtils = {
 };
 
 
-/* ============================================
-   DROPZONE HELPER
-   ============================================ */
+/* Dropzone helper */
 class Dropzone {
-  /**
-   * @param {HTMLElement} el
-   * @param {Object} opts
-   * @param {Function} opts.onFiles - called with FileList
-   * @param {string[]} opts.accept  - mime types
-   * @param {boolean} opts.multiple
-   */
   constructor(el, opts = {}) {
     this.el   = el;
     this.opts = { multiple: true, accept: [], ...opts };
@@ -238,7 +216,6 @@ class Dropzone {
       if (files.length) this._handle(files);
     });
 
-    // Native file input inside dropzone
     const input = el.querySelector('input[type="file"]');
     if (input) {
       input.multiple = this.opts.multiple;
@@ -249,7 +226,6 @@ class Dropzone {
       });
     }
 
-    // Click anywhere on dropzone triggers input
     el.addEventListener('click', e => {
       if (e.target === el || e.target.closest('.dropzone__icon, .dropzone__title, .dropzone__hint')) {
         input && input.click();
@@ -274,9 +250,7 @@ class Dropzone {
 }
 
 
-/* ============================================
-   FILE LIST MANAGER
-   ============================================ */
+/* File list manager */
 class FileListManager {
   constructor(containerEl) {
     this.container = containerEl;
@@ -315,7 +289,6 @@ class FileListManager {
       this.container.dispatchEvent(new CustomEvent('file-removed', { detail: { id } }));
     };
 
-    // Load thumbnail
     if (file.type.startsWith('image/') && file.type !== 'image/svg+xml') {
       FileUtils.readAsDataURL(file).then(src => {
         const thumb = row.querySelector('.file-item__thumb');
@@ -366,9 +339,7 @@ class FileListManager {
 }
 
 
-/* ============================================
-   NAVIGATION MOBILE
-   ============================================ */
+/* Mobile navigation */
 document.addEventListener('DOMContentLoaded', () => {
   const toggle = document.querySelector('.nav-toggle');
   const nav    = document.querySelector('.site-nav');
@@ -376,7 +347,6 @@ document.addEventListener('DOMContentLoaded', () => {
     toggle.addEventListener('click', () => nav.classList.toggle('open'));
   }
 
-  // Mark active nav link
   const current = location.pathname.split('/').pop() || 'index.html';
   document.querySelectorAll('.site-nav a').forEach(a => {
     const href = a.getAttribute('href').split('/').pop();

@@ -1,6 +1,4 @@
-/* ============================================
-   HERO (home page)
-   ============================================ */
+/* Home hero */
 .hero {
   text-align: center;
   padding: 64px 24px 16px;
@@ -31,9 +29,7 @@
   margin-bottom: 20px;
 }
 
-/* ============================================
-   TOOLS GRID & FILTERS
-   ============================================ */
+/* Tools grid and filters */
 .tool-filters {
   display: flex;
   flex-wrap: wrap;
@@ -131,9 +127,7 @@
 .ic-pink   { background: #FDF2F8; }
 .ic-teal   { background: #F0FDFA; }
 
-/* ============================================
-   TOOL PAGE LAYOUT
-   ============================================ */
+/* Tool page layout */
 .tool-page {
   padding: 56px 0 80px;
 }

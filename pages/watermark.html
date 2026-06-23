@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Водяной знак — AKD Image</title>
+  <meta name="description" content="Добавляйте текстовый водяной знак или логотип на JPG, PNG и WebP прямо в браузере с локальной обработкой файлов.">
   <link rel="stylesheet" href="../css/main.css">
   <style>
     .position-grid {
@@ -65,8 +66,6 @@
       </h1>
       <p class="tool-page__subtitle">Добавьте текст или логотип на изображения. Пакетная обработка поддерживается.</p>
     </div>
-
-    <!-- Drop Zone -->
     <div class="dropzone" id="dropzone">
       <input type="file" accept="image/jpeg,image/png,image/webp" multiple>
       <p class="dropzone__title">Перетащите изображения для обработки</p>
@@ -77,22 +76,16 @@
         <span class="fmt-badge">WEBP</span>
       </div>
     </div>
-
-    <!-- Settings -->
     <div class="tool-panel hidden" id="settings-panel">
       <div class="tool-panel__head">
         <h3>Водяной знак</h3>
         <button class="btn btn-sm btn-secondary" id="clear-btn">Очистить всё</button>
       </div>
       <div class="tool-panel__body">
-
-        <!-- Tabs -->
         <div class="wm-tabs">
           <button class="wm-tab active" data-tab="text">Текст</button>
           <button class="wm-tab" data-tab="image">Изображение / Логотип</button>
         </div>
-
-        <!-- Text watermark -->
         <div id="tab-text">
           <div class="form-row">
             <div class="form-group flex-1">
@@ -129,8 +122,6 @@
             </div>
           </div>
         </div>
-
-        <!-- Image watermark -->
         <div id="tab-image" class="hidden">
           <div class="dropzone" id="logo-dropzone" style="padding:20px 24px;">
             <input type="file" accept="image/png,image/svg+xml,image/webp" id="logo-input">
@@ -147,7 +138,6 @@
             <div id="saved-logos-container" style="margin-top:12px;">
               <label style="display:block;margin-bottom:6px;font-size:0.75rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.05em;">Мои ссылки</label>
               <div id="saved-logos-list" style="display:flex;flex-direction:column;gap:6px;max-height:120px;overflow-y:auto;padding-right:4px;">
-                <!-- Saved items go here -->
               </div>
             </div>
           </div>
@@ -167,8 +157,6 @@
         </div>
 
         <hr class="divider">
-
-        <!-- Position -->
         <div class="form-row" style="align-items:flex-start;">
           <div class="form-group">
             <label>Позиция</label>
@@ -196,8 +184,6 @@
             </div>
           </div>
         </div>
-
-        <!-- Tile option -->
         <div class="toggle-row">
           <div>
             <div class="toggle-label">Замостить по всему изображению</div>
@@ -228,19 +214,13 @@
             </div>
           </div>
         </div>
-
-        <!-- Live preview button -->
         <button class="btn btn-secondary mt-16" id="preview-btn" style="display:none;">
           Предпросмотр (первое изображение)
         </button>
         <canvas id="preview-canvas"></canvas>
       </div>
     </div>
-
-    <!-- File list -->
     <div class="file-list hidden" id="file-list"></div>
-
-    <!-- Action bar -->
     <div class="hidden mt-16 flex gap-8 items-center" id="action-bar">
       <button class="btn btn-primary btn-lg" id="apply-btn">Добавить водяной знак</button>
       <span class="text-muted text-sm" id="file-count"></span>
@@ -258,7 +238,6 @@
 <script src="../js/core.js"></script>
 <script>
 (function () {
-  // UI refs
   const dropzoneEl  = document.getElementById('dropzone');
   const fileListEl  = document.getElementById('file-list');
   const settingsEl  = document.getElementById('settings-panel');
@@ -272,7 +251,6 @@
   const previewBtn  = document.getElementById('preview-btn');
   const previewCanvas = document.getElementById('preview-canvas');
 
-  // Text controls
   const wmText     = document.getElementById('wm-text');
   const wmColor    = document.getElementById('wm-color');
   const wmFontSize = document.getElementById('wm-font-size');
@@ -291,7 +269,6 @@
   wmOpacity.addEventListener('input', () => { wmOpacityVal.textContent = wmOpacity.value + '%'; });
   logoSizeInput.addEventListener('input', () => { logoSizeVal.textContent = logoSizeInput.value + '%'; });
 
-  // Tabs
   let activeTab = 'text';
   document.querySelectorAll('.wm-tab').forEach(tab => {
     tab.addEventListener('click', () => {
@@ -303,7 +280,6 @@
     });
   });
 
-  // Position grid
   let selectedPos = 'bottom-right';
   document.querySelectorAll('.pos-btn').forEach(btn => {
     btn.addEventListener('click', () => {
@@ -313,7 +289,6 @@
     });
   });
 
-  // Logo upload & URLs
   let logoImage = null;
   const logoInput = document.getElementById('logo-input');
   const logoUrlInput = document.getElementById('logo-url-input');
@@ -322,7 +297,6 @@
   const logoPreviewWrap = document.getElementById('logo-preview-wrap');
   const logoPreviewEl   = document.getElementById('logo-preview');
 
-  // Load saved logos from localStorage
   let savedLogos = [];
   try {
     savedLogos = JSON.parse(localStorage.getItem('akd_watermark_svgs') || '[]');
@@ -405,7 +379,6 @@
 
   renderSavedLogos();
 
-  // Files
   const manager = new FileListManager(fileListEl);
   let files = [], results = [];
 
@@ -438,7 +411,7 @@
 
   clearBtn.addEventListener('click', () => { files = []; manager.clear(); updateUI(); });
 
-  // === CORE WATERMARK FUNCTION ===
+  // Draw text or logo watermark on a new canvas.
   async function applyWatermark(img) {
     const canvas = document.createElement('canvas');
     canvas.width  = img.naturalWidth;
@@ -459,7 +432,6 @@
       ctx.textBaseline = 'middle';
 
       if (wmTile.checked) {
-        // Tile diagonally
         ctx.save();
         ctx.globalAlpha = Math.min(opacity, 0.3);
         const metrics = ctx.measureText(text);
@@ -481,7 +453,6 @@
         ctx.fillText(text, x, y);
       }
     } else {
-      // Image watermark
       if (!logoImage) { ctx.globalAlpha = 1; return canvas; }
       const logoW = Math.round(canvas.width * (parseInt(logoSizeInput.value) / 100));
       const logoH = Math.round(logoImage.naturalHeight * (logoW / logoImage.naturalWidth));
@@ -519,7 +490,6 @@
     return positions[pos] || positions['bottom-right'];
   }
 
-  // Preview
   previewBtn.addEventListener('click', async () => {
     if (!files.length) return;
     const dataURL = await FileUtils.readAsDataURL(files[0].file);
@@ -531,7 +501,6 @@
     previewCanvas.style.display = 'block';
   });
 
-  // Apply
   applyBtn.addEventListener('click', async () => {
     if (!files.length) return;
     if (activeTab === 'image' && !logoImage) {

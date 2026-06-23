@@ -1,8 +1,4 @@
-/**
- * AKD IMAGE — Shared Layout
- * Inject header and footer into every page
- */
-
+/* Shared layout */
 (function () {
   const tools = [
     { href: '../pages/compress.html',   label: 'Сжать' },
@@ -13,7 +9,6 @@
     { href: '../pages/rotate.html',     label: 'Повернуть' }
   ];
 
-  // Determine relative path prefix (pages vs root)
   const isRoot = !location.pathname.includes('/pages/');
   const prefix = isRoot ? '' : '../';
 
@@ -61,12 +56,10 @@ const headerHTML = `
   const toastContainer = `<div class="toast-container" id="toast-container"></div>`;
 
   document.addEventListener('DOMContentLoaded', () => {
-    // Insert header before body content
     document.body.insertAdjacentHTML('afterbegin', headerHTML);
     document.body.insertAdjacentHTML('beforeend', footerHTML);
     document.body.insertAdjacentHTML('beforeend', toastContainer);
 
-    // Mark active nav link
     const current = location.pathname;
     document.querySelectorAll('.site-nav a').forEach(a => {
       if (current.endsWith(a.getAttribute('href').replace('../', '').replace('./', ''))) {

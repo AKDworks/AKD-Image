@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Генератор мемов — AKD Image</title>
+  <meta name="description" content="Создавайте мемы из JPG, PNG и WebP: добавляйте верхний и нижний текст и скачивайте готовые изображения.">
   <link rel="stylesheet" href="../css/main.css">
   <style>
     #preview-canvas {
@@ -26,8 +27,6 @@
       <h1 class="tool-page__title">Генератор мемов</h1>
       <p class="tool-page__subtitle">Добавляйте текст сверху и снизу изображения для создания мемов.</p>
     </div>
-
-    <!-- Drop Zone -->
     <div class="dropzone" id="dropzone">
       <input type="file" accept="image/jpeg,image/png,image/webp" multiple>
       <p class="dropzone__title">Перетащите изображения сюда</p>
@@ -38,8 +37,6 @@
         <span class="fmt-badge">WEBP</span>
       </div>
     </div>
-
-    <!-- Settings -->
     <div class="tool-panel hidden" id="settings-panel">
       <div class="tool-panel__head">
         <h3>Настройки</h3>
@@ -67,19 +64,13 @@
             <input type="number" id="font-size" value="48" min="10" max="300">
           </div>
         </div>
-
-        <!-- Live preview button -->
         <button class="btn btn-secondary mt-16" id="preview-btn" style="display:none;">
           Предпросмотр
         </button>
         <canvas id="preview-canvas"></canvas>
       </div>
     </div>
-
-    <!-- File list -->
     <div class="file-list hidden" id="file-list"></div>
-
-    <!-- Action bar -->
     <div class="hidden mt-16 flex gap-8 items-center" id="action-bar">
       <button class="btn btn-primary btn-lg" id="apply-btn">Создать мем</button>
       <span class="text-muted text-sm" id="file-count"></span>

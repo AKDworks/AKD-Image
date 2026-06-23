@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Повернуть и отразить — AKD Image</title>
+  <meta name="description" content="Поворачивайте и отражайте JPG, PNG и WebP в браузере. Выберите угол, примените отражение и скачайте результат.">
   <link rel="stylesheet" href="../css/main.css">
 </head>
 <body>
@@ -19,8 +20,6 @@
       </h1>
       <p class="tool-page__subtitle">Поворачивайте изображения на 90°, 180°, 270° или отражайте по горизонтали и вертикали.</p>
     </div>
-
-    <!-- Drop Zone -->
     <div class="dropzone" id="dropzone">
       <input type="file" accept="image/jpeg,image/png,image/webp" multiple>
       <p class="dropzone__title">Перетащите изображения сюда</p>
@@ -31,8 +30,6 @@
         <span class="fmt-badge">WEBP</span>
       </div>
     </div>
-
-    <!-- Settings -->
     <div class="tool-panel hidden" id="settings-panel">
       <div class="tool-panel__head">
         <h3>Действия</h3>
@@ -52,17 +49,11 @@
 
       </div>
     </div>
-
-    <!-- File list -->
     <div class="file-list hidden" id="file-list"></div>
-
-    <!-- Action bar -->
     <div class="hidden mt-16 flex gap-8 items-center" id="action-bar">
       <button class="btn btn-primary btn-lg" id="apply-btn">Применить и скачать</button>
       <span class="text-muted text-sm" id="file-count"></span>
     </div>
-
-    <!-- Results -->
     <div class="result-area" id="result-area">
       <hr class="divider">
       <div class="result-stats" id="result-stats"></div>
@@ -86,7 +77,7 @@
   const resultStats = document.getElementById('result-stats');
   const dlAllBtn    = document.getElementById('download-all-btn');
 
-  let rotation = 0; // 0, 90, 180, 270
+  let rotation = 0;
   let flipH = false;
   let flipV = false;
 
@@ -202,7 +193,6 @@
         const canvas = document.createElement('canvas');
         const ctx = canvas.getContext('2d');
         
-        // Determine canvas dimensions based on rotation
         const isSwapped = rotation === 90 || rotation === 270;
         const w = isSwapped ? img.naturalHeight : img.naturalWidth;
         const h = isSwapped ? img.naturalWidth : img.naturalHeight;
@@ -210,11 +200,9 @@
         canvas.width = w;
         canvas.height = h;
         
-        // Transform canvas context
         ctx.translate(w / 2, h / 2);
         ctx.rotate((rotation * Math.PI) / 180);
         
-        // Scaling for flip
         const scaleX = flipH ? -1 : 1;
         const scaleY = flipV ? -1 : 1;
         ctx.scale(scaleX, scaleY);

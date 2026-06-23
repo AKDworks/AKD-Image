@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Конвертировать изображение — AKD Image</title>
+  <meta name="description" content="Конвертируйте изображения между JPG, PNG и WebP локально в браузере без отправки файлов на сервер.">
   <link rel="stylesheet" href="../css/main.css">
 </head>
 <body>
@@ -19,8 +20,6 @@
       </h1>
       <p class="tool-page__subtitle">Конвертируйте изображения между форматами JPG, PNG и WebP.</p>
     </div>
-
-    <!-- Drop Zone -->
     <div class="dropzone" id="dropzone">
       <input type="file" accept="image/jpeg,image/png,image/webp" multiple>
       <p class="dropzone__title">Перетащите изображения сюда</p>
@@ -31,8 +30,6 @@
         <span class="fmt-badge">WEBP</span>
       </div>
     </div>
-
-    <!-- Settings -->
     <div class="tool-panel hidden" id="settings-panel">
       <div class="tool-panel__head">
         <h3>Параметры конвертации</h3>
@@ -62,17 +59,11 @@
 
       </div>
     </div>
-
-    <!-- File list -->
     <div class="file-list hidden" id="file-list"></div>
-
-    <!-- Action bar -->
     <div class="hidden mt-16 flex gap-8 items-center" id="action-bar">
       <button class="btn btn-primary btn-lg" id="convert-btn">Конвертировать всё</button>
       <span class="text-muted text-sm" id="file-count"></span>
     </div>
-
-    <!-- Results -->
     <div class="result-area" id="result-area">
       <hr class="divider">
       <div class="result-stats" id="result-stats"></div>
