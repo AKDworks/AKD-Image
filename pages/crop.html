@@ -261,6 +261,11 @@
 
   changeImgBtn.addEventListener('click', () => {
     activeFile = null;
+    if (croppedUrl) {
+      URL.revokeObjectURL(croppedUrl);
+      croppedUrl = null;
+    }
+    resultImg.removeAttribute('src');
     dropzoneEl.classList.remove('hidden');
     workspaceEl.classList.add('hidden');
     settingsEl.classList.add('hidden');
@@ -486,6 +491,7 @@
   }
 
   let croppedBlob = null;
+  let croppedUrl = null;
   applyCropBtn.addEventListener('click', async () => {
     if (!activeFile) return;
 
@@ -513,10 +519,11 @@
       );
 
       croppedBlob = await FileUtils.canvasToBlob(canvas, mime, quality);
-      const url = URL.createObjectURL(croppedBlob);
+      if (croppedUrl) URL.revokeObjectURL(croppedUrl);
+      croppedUrl = URL.createObjectURL(croppedBlob);
       const ext = mime.split('/')[1].replace('jpeg','jpg');
 
-      resultImg.src = url;
+      resultImg.src = croppedUrl;
       resultStats.innerHTML = `
         <div class="stat-card"><div class="stat-card__label">Размер</div><div class="stat-card__value">${cropState.w}×${cropState.h}px</div></div>
         <div class="stat-card"><div class="stat-card__label">Формат</div><div class="stat-card__value">${ext.toUpperCase()}</div></div>
@@ -530,7 +537,10 @@
       downloadBtn.onclick = () => FileUtils.downloadBlob(croppedBlob, croppedFilename);
       copyBtn.onclick = async () => {
         try {
-          const item = new ClipboardItem({ [mime]: croppedBlob });
+          const copyBlob = mime === 'image/png'
+            ? croppedBlob
+            : await FileUtils.canvasToBlob(canvas, 'image/png', 1);
+          const item = new ClipboardItem({ 'image/png': copyBlob });
           await navigator.clipboard.write([item]);
           Toast.success('Изображение скопировано в буфер!');
         } catch (e) {

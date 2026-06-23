@@ -178,6 +178,20 @@
   let activeImage = null;
   let activeFile = null;
 
+  function resetFilters() {
+    brightnessInput.value = 100;
+    contrastInput.value = 100;
+    saturateInput.value = 100;
+    blurInput.value = 0;
+    sepiaInput.value = 0;
+    grayscaleInput.value = 0;
+    invertInput.value = 0;
+
+    sliders.forEach(s => {
+      s.valEl.textContent = s.el.value + s.suffix;
+    });
+  }
+
   const sliders = [
     { el: brightnessInput, valEl: document.getElementById('brightness-val'), suffix: '%' },
     { el: contrastInput,   valEl: document.getElementById('contrast-val'),   suffix: '%' },
@@ -205,6 +219,7 @@
 
   async function loadImage(file) {
     activeFile = file;
+    resetFilters();
     dropzoneEl.classList.add('hidden');
     workspaceEl.classList.remove('hidden');
     
@@ -244,24 +259,14 @@
   }
 
   resetBtn.addEventListener('click', () => {
-    brightnessInput.value = 100;
-    contrastInput.value = 100;
-    saturateInput.value = 100;
-    blurInput.value = 0;
-    sepiaInput.value = 0;
-    grayscaleInput.value = 0;
-    invertInput.value = 0;
-
-    sliders.forEach(s => {
-      s.valEl.textContent = s.el.value + s.suffix;
-    });
-
+    resetFilters();
     applyFilters();
   });
 
   changeImgBtn.addEventListener('click', () => {
     activeImage = null;
     activeFile = null;
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
     dropzoneEl.classList.remove('hidden');
     workspaceEl.classList.add('hidden');
   });
