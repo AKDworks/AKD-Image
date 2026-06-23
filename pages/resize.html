@@ -9,7 +9,7 @@
 </head>
 <body>
 
-<script src="../js/layout.js?v=5"></script>
+<script src="../js/layout.js?v=6"></script>
 
 <main>
   <div class="container container--narrow tool-page">
@@ -115,8 +115,8 @@
           </label>
         </div>
 
-        <button class="btn btn-secondary mt-16" id="preview-btn" style="display:none;">Предпросмотр (первое изображение)</button>
-        <canvas id="preview-canvas" style="display:none; max-width:100%; border:1px solid var(--border); border-radius:var(--r-md); margin-top:16px;"></canvas>
+        <button class="btn btn-secondary mt-16 hidden" id="preview-btn">Предпросмотр (первое изображение)</button>
+        <canvas class="preview-canvas hidden" id="preview-canvas"></canvas>
 
       </div>
     </div>
@@ -129,7 +129,7 @@
     <div class="result-area" id="result-area">
       <hr class="divider">
       <div class="result-stats" id="result-stats"></div>
-      <button class="btn btn-success" id="download-all-btn" style="display:none;">
+      <button class="btn btn-success hidden" id="download-all-btn">
         Скачать всё (ZIP)
       </button>
     </div>
@@ -151,6 +151,7 @@
   const resultStats = document.getElementById('result-stats');
   const dlAllBtn    = document.getElementById('download-all-btn');
   const previewBtn  = document.getElementById('preview-btn');
+  const previewCanvas = document.getElementById('preview-canvas');
 
   const widthInput    = document.getElementById('width');
   const heightInput   = document.getElementById('height');
@@ -230,20 +231,13 @@
   }
 
   function updateUI() {
-    const has = files.length > 0;
-    fileListEl.classList.toggle('hidden', !has);
-    settingsEl.classList.toggle('hidden', !has);
-    actionBarEl.classList.toggle('hidden', !has);
-    countEl.textContent = FileUtils.formatFilesCount(files.length);
-    resultArea.classList.remove('visible');
-    results = []; dlAllBtn.style.display = 'none'; resultStats.innerHTML = '';
-    const previewBtn = document.getElementById('preview-btn');
-    if (previewBtn) previewBtn.style.display = has ? '' : 'none';
-    const canvas = document.getElementById('preview-canvas');
-    if (canvas) canvas.style.display = 'none';
+    const has = UIUtils.updateBatchLayout({ fileListEl, settingsEl, actionBarEl, countEl }, files.length);
+    UIUtils.resetBatchResult({ resultArea, resultStats, downloadAllBtn: dlAllBtn });
+    UIUtils.resetPreview({ previewBtn, previewCanvas }, has);
+    results = [];
   }
 
-  document.getElementById('preview-btn').addEventListener('click', async () => {
+  previewBtn.addEventListener('click', async () => {
     if (!files.length) return;
     const file = files[0].file;
     const src = await FileUtils.readAsDataURL(file);
@@ -269,12 +263,11 @@
       nw = img.naturalWidth; nh = img.naturalHeight;
     }
     
-    const canvas = document.getElementById('preview-canvas');
-    canvas.width = nw;
-    canvas.height = nh;
-    const ctx = canvas.getContext('2d');
+    previewCanvas.width = nw;
+    previewCanvas.height = nh;
+    const ctx = previewCanvas.getContext('2d');
     ctx.drawImage(img, 0, 0, nw, nh);
-    canvas.style.display = 'block';
+    previewCanvas.classList.remove('hidden');
   });
 
   clearBtn.addEventListener('click', () => {
@@ -289,10 +282,7 @@
   resizeBtn.addEventListener('click', async () => {
     if (!files.length) return;
     resizeBtn.disabled = true;
-    clearBtn.disabled = true;
-    dlAllBtn.disabled = true;
-    previewBtn.disabled = true;
-    manager.setLocked(true);
+    UIUtils.setBatchLocked(manager, [clearBtn, dlAllBtn, previewBtn], true);
     resizeBtn.innerHTML = '<span class="spinner"></span> Обработка...';
     results = [];
     let errors = 0;
@@ -368,19 +358,15 @@
         <div class="stat-card"><div class="stat-card__label">Обработано</div><div class="stat-card__value">${results.length}</div></div>
         <div class="stat-card stat-green"><div class="stat-card__label">Статус</div><div class="stat-card__value">Готово</div></div>
       `;
-      resultArea.classList.add('visible');
-      if (results.length > 1) dlAllBtn.style.display = '';
-      Toast.success('Размер изменён!');
+      UIUtils.showBatchResult({ resultArea, downloadAllBtn: dlAllBtn }, results.length);
+      Toast.success('Размер изменён.');
     }
     if (errors) {
       Toast.error('Не удалось обработать ' + FileUtils.formatFilesCount(errors) + '.');
     }
 
     resizeBtn.disabled = false;
-    clearBtn.disabled = false;
-    dlAllBtn.disabled = false;
-    previewBtn.disabled = false;
-    manager.setLocked(false);
+    UIUtils.setBatchLocked(manager, [clearBtn, dlAllBtn, previewBtn], false);
     resizeBtn.innerHTML = 'Изменить размер';
   });
 

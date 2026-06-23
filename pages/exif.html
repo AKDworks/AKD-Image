@@ -9,7 +9,7 @@
 </head>
 <body>
 
-<script src="../js/layout.js?v=5"></script>
+<script src="../js/layout.js?v=6"></script>
 
 <main>
   <div class="container container--narrow tool-page">
@@ -46,8 +46,8 @@
           <p class="text-muted text-sm mt-8">EXIF удаляется автоматически при пересохранении изображения.</p>
         </div>
 
-        <button class="btn btn-secondary mt-16" id="preview-btn" style="display:none;">Предпросмотр (первое изображение)</button>
-        <canvas id="preview-canvas" style="display:none; max-width:100%; border:1px solid var(--border); border-radius:var(--r-md); margin-top:16px;"></canvas>
+        <button class="btn btn-secondary mt-16 hidden" id="preview-btn">Предпросмотр (первое изображение)</button>
+        <canvas class="preview-canvas hidden" id="preview-canvas"></canvas>
 
       </div>
     </div>
@@ -64,7 +64,7 @@
     <div class="result-area" id="result-area">
       <hr class="divider">
       <div class="result-stats" id="result-stats"></div>
-      <button class="btn btn-success" id="download-all-btn" style="display:none;">
+      <button class="btn btn-success hidden" id="download-all-btn">
         Скачать всё (ZIP)
       </button>
     </div>
@@ -117,16 +117,10 @@
   });
 
   function updateUI() {
-    const hasFiles = files.length > 0;
-    fileListEl.classList.toggle('hidden', !hasFiles);
-    settingsEl.classList.toggle('hidden', !hasFiles);
-    actionBarEl.classList.toggle('hidden', !hasFiles);
-    countEl.textContent = FileUtils.formatFilesCount(files.length);
-    resultArea.classList.remove('visible');
+    const hasFiles = UIUtils.updateBatchLayout({ fileListEl, settingsEl, actionBarEl, countEl }, files.length);
+    UIUtils.resetBatchResult({ resultArea, resultStats, downloadAllBtn: dlAllBtn });
+    UIUtils.resetPreview({ previewBtn, previewCanvas }, hasFiles);
     results = [];
-    previewBtn.style.display = hasFiles ? '' : 'none';
-    previewCanvas.style.display = 'none';
-    dlAllBtn.style.display = 'none';
   }
 
   clearBtn.addEventListener('click', () => {
@@ -145,16 +139,13 @@
     previewCanvas.height = img.naturalHeight;
     const pCtx = previewCanvas.getContext('2d');
     pCtx.drawImage(img, 0, 0);
-    previewCanvas.style.display = 'block';
+    previewCanvas.classList.remove('hidden');
   });
 
   cleanBtn.addEventListener('click', async () => {
     if (!files.length) return;
     cleanBtn.disabled = true;
-    clearBtn.disabled = true;
-    dlAllBtn.disabled = true;
-    previewBtn.disabled = true;
-    manager.setLocked(true);
+    UIUtils.setBatchLocked(manager, [clearBtn, dlAllBtn, previewBtn], true);
     cleanBtn.innerHTML = '<span class="spinner"></span> Обработка...';
     results = [];
     let errors = 0;
@@ -204,18 +195,15 @@
         <div class="stat-card"><div class="stat-card__label">Очищено</div><div class="stat-card__value">${results.length}</div></div>
         <div class="stat-card stat-green"><div class="stat-card__label">Статус</div><div class="stat-card__value">Готово</div></div>
       `;
-      resultArea.classList.add('visible');
-      if (results.length > 1) dlAllBtn.style.display = '';
+      UIUtils.showBatchResult({ resultArea, downloadAllBtn: dlAllBtn }, results.length);
+      Toast.success('EXIF очищен.');
     }
     if (errors) {
       Toast.error('Не удалось очистить ' + FileUtils.formatFilesCount(errors) + '.');
     }
 
     cleanBtn.disabled = false;
-    clearBtn.disabled = false;
-    dlAllBtn.disabled = false;
-    previewBtn.disabled = false;
-    manager.setLocked(false);
+    UIUtils.setBatchLocked(manager, [clearBtn, dlAllBtn, previewBtn], false);
     cleanBtn.innerHTML = 'Удалить метаданные';
   });
 

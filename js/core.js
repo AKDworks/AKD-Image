@@ -1,4 +1,4 @@
-/* Toast notifications */
+/* Toasts */
 const Toast = (() => {
   let container = null;
 
@@ -63,7 +63,51 @@ const Modal = (() => {
 })();
 
 
-/* File utilities */
+/* UI */
+const UIUtils = {
+  setDisabled(elements, disabled) {
+    elements.forEach(el => {
+      if (el) el.disabled = disabled;
+    });
+  },
+
+  setBatchLocked(manager, elements, locked) {
+    this.setDisabled(elements, locked);
+    if (manager) manager.setLocked(locked);
+  },
+
+  setVisible(el, visible) {
+    if (el) el.classList.toggle('hidden', !visible);
+  },
+
+  updateBatchLayout(parts, count) {
+    const hasFiles = count > 0;
+    this.setVisible(parts.fileListEl, hasFiles);
+    this.setVisible(parts.settingsEl, hasFiles);
+    this.setVisible(parts.actionBarEl, hasFiles);
+    if (parts.countEl) parts.countEl.textContent = FileUtils.formatFilesCount(count);
+    return hasFiles;
+  },
+
+  resetBatchResult(parts) {
+    if (parts.resultArea) parts.resultArea.classList.remove('visible');
+    if (parts.resultStats) parts.resultStats.innerHTML = '';
+    this.setVisible(parts.downloadAllBtn, false);
+  },
+
+  resetPreview(parts, hasFiles) {
+    this.setVisible(parts.previewBtn, hasFiles);
+    this.setVisible(parts.previewCanvas, false);
+  },
+
+  showBatchResult(parts, count) {
+    if (parts.resultArea) parts.resultArea.classList.add('visible');
+    this.setVisible(parts.downloadAllBtn, count > 1);
+  },
+};
+
+
+/* Files */
 const FileUtils = {
   formatSize(bytes) {
     if (bytes < 1024)       return bytes + ' B';
@@ -187,7 +231,7 @@ const FileUtils = {
     return window.__akdJSZipPromise;
   },
 
-  async downloadZip(entries, filename, successMessage = 'ZIP скачан!') {
+  async downloadZip(entries, filename, successMessage = 'ZIP скачан.') {
     try {
       const JSZipCtor = await this.loadJSZip();
       const zip = new JSZipCtor();
@@ -205,7 +249,7 @@ const FileUtils = {
 };
 
 
-/* Dropzone helper */
+/* Dropzone */
 class Dropzone {
   constructor(el, opts = {}) {
     this.el   = el;
@@ -264,7 +308,7 @@ class Dropzone {
 }
 
 
-/* File list manager */
+/* File list */
 class FileListManager {
   constructor(containerEl) {
     this.container = containerEl;
@@ -284,12 +328,12 @@ class FileListManager {
     row.dataset.id = id;
     row.innerHTML = `
       <div class="file-item__thumb-wrap">
-        <div class="file-item__thumb" style="width:44px;height:44px;background:#E5E7EB;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:.7rem;font-weight:700;color:#6B7280;">${ext}</div>
+        <div class="file-item__thumb file-item__thumb-placeholder">${ext}</div>
       </div>
       <div class="file-item__info">
         <div class="file-item__name" title="${file.name}">${file.name}</div>
         <div class="file-item__meta">${FileUtils.formatSize(file.size)}</div>
-        <div class="progress-bar hidden"><div class="progress-fill" style="width:0%"></div></div>
+        <div class="progress-bar hidden"><div class="progress-fill"></div></div>
       </div>
       <span class="file-item__status status-pending">Ожидание</span>
       <button class="btn-icon remove-btn" title="Удалить">✕</button>
@@ -359,7 +403,7 @@ class FileListManager {
 }
 
 
-/* Mobile navigation */
+/* Mobile nav */
 document.addEventListener('DOMContentLoaded', () => {
   const toggle = document.querySelector('.nav-toggle');
   const nav    = document.querySelector('.site-nav');
