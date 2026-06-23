@@ -6,15 +6,6 @@
   <title>Генератор мемов — AKD Image</title>
   <meta name="description" content="Создавайте мемы из JPG, PNG и WebP: добавляйте верхний и нижний текст и скачивайте готовые изображения.">
   <link rel="stylesheet" href="../css/main.css">
-  <style>
-    #preview-canvas {
-      max-width: 100%;
-      border-radius: var(--r-md);
-      border: 1px solid var(--border);
-      margin-top: 16px;
-      display: none;
-    }
-  </style>
 </head>
 <body>
 
@@ -57,17 +48,17 @@
         <div class="form-row mt-16">
           <div class="form-group">
             <label>Цвет текста</label>
-            <input type="color" id="text-color" value="#ffffff" style="height:38px;padding:4px;border:1px solid var(--border);border-radius:6px;cursor:pointer;">
+            <input type="color" class="color-input" id="text-color" value="#ffffff">
           </div>
           <div class="form-group">
             <label>Размер шрифта (px)</label>
             <input type="number" id="font-size" value="48" min="10" max="300">
           </div>
         </div>
-        <button class="btn btn-secondary mt-16" id="preview-btn" style="display:none;">
+        <button class="btn btn-secondary mt-16 hidden" id="preview-btn">
           Предпросмотр
         </button>
-        <canvas id="preview-canvas"></canvas>
+        <canvas class="preview-canvas hidden" id="preview-canvas"></canvas>
       </div>
     </div>
     <div class="file-list hidden" id="file-list"></div>
@@ -79,7 +70,7 @@
     <div class="result-area" id="result-area">
       <hr class="divider">
       <div class="result-stats" id="result-stats"></div>
-      <button class="btn btn-success" id="download-all-btn" style="display:none;">Скачать всё (ZIP)</button>
+      <button class="btn btn-success hidden" id="download-all-btn">Скачать всё (ZIP)</button>
     </div>
 
   </div>
@@ -130,11 +121,9 @@
     actionBarEl.classList.toggle('hidden', !has);
     countEl.textContent = FileUtils.formatFilesCount(files.length);
     resultArea.classList.remove('visible');
-    results = []; dlAllBtn.style.display = 'none'; resultStats.innerHTML = '';
-    const previewBtn = document.getElementById('preview-btn');
-    if (previewBtn) previewBtn.style.display = has ? '' : 'none';
-    const canvas = document.getElementById('preview-canvas');
-    if (canvas) canvas.style.display = 'none';
+    results = []; dlAllBtn.classList.add('hidden'); resultStats.innerHTML = '';
+    previewBtn.classList.toggle('hidden', !has);
+    previewCanvas.classList.add('hidden');
   }
 
   clearBtn.addEventListener('click', () => { files = []; manager.clear(); updateUI(); });
@@ -186,7 +175,7 @@
     previewCanvas.width  = canvas.width;
     previewCanvas.height = canvas.height;
     previewCanvas.getContext('2d').drawImage(canvas, 0, 0);
-    previewCanvas.style.display = 'block';
+    previewCanvas.classList.remove('hidden');
   });
 
   applyBtn.addEventListener('click', async () => {
@@ -231,7 +220,7 @@
         <div class="stat-card stat-green"><div class="stat-card__label">Статус</div><div class="stat-card__value">Готово</div></div>
       `;
       resultArea.classList.add('visible');
-      if (results.length > 1) dlAllBtn.style.display = '';
+      dlAllBtn.classList.toggle('hidden', results.length <= 1);
       Toast.success('Мемы успешно созданы!');
     }
     if (errors) {

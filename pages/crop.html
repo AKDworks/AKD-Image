@@ -6,91 +6,6 @@
   <title>Обрезать изображение — AKD Image</title>
   <meta name="description" content="Обрезайте JPG, PNG и WebP по выбранной области или точным координатам. Файлы остаются на вашем устройстве.">
   <link rel="stylesheet" href="../css/main.css">
-  <style>
-    .crop-workspace {
-      position: relative;
-      max-width: 100%;
-      margin: 20px auto;
-      background: #1e1e24;
-      border-radius: var(--r-md);
-      overflow: hidden;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      user-select: none;
-      border: 1px solid var(--border);
-    }
-    .crop-container {
-      position: relative;
-      display: inline-block;
-      max-width: 100%;
-      max-height: 70vh;
-    }
-    .crop-image {
-      display: block;
-      max-width: 100%;
-      max-height: 70vh;
-      pointer-events: none;
-    }
-    .crop-shade {
-      position: absolute;
-      top: 0; left: 0; right: 0; bottom: 0;
-      background: rgba(0, 0, 0, 0.6);
-      pointer-events: none;
-    }
-    .crop-box {
-      position: absolute;
-      border: 2px solid var(--accent);
-      box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.5), 0 0 10px rgba(0, 0, 0, 0.3);
-      cursor: move;
-      box-sizing: border-box;
-      touch-action: none;
-    }
-    .crop-handle {
-      position: absolute;
-      width: 12px;
-      height: 12px;
-      background: #ffffff;
-      border: 2px solid var(--accent);
-      border-radius: 50%;
-      box-sizing: border-box;
-    }
-    .handle-nw { top: -6px; left: -6px; cursor: nwse-resize; }
-    .handle-ne { top: -6px; right: -6px; cursor: nesw-resize; }
-    .handle-sw { bottom: -6px; left: -6px; cursor: nesw-resize; }
-    .handle-se { bottom: -6px; right: -6px; cursor: nwse-resize; }
-    .handle-n  { top: -6px; left: calc(50% - 6px); cursor: ns-resize; }
-    .handle-s  { bottom: -6px; left: calc(50% - 6px); cursor: ns-resize; }
-    .handle-w  { top: calc(50% - 6px); left: -6px; cursor: ew-resize; }
-    .handle-e  { top: calc(50% - 6px); right: -6px; cursor: ew-resize; }
-
-    .ratio-btn-grid {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 6px;
-      margin-bottom: 12px;
-    }
-    .ratio-btn {
-      font-size: .8rem;
-      font-weight: 600;
-      padding: 6px 12px;
-      border: 1px solid var(--border);
-      border-radius: var(--r-sm);
-      background: var(--bg);
-      cursor: pointer;
-      color: var(--text);
-      transition: background var(--t), border-color var(--t), color var(--t);
-    }
-    .ratio-btn:hover {
-      border-color: var(--accent);
-      color: var(--accent);
-    }
-    .ratio-btn.active {
-      background: var(--accent);
-      border-color: var(--accent);
-      color: #fff;
-    }
-  </style>
 </head>
 <body>
 
@@ -143,7 +58,7 @@
         <h3>Настройки обрезки</h3>
       </div>
       <div class="tool-panel__body">
-        <label style="display:block;margin-bottom:6px;font-weight:600;font-size:0.85rem;">Пропорции (Aspect Ratio)</label>
+        <label class="ratio-label">Пропорции (Aspect Ratio)</label>
         <div class="ratio-btn-grid" id="ratio-grid">
           <button class="ratio-btn active" data-ratio="free">Свободно</button>
           <button class="ratio-btn" data-ratio="1">1:1 (Квадрат)</button>
@@ -198,8 +113,8 @@
     <div class="result-area" id="result-area">
       <hr class="divider">
       <div class="result-stats" id="result-stats"></div>
-      <div style="margin-top:16px;text-align:center;">
-        <img id="result-img" style="max-width:100%;border-radius:var(--r-md);border:1px solid var(--border);" alt="Результат обрезки">
+      <div class="crop-result-preview">
+        <img class="crop-result-preview__img" id="result-img" alt="Результат обрезки">
       </div>
       <div class="flex gap-8 mt-16 flex-wrap">
         <button class="btn btn-success" id="download-btn">Скачать результат</button>

@@ -299,12 +299,12 @@ class FileListManager {
     row.dataset.id = id;
     row.innerHTML = `
       <div class="file-item__thumb-wrap">
-        <div class="file-item__thumb" style="width:44px;height:44px;background:#E5E7EB;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:.7rem;font-weight:700;color:#6B7280;">${ext}</div>
+        <div class="file-item__thumb file-item__thumb-placeholder">${ext}</div>
       </div>
       <div class="file-item__info">
         <div class="file-item__name" title="${file.name}">${file.name}</div>
         <div class="file-item__meta">${FileUtils.formatSize(file.size)}</div>
-        <div class="progress-bar hidden"><div class="progress-fill" style="width:0%"></div></div>
+        <div class="progress-bar hidden"><div class="progress-fill"></div></div>
       </div>
       <span class="file-item__status status-pending">Ожидание</span>
       <button class="btn-icon remove-btn" title="Удалить">✕</button>

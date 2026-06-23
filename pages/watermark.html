@@ -6,52 +6,6 @@
   <title>Водяной знак — AKD Image</title>
   <meta name="description" content="Добавляйте текстовый водяной знак или логотип на JPG, PNG и WebP прямо в браузере с локальной обработкой файлов.">
   <link rel="stylesheet" href="../css/main.css">
-  <style>
-    .position-grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 6px;
-      max-width: 180px;
-    }
-    .pos-btn {
-      aspect-ratio: 1;
-      background: var(--bg);
-      border: 2px solid var(--border);
-      border-radius: var(--r-sm);
-      cursor: pointer;
-      transition: border-color var(--t), background var(--t);
-      font-size: .6rem;
-      color: var(--muted);
-    }
-    .pos-btn:hover   { border-color: #93B4F5; }
-    .pos-btn.active  { border-color: var(--accent); background: var(--accent-light); }
-
-    .wm-tabs { display: flex; gap: 4px; margin-bottom: 16px; }
-    .wm-tab  {
-      padding: 8px 18px;
-      font-size: .85rem;
-      font-weight: 600;
-      border: 1px solid var(--border);
-      border-radius: var(--r-sm);
-      background: var(--bg);
-      cursor: pointer;
-      transition: background var(--t), border-color var(--t), color var(--t);
-      color: var(--muted);
-    }
-    .wm-tab.active {
-      background: var(--accent);
-      border-color: var(--accent);
-      color: #fff;
-    }
-
-    #preview-canvas {
-      max-width: 100%;
-      border-radius: var(--r-md);
-      border: 1px solid var(--border);
-      margin-top: 16px;
-      display: none;
-    }
-  </style>
 </head>
 <body>
 
@@ -96,7 +50,7 @@
           <div class="form-row mt-8">
             <div class="form-group">
               <label>Цвет текста</label>
-              <input type="color" id="wm-color" value="#ffffff" style="height:38px;padding:4px;border:1px solid var(--border);border-radius:6px;cursor:pointer;">
+              <input type="color" class="color-input" id="wm-color" value="#ffffff">
             </div>
             <div class="form-group">
               <label>Размер шрифта (px)</label>
@@ -123,28 +77,28 @@
           </div>
         </div>
         <div id="tab-image" class="hidden">
-          <div class="dropzone" id="logo-dropzone" style="padding:20px 24px;">
+          <div class="dropzone dropzone--compact" id="logo-dropzone">
             <input type="file" accept="image/png,image/svg+xml,image/webp" id="logo-input">
-            <p class="dropzone__title" style="font-size:.9rem;">Загрузите файл водяного знака</p>
+            <p class="dropzone__title dropzone__title--sm">Загрузите файл водяного знака</p>
             <p class="dropzone__hint">PNG, SVG, WEBP</p>
           </div>
 
-          <div style="margin-top:12px;border:1px solid var(--border);border-radius:var(--r-sm);padding:12px;background:var(--bg);">
-            <label style="display:block;margin-bottom:6px;font-weight:600;font-size:0.85rem;">Или вставьте ссылку на SVG / картинку</label>
-            <div style="display:flex;gap:8px;">
-              <input type="text" id="logo-url-input" placeholder="https://example.com/logo.svg или data:image..." style="flex:1;">
-              <button class="btn btn-secondary" id="logo-url-add" style="padding:0 12px;">Добавить</button>
+          <div class="logo-url-card">
+            <label class="logo-url-card__label">Или вставьте ссылку на SVG / картинку</label>
+            <div class="logo-url-card__row">
+              <input type="text" class="logo-url-card__input" id="logo-url-input" placeholder="https://example.com/logo.svg или data:image...">
+              <button class="btn btn-secondary logo-url-card__button" id="logo-url-add">Добавить</button>
             </div>
-            <div id="saved-logos-container" style="margin-top:12px;">
-              <label style="display:block;margin-bottom:6px;font-size:0.75rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.05em;">Мои ссылки</label>
-              <div id="saved-logos-list" style="display:flex;flex-direction:column;gap:6px;max-height:120px;overflow-y:auto;padding-right:4px;">
+            <div class="saved-logos" id="saved-logos-container">
+              <label class="saved-logos__label">Мои ссылки</label>
+              <div class="saved-logos__list" id="saved-logos-list">
               </div>
             </div>
           </div>
 
-          <div id="logo-preview-wrap" class="hidden mt-8" style="background:rgba(0,0,0,0.03);padding:8px;border-radius:6px;display:flex;align-items:center;justify-content:space-between;border:1px dashed var(--border);">
-            <img id="logo-preview" style="max-height:50px;max-width:120px;border-radius:4px;background:#fff;padding:2px;border:1px solid var(--border);">
-            <button class="btn btn-sm btn-secondary" id="remove-logo" style="margin-top:0;">Удалить</button>
+          <div class="logo-preview hidden mt-8" id="logo-preview-wrap">
+            <img class="logo-preview__img" id="logo-preview">
+            <button class="btn btn-sm btn-secondary" id="remove-logo">Удалить</button>
           </div>
 
           <div class="form-group mt-8">
@@ -157,7 +111,7 @@
         </div>
 
         <hr class="divider">
-        <div class="form-row" style="align-items:flex-start;">
+        <div class="form-row form-row--start">
           <div class="form-group">
             <label>Позиция</label>
             <div class="position-grid" id="position-grid">
@@ -180,7 +134,7 @@
             </div>
             <div class="mt-8">
               <label>Отступ от края (px)</label>
-              <input type="number" id="wm-padding" value="20" min="0" max="200" style="margin-top:6px;">
+              <input type="number" class="wm-padding-input" id="wm-padding" value="20" min="0" max="200">
             </div>
           </div>
         </div>
@@ -214,10 +168,10 @@
             </div>
           </div>
         </div>
-        <button class="btn btn-secondary mt-16" id="preview-btn" style="display:none;">
+        <button class="btn btn-secondary mt-16 hidden" id="preview-btn">
           Предпросмотр (первое изображение)
         </button>
-        <canvas id="preview-canvas"></canvas>
+        <canvas class="preview-canvas hidden" id="preview-canvas"></canvas>
       </div>
     </div>
     <div class="file-list hidden" id="file-list"></div>
@@ -229,7 +183,7 @@
     <div class="result-area" id="result-area">
       <hr class="divider">
       <div class="result-stats" id="result-stats"></div>
-      <button class="btn btn-success" id="download-all-btn" style="display:none;">Скачать всё (ZIP)</button>
+      <button class="btn btn-success hidden" id="download-all-btn">Скачать всё (ZIP)</button>
     </div>
 
   </div>
@@ -305,23 +259,22 @@
   function renderSavedLogos() {
     savedLogosList.innerHTML = '';
     if (savedLogos.length === 0) {
-      savedLogosList.innerHTML = '<span style="font-size:0.8rem;color:var(--muted);font-style:italic;">Список пуст</span>';
+      savedLogosList.innerHTML = '<span class="saved-logos__empty">Список пуст</span>';
       return;
     }
     savedLogos.forEach((url, index) => {
       const item = document.createElement('div');
-      item.style.cssText = 'display:flex;align-items:center;justify-content:space-between;background:var(--surface);padding:4px 8px;border-radius:4px;border:1px solid var(--border);gap:8px;margin-bottom:4px;';
+      item.className = 'saved-logos__item';
       
       const label = document.createElement('span');
       label.textContent = url.length > 30 ? url.substring(0, 27) + '...' : url;
       label.title = url;
-      label.style.cssText = 'font-size:0.8rem;cursor:pointer;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text);';
+      label.className = 'saved-logos__text';
       label.onclick = () => selectLogoUrl(url);
 
       const delBtn = document.createElement('button');
-      delBtn.className = 'btn-icon';
+      delBtn.className = 'btn-icon saved-logos__delete';
       delBtn.innerHTML = '✕';
-      delBtn.style.fontSize = '0.75rem';
       delBtn.onclick = (e) => {
         e.stopPropagation();
         deleteLogoUrl(index);
@@ -401,12 +354,11 @@
     fileListEl.classList.toggle('hidden', !has);
     settingsEl.classList.toggle('hidden', !has);
     actionBarEl.classList.toggle('hidden', !has);
-    previewBtn.style.display = has ? '' : 'none';
+    previewBtn.classList.toggle('hidden', !has);
     countEl.textContent = FileUtils.formatFilesCount(files.length);
     resultArea.classList.remove('visible');
-    results = []; dlAllBtn.style.display = 'none'; resultStats.innerHTML = '';
-    const canvas = document.getElementById('preview-canvas');
-    if (canvas) canvas.style.display = 'none';
+    results = []; dlAllBtn.classList.add('hidden'); resultStats.innerHTML = '';
+    previewCanvas.classList.add('hidden');
   }
 
   clearBtn.addEventListener('click', () => { files = []; manager.clear(); updateUI(); });
@@ -498,7 +450,7 @@
     previewCanvas.width  = canvas.width;
     previewCanvas.height = canvas.height;
     previewCanvas.getContext('2d').drawImage(canvas, 0, 0);
-    previewCanvas.style.display = 'block';
+    previewCanvas.classList.remove('hidden');
   });
 
   applyBtn.addEventListener('click', async () => {
@@ -546,7 +498,7 @@
         <div class="stat-card stat-green"><div class="stat-card__label">Статус</div><div class="stat-card__value">Готово</div></div>
       `;
       resultArea.classList.add('visible');
-      if (results.length > 1) dlAllBtn.style.display = '';
+      dlAllBtn.classList.toggle('hidden', results.length <= 1);
       Toast.success('Водяной знак добавлен!');
     }
     if (errors) {

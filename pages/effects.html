@@ -6,46 +6,13 @@
   <title>Фотоэффекты — AKD Image</title>
   <meta name="description" content="Настраивайте яркость, контраст, насыщенность, размытие и другие эффекты для изображений прямо в браузере.">
   <link rel="stylesheet" href="../css/main.css">
-  <style>
-    .workspace-wrap {
-      display: grid;
-      grid-template-columns: 1fr 280px;
-      gap: 16px;
-      margin-top: 16px;
-    }
-    @media (max-width: 768px) {
-      .workspace-wrap { grid-template-columns: 1fr; }
-    }
-    .preview-box {
-      background: #1e1e24;
-      border: 1px solid var(--border);
-      border-radius: var(--r-md);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      min-height: 300px;
-      overflow: hidden;
-      padding: 12px;
-    }
-    #preview-canvas {
-      max-width: 100%;
-      max-height: 60vh;
-      border-radius: var(--r-sm);
-      box-shadow: 0 4px 20px rgba(0,0,0,0.15);
-    }
-    .slider-group {
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-    }
-  </style>
 </head>
 <body>
 
 <script src="../js/layout.js?v=6"></script>
 
 <main>
-  <div class="container tool-page" style="max-width: 960px;">
+  <div class="container tool-page effects-page">
 
     <div class="tool-page__header">
       <h1 class="tool-page__title">
@@ -66,7 +33,7 @@
     <div class="hidden" id="workspace-panel">
       <div class="workspace-wrap">
         <div class="preview-box">
-          <canvas id="preview-canvas"></canvas>
+          <canvas class="effects-preview" id="preview-canvas"></canvas>
         </div>
         <div class="tool-panel">
           <div class="tool-panel__head">
