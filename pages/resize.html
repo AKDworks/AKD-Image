@@ -340,7 +340,7 @@
         canvas.height = targetH;
         const ctx = canvas.getContext('2d');
         const outMime = mime || file.type;
-        if (outMime !== 'image/png') {
+        if (outMime === 'image/jpeg') {
           ctx.fillStyle = '#fff'; ctx.fillRect(0,0,targetW,targetH);
         }
         ctx.drawImage(img, 0, 0, targetW, targetH);

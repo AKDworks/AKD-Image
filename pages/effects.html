@@ -274,7 +274,8 @@
     try {
       const mime = outputFormat.value;
       const ext = mime.split('/')[1].replace('jpeg','jpg');
-      const blob = await FileUtils.canvasToBlob(canvas, mime, 0.9);
+      const outputCanvas = FileUtils.canvasForMime(canvas, mime);
+      const blob = await FileUtils.canvasToBlob(outputCanvas, mime, 0.9);
       const filename = activeFile.name.replace(/\.[^.]+$/, '') + '_effect.' + ext;
       FileUtils.downloadBlob(blob, filename);
       Toast.success('Изображение сохранено!');

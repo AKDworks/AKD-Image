@@ -155,6 +155,19 @@ const FileUtils = {
     });
   },
 
+  canvasForMime(canvas, mimeType) {
+    if (mimeType !== 'image/jpeg') return canvas;
+
+    const out = document.createElement('canvas');
+    out.width = canvas.width;
+    out.height = canvas.height;
+    const ctx = out.getContext('2d');
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, out.width, out.height);
+    ctx.drawImage(canvas, 0, 0);
+    return out;
+  },
+
   loadJSZip() {
     if (window.JSZip) return Promise.resolve(window.JSZip);
     if (window.__akdJSZipPromise) return window.__akdJSZipPromise;

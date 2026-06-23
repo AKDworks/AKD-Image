@@ -501,7 +501,7 @@
       const mime = outputFmt.value === 'same' ? activeFile.type : outputFmt.value;
       const quality = parseInt(qualityInput.value) / 100;
 
-      if (mime !== 'image/png') {
+      if (mime === 'image/jpeg') {
         ctx.fillStyle = '#ffffff';
         ctx.fillRect(0, 0, canvas.width, canvas.height);
       }

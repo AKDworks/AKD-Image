@@ -191,9 +191,7 @@
         canvas.width  = img.naturalWidth;
         canvas.height = img.naturalHeight;
         const ctx    = canvas.getContext('2d');
-        if (mime === 'image/png') {
-          ctx.clearRect(0, 0, canvas.width, canvas.height);
-        } else {
+        if (mime === 'image/jpeg') {
           ctx.fillStyle = '#fff';
           ctx.fillRect(0, 0, canvas.width, canvas.height);
         }

@@ -527,7 +527,8 @@
         const canvas  = await applyWatermark(img);
         const mime    = outputFmt.value === 'same' ? file.type : outputFmt.value;
         const quality = parseInt(qualityInput.value) / 100;
-        const blob    = await FileUtils.canvasToBlob(canvas, mime, quality);
+        const outputCanvas = FileUtils.canvasForMime(canvas, mime);
+        const blob    = await FileUtils.canvasToBlob(outputCanvas, mime, quality);
         const ext     = mime.split('/')[1].replace('jpeg','jpg');
         const filename = file.name.replace(/\.[^.]+$/, '') + '_wm.' + ext;
         manager.setProgress(item.id, 100);
