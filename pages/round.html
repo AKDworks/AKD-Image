@@ -112,16 +112,10 @@
   });
 
   function updateUI() {
-    const hasFiles = files.length > 0;
-    fileListEl.classList.toggle('hidden', !hasFiles);
-    settingsEl.classList.toggle('hidden', !hasFiles);
-    actionBarEl.classList.toggle('hidden', !hasFiles);
-    countEl.textContent = FileUtils.formatFilesCount(files.length);
-    resultArea.classList.remove('visible');
+    const hasFiles = UIUtils.updateBatchLayout({ fileListEl, settingsEl, actionBarEl, countEl }, files.length);
+    UIUtils.resetBatchResult({ resultArea, resultStats, downloadAllBtn: dlAllBtn });
+    UIUtils.resetPreview({ previewBtn, previewCanvas }, hasFiles);
     results = [];
-    previewBtn.classList.toggle('hidden', !(hasFiles));
-    previewCanvas.classList.add('hidden');
-    dlAllBtn.classList.add('hidden');
   }
 
   clearBtn.addEventListener('click', () => {
@@ -222,8 +216,7 @@
         <div class="stat-card"><div class="stat-card__label">Обработано</div><div class="stat-card__value">${results.length}</div></div>
         <div class="stat-card stat-green"><div class="stat-card__label">Статус</div><div class="stat-card__value">Готово</div></div>
       `;
-      resultArea.classList.add('visible');
-      dlAllBtn.classList.toggle('hidden', results.length <= 1);
+      UIUtils.showBatchResult({ resultArea, downloadAllBtn: dlAllBtn }, results.length);
       Toast.success('Скругление завершено.');
     }
     if (errors) {
