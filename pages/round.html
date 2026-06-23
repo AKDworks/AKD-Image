@@ -179,6 +179,10 @@
   roundBtn.addEventListener('click', async () => {
     if (!files.length) return;
     roundBtn.disabled = true;
+    clearBtn.disabled = true;
+    dlAllBtn.disabled = true;
+    previewBtn.disabled = true;
+    manager.setLocked(true);
     roundBtn.innerHTML = '<span class="spinner"></span> Обработка...';
     results = [];
 
@@ -224,6 +228,10 @@
     }
 
     roundBtn.disabled = false;
+    clearBtn.disabled = false;
+    dlAllBtn.disabled = false;
+    previewBtn.disabled = false;
+    manager.setLocked(false);
     roundBtn.innerHTML = 'Скруглить углы';
   });
 

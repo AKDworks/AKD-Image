@@ -507,6 +507,10 @@
       Toast.error('Загрузите логотип для водяного знака!'); return;
     }
     applyBtn.disabled = true;
+    clearBtn.disabled = true;
+    dlAllBtn.disabled = true;
+    previewBtn.disabled = true;
+    manager.setLocked(true);
     applyBtn.innerHTML = '<span class="spinner"></span> Обработка...';
     results = [];
 
@@ -547,6 +551,10 @@
     }
 
     applyBtn.disabled = false;
+    clearBtn.disabled = false;
+    dlAllBtn.disabled = false;
+    previewBtn.disabled = false;
+    manager.setLocked(false);
     applyBtn.innerHTML = 'Добавить водяной знак';
   });
 

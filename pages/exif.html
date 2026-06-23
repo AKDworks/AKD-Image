@@ -151,6 +151,10 @@
   cleanBtn.addEventListener('click', async () => {
     if (!files.length) return;
     cleanBtn.disabled = true;
+    clearBtn.disabled = true;
+    dlAllBtn.disabled = true;
+    previewBtn.disabled = true;
+    manager.setLocked(true);
     cleanBtn.innerHTML = '<span class="spinner"></span> Обработка...';
     results = [];
 
@@ -203,6 +207,10 @@
     }
 
     cleanBtn.disabled = false;
+    clearBtn.disabled = false;
+    dlAllBtn.disabled = false;
+    previewBtn.disabled = false;
+    manager.setLocked(false);
     cleanBtn.innerHTML = 'Удалить метаданные';
   });
 

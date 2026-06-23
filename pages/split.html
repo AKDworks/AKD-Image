@@ -221,6 +221,9 @@
     if (!files.length) return;
 
     splitBtn.disabled = true;
+    clearBtn.disabled = true;
+    previewBtn.disabled = true;
+    manager.setLocked(true);
     splitBtn.innerHTML = '<span class="spinner"></span> Обработка...';
     
     const { file, item } = files[0];
@@ -296,6 +299,9 @@
     }
     
     splitBtn.disabled = false;
+    clearBtn.disabled = false;
+    previewBtn.disabled = false;
+    manager.setLocked(false);
     splitBtn.innerHTML = 'Нарезать и скачать (ZIP)';
   });
 

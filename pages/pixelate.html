@@ -170,6 +170,10 @@
   pixelateBtn.addEventListener('click', async () => {
     if (!files.length) return;
     pixelateBtn.disabled = true;
+    clearBtn.disabled = true;
+    dlAllBtn.disabled = true;
+    previewBtn.disabled = true;
+    manager.setLocked(true);
     pixelateBtn.innerHTML = '<span class="spinner"></span> Обработка...';
     results = [];
 
@@ -216,6 +220,10 @@
     }
 
     pixelateBtn.disabled = false;
+    clearBtn.disabled = false;
+    dlAllBtn.disabled = false;
+    previewBtn.disabled = false;
+    manager.setLocked(false);
     pixelateBtn.innerHTML = 'Пикселизировать';
   });
 

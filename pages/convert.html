@@ -86,6 +86,7 @@
   const resultArea  = document.getElementById('result-area');
   const resultStats = document.getElementById('result-stats');
   const dlAllBtn    = document.getElementById('download-all-btn');
+  const previewBtn  = document.getElementById('preview-btn');
   const targetFormat= document.getElementById('target-format');
   const qualityInput = document.getElementById('quality');
   const qualityVal   = document.getElementById('quality-val');
@@ -140,6 +141,10 @@
   convertBtn.addEventListener('click', async () => {
     if (!files.length) return;
     convertBtn.disabled = true;
+    clearBtn.disabled = true;
+    dlAllBtn.disabled = true;
+    previewBtn.disabled = true;
+    manager.setLocked(true);
     convertBtn.innerHTML = '<span class="spinner"></span> Конвертирую...';
     results = [];
 
@@ -194,6 +199,10 @@
     }
 
     convertBtn.disabled = false;
+    clearBtn.disabled = false;
+    dlAllBtn.disabled = false;
+    previewBtn.disabled = false;
+    manager.setLocked(false);
     convertBtn.innerHTML = 'Конвертировать всё';
   });
 

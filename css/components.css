@@ -250,6 +250,7 @@
   transition: color var(--t), border-color var(--t);
 }
 .btn-icon:hover { color: var(--text); border-color: #C0C9D8; }
+.btn-icon:disabled { opacity: .45; cursor: not-allowed; }
 .btn:disabled { opacity: .45; cursor: not-allowed; }
 
 /* File list */

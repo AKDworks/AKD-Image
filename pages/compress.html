@@ -91,6 +91,7 @@
   const resultArea   = document.getElementById('result-area');
   const resultStats  = document.getElementById('result-stats');
   const dlAllBtn     = document.getElementById('download-all-btn');
+  const previewBtn   = document.getElementById('preview-btn');
   const qualityInput = document.getElementById('quality');
   const qualityVal   = document.getElementById('quality-val');
   const outputFmt    = document.getElementById('output-format');
@@ -164,6 +165,10 @@
   compressBtn.addEventListener('click', async () => {
     if (!files.length) return;
     compressBtn.disabled = true;
+    clearBtn.disabled = true;
+    dlAllBtn.disabled = true;
+    previewBtn.disabled = true;
+    manager.setLocked(true);
     compressBtn.innerHTML = '<span class="spinner"></span> Сжимаю...';
     results = [];
     let totalBefore = 0, totalAfter = 0;
@@ -230,6 +235,10 @@
     }
 
     compressBtn.disabled = false;
+    clearBtn.disabled = false;
+    dlAllBtn.disabled = false;
+    previewBtn.disabled = false;
+    manager.setLocked(false);
     compressBtn.innerHTML = 'Сжать всё';
   });
 

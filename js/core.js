@@ -324,6 +324,12 @@ class FileListManager {
     row.querySelector('.file-item__meta').textContent = text;
   }
 
+  setLocked(locked) {
+    this.container.querySelectorAll('.remove-btn').forEach(btn => {
+      btn.disabled = locked;
+    });
+  }
+
   addDownload(id, blob, filename) {
     const row = this.container.querySelector(`[data-id="${id}"]`);
     if (!row) return;
