@@ -194,7 +194,8 @@
 
 /* Tool pages */
 .tool-page {
-  padding: 56px 0 80px;
+  padding-top: 56px;
+  padding-bottom: 80px;
 }
 .tool-page__header {
   margin-bottom: 32px;
