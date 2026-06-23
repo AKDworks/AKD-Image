@@ -137,7 +137,7 @@
   </div>
 </main>
 
-<script src="../js/core.js"></script>
+<script src="../js/core.js?v=2"></script>
 <script>
 (function () {
   const dropzoneEl  = document.getElementById('dropzone');
@@ -239,35 +239,37 @@
 
   previewBtn.addEventListener('click', async () => {
     if (!files.length) return;
-    const file = files[0].file;
-    const src = await FileUtils.readAsDataURL(file);
-    const img = await FileUtils.loadImage(src);
-    const wStr = widthInput.value;
-    const hStr = heightInput.value;
-    const mode = document.querySelector('input[name="resize-mode"]:checked').value;
-    
-    let nw = img.naturalWidth, nh = img.naturalHeight;
-    if (mode === 'px') {
-      nw = parseInt(wStr) || nw;
-      nh = parseInt(hStr) || nh;
-    } else if (mode === 'pct') {
-      const pct = parseInt(scalePct.value) / 100;
-      nw = Math.round(nw * pct);
-      nh = Math.round(nh * pct);
-    } else if (mode === 'longest') {
-      const lg = parseInt(longestPx.value) || 1200;
-      if (nw > nh) { nh = Math.round(nh * (lg / nw)); nw = lg; }
-      else { nw = Math.round(nw * (lg / nh)); nh = lg; }
-    }
-    if (noEnlarge.checked && (nw > img.naturalWidth || nh > img.naturalHeight)) {
-      nw = img.naturalWidth; nh = img.naturalHeight;
-    }
-    
-    previewCanvas.width = nw;
-    previewCanvas.height = nh;
-    const ctx = previewCanvas.getContext('2d');
-    ctx.drawImage(img, 0, 0, nw, nh);
-    previewCanvas.classList.remove('hidden');
+    await UIUtils.runPreview(previewCanvas, async () => {
+      const file = files[0].file;
+      const src = await FileUtils.readAsDataURL(file);
+      const img = await FileUtils.loadImage(src);
+      const wStr = widthInput.value;
+      const hStr = heightInput.value;
+      const mode = document.querySelector('input[name="resize-mode"]:checked').value;
+
+      let nw = img.naturalWidth, nh = img.naturalHeight;
+      if (mode === 'px') {
+        nw = parseInt(wStr) || nw;
+        nh = parseInt(hStr) || nh;
+      } else if (mode === 'pct') {
+        const pct = parseInt(scalePct.value) / 100;
+        nw = Math.round(nw * pct);
+        nh = Math.round(nh * pct);
+      } else if (mode === 'longest') {
+        const lg = parseInt(longestPx.value) || 1200;
+        if (nw > nh) { nh = Math.round(nh * (lg / nw)); nw = lg; }
+        else { nw = Math.round(nw * (lg / nh)); nh = lg; }
+      }
+      if (noEnlarge.checked && (nw > img.naturalWidth || nh > img.naturalHeight)) {
+        nw = img.naturalWidth; nh = img.naturalHeight;
+      }
+
+      previewCanvas.width = nw;
+      previewCanvas.height = nh;
+      const ctx = previewCanvas.getContext('2d');
+      ctx.drawImage(img, 0, 0, nw, nh);
+      previewCanvas.classList.remove('hidden');
+    });
   });
 
   clearBtn.addEventListener('click', () => {

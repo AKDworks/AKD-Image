@@ -87,7 +87,7 @@
   </div>
 </main>
 
-<script src="../js/core.js"></script>
+<script src="../js/core.js?v=2"></script>
 <script>
 (function () {
   const dropzoneEl  = document.getElementById('dropzone');
@@ -167,10 +167,12 @@
 
   previewBtn.addEventListener('click', async () => {
     if (!files.length) return;
-    const file = files[0].file;
-    const src = await FileUtils.readAsDataURL(file);
-    cachedImg = await FileUtils.loadImage(src);
-    drawPreview();
+    await UIUtils.runPreview(previewWrap, async () => {
+      const file = files[0].file;
+      const src = await FileUtils.readAsDataURL(file);
+      cachedImg = await FileUtils.loadImage(src);
+      drawPreview();
+    });
   });
 
   function drawPreview() {

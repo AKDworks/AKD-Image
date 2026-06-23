@@ -63,7 +63,7 @@
   </div>
 </main>
 
-<script src="../js/core.js"></script>
+<script src="../js/core.js?v=2"></script>
 <script>
 (function () {
   const dropzoneEl  = document.getElementById('dropzone');
@@ -139,27 +139,29 @@
 
   previewBtn.addEventListener('click', async () => {
     if (!files.length) return;
-    const file = files[0].file;
-    const src = await FileUtils.readAsDataURL(file);
-    const img = await FileUtils.loadImage(src);
-    
-    const ctx = previewCanvas.getContext('2d');
-    
-    const isSwapped = rotation === 90 || rotation === 270;
-    const w = isSwapped ? img.naturalHeight : img.naturalWidth;
-    const h = isSwapped ? img.naturalWidth : img.naturalHeight;
-    
-    previewCanvas.width = w;
-    previewCanvas.height = h;
-    
-    ctx.translate(w / 2, h / 2);
-    ctx.rotate((rotation * Math.PI) / 180);
-    const scaleX = flipH ? -1 : 1;
-    const scaleY = flipV ? -1 : 1;
-    ctx.scale(scaleX, scaleY);
-    ctx.drawImage(img, -img.naturalWidth / 2, -img.naturalHeight / 2);
-    
-    previewCanvas.classList.remove('hidden');
+    await UIUtils.runPreview(previewCanvas, async () => {
+      const file = files[0].file;
+      const src = await FileUtils.readAsDataURL(file);
+      const img = await FileUtils.loadImage(src);
+
+      const ctx = previewCanvas.getContext('2d');
+
+      const isSwapped = rotation === 90 || rotation === 270;
+      const w = isSwapped ? img.naturalHeight : img.naturalWidth;
+      const h = isSwapped ? img.naturalWidth : img.naturalHeight;
+
+      previewCanvas.width = w;
+      previewCanvas.height = h;
+
+      ctx.translate(w / 2, h / 2);
+      ctx.rotate((rotation * Math.PI) / 180);
+      const scaleX = flipH ? -1 : 1;
+      const scaleY = flipV ? -1 : 1;
+      ctx.scale(scaleX, scaleY);
+      ctx.drawImage(img, -img.naturalWidth / 2, -img.naturalHeight / 2);
+
+      previewCanvas.classList.remove('hidden');
+    });
   });
 
   clearBtn.addEventListener('click', () => {

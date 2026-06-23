@@ -104,6 +104,16 @@ const UIUtils = {
     this.setVisible(parts.previewCanvas, false);
   },
 
+  async runPreview(previewEl, render) {
+    try {
+      await render();
+    } catch (err) {
+      console.error(err);
+      this.setVisible(previewEl, false);
+      Toast.error('Не удалось показать предпросмотр.');
+    }
+  },
+
   showBatchResult(parts, count) {
     if (parts.resultArea) parts.resultArea.classList.add('visible');
     this.setVisible(parts.downloadAllBtn, count > 1);

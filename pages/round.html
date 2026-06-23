@@ -66,7 +66,7 @@
   </div>
 </main>
 
-<script src="../js/core.js"></script>
+<script src="../js/core.js?v=2"></script>
 <script>
 (function () {
   const dropzoneEl  = document.getElementById('dropzone');
@@ -155,19 +155,21 @@
 
   previewBtn.addEventListener('click', async () => {
     if (!files.length) return;
-    const file = files[0].file;
-    const src = await FileUtils.readAsDataURL(file);
-    const img = await FileUtils.loadImage(src);
-    
-    const percent = parseInt(radiusInput.value) || 0;
-    const processedCanvas = applyRounding(img, percent);
-    
-    previewCanvas.width = processedCanvas.width;
-    previewCanvas.height = processedCanvas.height;
-    const pCtx = previewCanvas.getContext('2d');
-    pCtx.clearRect(0, 0, previewCanvas.width, previewCanvas.height);
-    pCtx.drawImage(processedCanvas, 0, 0);
-    previewCanvas.classList.remove('hidden');
+    await UIUtils.runPreview(previewCanvas, async () => {
+      const file = files[0].file;
+      const src = await FileUtils.readAsDataURL(file);
+      const img = await FileUtils.loadImage(src);
+
+      const percent = parseInt(radiusInput.value) || 0;
+      const processedCanvas = applyRounding(img, percent);
+
+      previewCanvas.width = processedCanvas.width;
+      previewCanvas.height = processedCanvas.height;
+      const pCtx = previewCanvas.getContext('2d');
+      pCtx.clearRect(0, 0, previewCanvas.width, previewCanvas.height);
+      pCtx.drawImage(processedCanvas, 0, 0);
+      previewCanvas.classList.remove('hidden');
+    });
   });
 
   roundBtn.addEventListener('click', async () => {

@@ -72,7 +72,7 @@
   </div>
 </main>
 
-<script src="../js/core.js"></script>
+<script src="../js/core.js?v=2"></script>
 <script>
 (function () {
   const dropzoneEl  = document.getElementById('dropzone');
@@ -131,15 +131,17 @@
 
   previewBtn.addEventListener('click', async () => {
     if (!files.length) return;
-    const file = files[0].file;
-    const src = await FileUtils.readAsDataURL(file);
-    const img = await FileUtils.loadImage(src);
-    
-    previewCanvas.width = img.naturalWidth;
-    previewCanvas.height = img.naturalHeight;
-    const pCtx = previewCanvas.getContext('2d');
-    pCtx.drawImage(img, 0, 0);
-    previewCanvas.classList.remove('hidden');
+    await UIUtils.runPreview(previewCanvas, async () => {
+      const file = files[0].file;
+      const src = await FileUtils.readAsDataURL(file);
+      const img = await FileUtils.loadImage(src);
+
+      previewCanvas.width = img.naturalWidth;
+      previewCanvas.height = img.naturalHeight;
+      const pCtx = previewCanvas.getContext('2d');
+      pCtx.drawImage(img, 0, 0);
+      previewCanvas.classList.remove('hidden');
+    });
   });
 
   cleanBtn.addEventListener('click', async () => {
