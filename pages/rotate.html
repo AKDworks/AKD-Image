@@ -236,7 +236,7 @@
       `;
       resultArea.classList.add('visible');
       dlAllBtn.classList.toggle('hidden', results.length <= 1);
-      Toast.success('Изображения успешно сохранены!');
+      Toast.success('Поворот завершён.');
     }
     if (errors) {
       Toast.error('Не удалось обработать ' + FileUtils.formatFilesCount(errors) + '.');

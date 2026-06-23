@@ -291,7 +291,7 @@
       logoImage = await FileUtils.loadImage(url);
       logoPreviewEl.src = url;
       logoPreviewWrap.classList.remove('hidden');
-      Toast.success('Логотип загружен!');
+      Toast.success('Логотип загружен.');
     } catch(e) {
       Toast.error('Не удалось загрузить изображение по ссылке.');
     }
@@ -456,7 +456,7 @@
   applyBtn.addEventListener('click', async () => {
     if (!files.length) return;
     if (activeTab === 'image' && !logoImage) {
-      Toast.error('Загрузите логотип для водяного знака!'); return;
+      Toast.error('Загрузите логотип для водяного знака.'); return;
     }
     applyBtn.disabled = true;
     UIUtils.setBatchLocked(manager, [clearBtn, dlAllBtn, previewBtn], true);
@@ -499,7 +499,7 @@
       `;
       resultArea.classList.add('visible');
       dlAllBtn.classList.toggle('hidden', results.length <= 1);
-      Toast.success('Водяной знак добавлен!');
+      Toast.success('Водяной знак добавлен.');
     }
     if (errors) {
       Toast.error('Не удалось обработать ' + FileUtils.formatFilesCount(errors) + '.');

@@ -193,7 +193,7 @@
       `;
       resultArea.classList.add('visible');
       dlAllBtn.classList.toggle('hidden', results.length <= 1);
-      Toast.success('Конвертация завершена!');
+      Toast.success('Конвертация завершена.');
     }
     if (errors) {
       Toast.error('Не удалось обработать ' + FileUtils.formatFilesCount(errors) + '.');

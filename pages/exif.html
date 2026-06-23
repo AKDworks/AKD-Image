@@ -203,6 +203,7 @@
       `;
       resultArea.classList.add('visible');
       dlAllBtn.classList.toggle('hidden', results.length <= 1);
+      Toast.success('EXIF очищен.');
     }
     if (errors) {
       Toast.error('Не удалось очистить ' + FileUtils.formatFilesCount(errors) + '.');

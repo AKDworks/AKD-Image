@@ -250,10 +250,10 @@
       const blob = await FileUtils.canvasToBlob(outputCanvas, mime, 0.9);
       const filename = activeFile.name.replace(/\.[^.]+$/, '') + '_effect.' + ext;
       FileUtils.downloadBlob(blob, filename);
-      Toast.success('Изображение сохранено!');
+      Toast.success('Изображение сохранено.');
     } catch (err) {
       console.error(err);
-      Toast.error('Ошибка при сохранении.');
+      Toast.error('Не удалось сохранить изображение.');
     }
 
     saveBtn.disabled = false;

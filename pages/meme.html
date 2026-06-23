@@ -221,7 +221,7 @@
       `;
       resultArea.classList.add('visible');
       dlAllBtn.classList.toggle('hidden', results.length <= 1);
-      Toast.success('Мемы успешно созданы!');
+      Toast.success('Мемы созданы.');
     }
     if (errors) {
       Toast.error('Не удалось обработать ' + FileUtils.formatFilesCount(errors) + '.');

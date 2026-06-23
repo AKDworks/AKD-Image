@@ -227,7 +227,7 @@
       `;
       resultArea.classList.add('visible');
       dlAllBtn.classList.toggle('hidden', results.length <= 1);
-      Toast.success('Сжатие завершено!');
+      Toast.success('Сжатие завершено.');
     }
     if (errors) {
       Toast.error('Не удалось обработать ' + FileUtils.formatFilesCount(errors) + '.');

@@ -202,7 +202,7 @@ const FileUtils = {
     return window.__akdJSZipPromise;
   },
 
-  async downloadZip(entries, filename, successMessage = 'ZIP скачан!') {
+  async downloadZip(entries, filename, successMessage = 'ZIP скачан.') {
     try {
       const JSZipCtor = await this.loadJSZip();
       const zip = new JSZipCtor();

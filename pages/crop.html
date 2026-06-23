@@ -457,18 +457,18 @@
             : await FileUtils.canvasToBlob(canvas, 'image/png', 1);
           const item = new ClipboardItem({ 'image/png': copyBlob });
           await navigator.clipboard.write([item]);
-          Toast.success('Изображение скопировано в буфер!');
+          Toast.success('Изображение скопировано в буфер.');
         } catch (e) {
           Toast.error('Копирование не поддерживается браузером, скачайте изображение.');
         }
       };
 
-      Toast.success('Обрезка успешно завершена!');
+      Toast.success('Обрезка завершена.');
       resultArea.scrollIntoView({ behavior: 'smooth' });
 
     } catch (err) {
       console.error(err);
-      Toast.error('Ошибка при обрезке изображения.');
+      Toast.error('Не удалось обрезать изображение.');
     }
 
     applyCropBtn.disabled = false;
