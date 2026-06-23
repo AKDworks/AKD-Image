@@ -1,4 +1,4 @@
-/* Toast notifications */
+/* Toasts */
 const Toast = (() => {
   let container = null;
 
@@ -63,7 +63,7 @@ const Modal = (() => {
 })();
 
 
-/* UI helpers */
+/* UI */
 const UIUtils = {
   setDisabled(elements, disabled) {
     elements.forEach(el => {
@@ -107,7 +107,7 @@ const UIUtils = {
 };
 
 
-/* File utilities */
+/* Files */
 const FileUtils = {
   formatSize(bytes) {
     if (bytes < 1024)       return bytes + ' B';
@@ -249,7 +249,7 @@ const FileUtils = {
 };
 
 
-/* Dropzone helper */
+/* Dropzone */
 class Dropzone {
   constructor(el, opts = {}) {
     this.el   = el;
@@ -308,7 +308,7 @@ class Dropzone {
 }
 
 
-/* File list manager */
+/* File list */
 class FileListManager {
   constructor(containerEl) {
     this.container = containerEl;
@@ -403,7 +403,7 @@ class FileListManager {
 }
 
 
-/* Mobile navigation */
+/* Mobile nav */
 document.addEventListener('DOMContentLoaded', () => {
   const toggle = document.querySelector('.nav-toggle');
   const nav    = document.querySelector('.site-nav');

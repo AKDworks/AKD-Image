@@ -131,7 +131,7 @@
   cursor: pointer;
 }
 
-/* Inline label+value for sliders */
+/* Range labels */
 .range-row {
   display: flex;
   align-items: center;
@@ -362,7 +362,7 @@
 .stat-card__value { font-size: 1.3rem; font-weight: 800; margin-top: 2px; }
 .stat-green .stat-card__value { color: var(--success); }
 
-/* Alerts and toasts */
+/* Alerts */
 .alert {
   padding: 12px 16px;
   border-radius: var(--r-sm);
@@ -377,7 +377,7 @@
 .alert-warn    { background: #FFFBEB; color: #92400E; border: 1px solid #FDE68A; }
 .alert-danger  { background: #FEF2F2; color: #991B1B; border: 1px solid #FECACA; }
 
-/* Toast container */
+/* Toasts */
 .toast-container {
   position: fixed;
   bottom: 24px;
@@ -412,7 +412,7 @@
   margin: 24px 0;
 }
 
-/* Preview canvases */
+/* Previews */
 .preview-canvas {
   max-width: 100%;
   border: 1px solid var(--border);
@@ -481,7 +481,7 @@
 }
 .modal__close:hover { color: var(--text); }
 
-/* Responsive adjustments */
+/* Responsive */
 @media (max-width: 768px) {
   .form-row { flex-direction: column; }
   .result-stats { flex-direction: column; }

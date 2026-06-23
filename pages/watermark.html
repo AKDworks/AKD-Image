@@ -358,7 +358,6 @@
 
   clearBtn.addEventListener('click', () => { files = []; manager.clear(); updateUI(); });
 
-  // Draw text or logo watermark on a new canvas.
   async function applyWatermark(img) {
     const canvas = document.createElement('canvas');
     canvas.width  = img.naturalWidth;
