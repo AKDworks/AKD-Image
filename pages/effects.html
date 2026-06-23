@@ -187,8 +187,8 @@
   async function loadImage(file) {
     activeFile = file;
     resetFilters();
-    dropzoneEl.classList.add('hidden');
-    workspaceEl.classList.remove('hidden');
+    UIUtils.setVisible(dropzoneEl, false);
+    UIUtils.setVisible(workspaceEl, true);
     
     const src = await FileUtils.readAsDataURL(file);
     activeImage = await FileUtils.loadImage(src);
@@ -234,8 +234,8 @@
     activeImage = null;
     activeFile = null;
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-    dropzoneEl.classList.remove('hidden');
-    workspaceEl.classList.add('hidden');
+    UIUtils.setVisible(dropzoneEl, true);
+    UIUtils.setVisible(workspaceEl, false);
   });
 
   saveBtn.addEventListener('click', async () => {
