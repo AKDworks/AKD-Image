@@ -331,16 +331,23 @@ class FileListManager {
     row.dataset.id = id;
     row.innerHTML = `
       <div class="file-item__thumb-wrap">
-        <div class="file-item__thumb file-item__thumb-placeholder">${ext}</div>
+        <div class="file-item__thumb file-item__thumb-placeholder"></div>
       </div>
       <div class="file-item__info">
-        <div class="file-item__name" title="${file.name}">${file.name}</div>
+        <div class="file-item__name"></div>
         <div class="file-item__meta">${FileUtils.formatSize(file.size)}</div>
         <div class="progress-bar hidden"><div class="progress-fill"></div></div>
       </div>
       <span class="file-item__status status-pending">Ожидание</span>
       <button class="btn-icon remove-btn" title="Удалить">✕</button>
     `;
+
+    const placeholder = row.querySelector('.file-item__thumb-placeholder');
+    const name = row.querySelector('.file-item__name');
+    placeholder.textContent = ext;
+    name.textContent = file.name;
+    name.title = file.name;
+
     this.container.appendChild(row);
 
     const btn = row.querySelector('.remove-btn');
