@@ -4,9 +4,13 @@ const Toast = (() => {
 
   function getContainer() {
     if (!container) {
-      container = document.createElement('div');
-      container.className = 'toast-container';
-      document.body.appendChild(container);
+      container = document.getElementById('toast-container');
+      if (!container) {
+        container = document.createElement('div');
+        container.className = 'toast-container';
+        container.id = 'toast-container';
+        document.body.appendChild(container);
+      }
     }
     return container;
   }
@@ -307,7 +311,6 @@ class Dropzone {
   }
 }
 
-
 /* File list */
 class FileListManager {
   constructor(containerEl) {
@@ -401,19 +404,3 @@ class FileListManager {
     info.appendChild(dl);
   }
 }
-
-
-/* Mobile nav */
-document.addEventListener('DOMContentLoaded', () => {
-  const toggle = document.querySelector('.nav-toggle');
-  const nav    = document.querySelector('.site-nav');
-  if (toggle && nav) {
-    toggle.addEventListener('click', () => nav.classList.toggle('open'));
-  }
-
-  const current = location.pathname.split('/').pop() || 'index.html';
-  document.querySelectorAll('.site-nav a').forEach(a => {
-    const href = a.getAttribute('href').split('/').pop();
-    if (href === current) a.classList.add('active');
-  });
-});
