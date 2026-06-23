@@ -9,7 +9,7 @@
 </head>
 <body>
 
-<script src="../js/layout.js?v=6"></script>
+<script src="../js/layout.js?v=7"></script>
 
 <main>
   <div class="container container--narrow tool-page">
@@ -189,7 +189,7 @@
   </div>
 </main>
 
-<script src="../js/core.js"></script>
+<script src="../js/core.js?v=2"></script>
 <script>
 (function () {
   const dropzoneEl  = document.getElementById('dropzone');
@@ -438,13 +438,15 @@
 
   previewBtn.addEventListener('click', async () => {
     if (!files.length) return;
-    const dataURL = await FileUtils.readAsDataURL(files[0].file);
-    const img     = await FileUtils.loadImage(dataURL);
-    const canvas  = await applyWatermark(img);
-    previewCanvas.width  = canvas.width;
-    previewCanvas.height = canvas.height;
-    previewCanvas.getContext('2d').drawImage(canvas, 0, 0);
-    previewCanvas.classList.remove('hidden');
+    await UIUtils.runPreview(previewCanvas, async () => {
+      const dataURL = await FileUtils.readAsDataURL(files[0].file);
+      const img     = await FileUtils.loadImage(dataURL);
+      const canvas  = await applyWatermark(img);
+      previewCanvas.width  = canvas.width;
+      previewCanvas.height = canvas.height;
+      previewCanvas.getContext('2d').drawImage(canvas, 0, 0);
+      previewCanvas.classList.remove('hidden');
+    });
   });
 
   applyBtn.addEventListener('click', async () => {

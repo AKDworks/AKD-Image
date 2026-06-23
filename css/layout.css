@@ -26,6 +26,12 @@ main {
   gap: 32px;
   height: 60px;
 }
+.header-side {
+  display: flex;
+  align-items: center;
+}
+.header-side--start { justify-content: flex-start; }
+.header-side--end { justify-content: flex-end; }
 .logo {
   display: flex;
   align-items: center;
@@ -49,8 +55,10 @@ main {
 .site-nav {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 4px;
-  flex: 1;
+  flex: none;
+  margin: 0 auto;
 }
 .site-nav a {
   font-size: .875rem;
@@ -77,6 +85,7 @@ main {
   border-radius: var(--r-sm);
   transition: background var(--t);
   white-space: nowrap;
+  text-decoration: none;
 }
 .header-btn:hover { background: #DBEAFE; }
 

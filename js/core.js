@@ -4,9 +4,13 @@ const Toast = (() => {
 
   function getContainer() {
     if (!container) {
-      container = document.createElement('div');
-      container.className = 'toast-container';
-      document.body.appendChild(container);
+      container = document.getElementById('toast-container');
+      if (!container) {
+        container = document.createElement('div');
+        container.className = 'toast-container';
+        container.id = 'toast-container';
+        document.body.appendChild(container);
+      }
     }
     return container;
   }
@@ -98,6 +102,16 @@ const UIUtils = {
   resetPreview(parts, hasFiles) {
     this.setVisible(parts.previewBtn, hasFiles);
     this.setVisible(parts.previewCanvas, false);
+  },
+
+  async runPreview(previewEl, render) {
+    try {
+      await render();
+    } catch (err) {
+      console.error(err);
+      this.setVisible(previewEl, false);
+      Toast.error('Не удалось показать предпросмотр.');
+    }
   },
 
   showBatchResult(parts, count) {
@@ -307,7 +321,6 @@ class Dropzone {
   }
 }
 
-
 /* File list */
 class FileListManager {
   constructor(containerEl) {
@@ -328,16 +341,23 @@ class FileListManager {
     row.dataset.id = id;
     row.innerHTML = `
       <div class="file-item__thumb-wrap">
-        <div class="file-item__thumb file-item__thumb-placeholder">${ext}</div>
+        <div class="file-item__thumb file-item__thumb-placeholder"></div>
       </div>
       <div class="file-item__info">
-        <div class="file-item__name" title="${file.name}">${file.name}</div>
+        <div class="file-item__name"></div>
         <div class="file-item__meta">${FileUtils.formatSize(file.size)}</div>
         <div class="progress-bar hidden"><div class="progress-fill"></div></div>
       </div>
       <span class="file-item__status status-pending">Ожидание</span>
       <button class="btn-icon remove-btn" title="Удалить">✕</button>
     `;
+
+    const placeholder = row.querySelector('.file-item__thumb-placeholder');
+    const name = row.querySelector('.file-item__name');
+    placeholder.textContent = ext;
+    name.textContent = file.name;
+    name.title = file.name;
+
     this.container.appendChild(row);
 
     const btn = row.querySelector('.remove-btn');
@@ -401,19 +421,3 @@ class FileListManager {
     info.appendChild(dl);
   }
 }
-
-
-/* Mobile nav */
-document.addEventListener('DOMContentLoaded', () => {
-  const toggle = document.querySelector('.nav-toggle');
-  const nav    = document.querySelector('.site-nav');
-  if (toggle && nav) {
-    toggle.addEventListener('click', () => nav.classList.toggle('open'));
-  }
-
-  const current = location.pathname.split('/').pop() || 'index.html';
-  document.querySelectorAll('.site-nav a').forEach(a => {
-    const href = a.getAttribute('href').split('/').pop();
-    if (href === current) a.classList.add('active');
-  });
-});
