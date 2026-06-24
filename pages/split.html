@@ -20,8 +20,8 @@
     </div>
     <div class="dropzone" id="dropzone">
       <input type="file" accept="image/jpeg,image/png,image/webp">
-      <p class="dropzone__title">Перетащите изображение сюда</p>
-      <p class="dropzone__hint">или нажмите для выбора файла (только 1 файл за раз)</p>
+      <p class="dropzone__title">Перетащите изображения сюда</p>
+      <p class="dropzone__hint">или нажмите для выбора файлов</p>
       <div class="dropzone__formats">
         <span class="fmt-badge">JPG</span>
         <span class="fmt-badge">PNG</span>
@@ -87,7 +87,7 @@
   </div>
 </main>
 
-<script src="../js/core.js?v=2"></script>
+<script src="../js/core.js?v=3"></script>
 <script>
 (function () {
   const dropzoneEl  = document.getElementById('dropzone');
@@ -152,7 +152,7 @@
   });
 
   function updateUI() {
-    const hasFiles = UIUtils.updateBatchLayout({ fileListEl, settingsEl, actionBarEl }, files.length);
+    const hasFiles = UIUtils.updateBatchLayout({ dropzoneEl, fileListEl, settingsEl, actionBarEl }, files.length);
     UIUtils.resetBatchResult({ resultArea, resultStats });
     UIUtils.resetPreview({ previewBtn, previewCanvas: previewWrap }, hasFiles);
     cachedImg = null;

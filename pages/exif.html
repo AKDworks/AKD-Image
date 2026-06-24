@@ -21,7 +21,7 @@
 
     <div class="dropzone" id="dropzone">
       <input type="file" accept="image/jpeg,image/png,image/webp" multiple>
-      <p class="dropzone__title">Перетащите изображения сюда</p>
+      <p class="dropzone__title">Перетащите одно или несколько изображений сюда</p>
       <p class="dropzone__hint">или нажмите для выбора файлов</p>
       <div class="dropzone__formats">
         <span class="fmt-badge">JPG</span>
@@ -72,7 +72,7 @@
   </div>
 </main>
 
-<script src="../js/core.js?v=2"></script>
+<script src="../js/core.js?v=3"></script>
 <script>
 (function () {
   const dropzoneEl  = document.getElementById('dropzone');
@@ -117,7 +117,7 @@
   });
 
   function updateUI() {
-    const hasFiles = UIUtils.updateBatchLayout({ fileListEl, settingsEl, actionBarEl, countEl }, files.length);
+    const hasFiles = UIUtils.updateBatchLayout({ dropzoneEl, fileListEl, settingsEl, actionBarEl, countEl }, files.length);
     UIUtils.resetBatchResult({ resultArea, resultStats, downloadAllBtn: dlAllBtn });
     UIUtils.resetPreview({ previewBtn, previewCanvas }, hasFiles);
     results = [];

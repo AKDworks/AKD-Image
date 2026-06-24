@@ -86,6 +86,7 @@ const UIUtils = {
 
   updateBatchLayout(parts, count) {
     const hasFiles = count > 0;
+    this.setVisible(parts.dropzoneEl, !hasFiles);
     this.setVisible(parts.fileListEl, hasFiles);
     this.setVisible(parts.settingsEl, hasFiles);
     this.setVisible(parts.actionBarEl, hasFiles);
