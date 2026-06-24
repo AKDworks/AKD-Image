@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Изображение в Base64 — AKD Image</title>
+  <meta name="description" content="Преобразуйте изображение в Base64 или восстановите изображение из Base64 локально в браузере.">
+  <link rel="stylesheet" href="../css/main.css?v=2">
+</head>
+<body>
+
+<script src="../js/layout.js?v=7"></script>
+
+<main>
+  <div class="container container--narrow tool-page">
+    <div class="tool-page__header">
+      <h1 class="tool-page__title">Изображение в Base64</h1>
+      <p class="tool-page__subtitle">Преобразуйте изображение в текстовую строку или восстановите файл из Base64.</p>
+    </div>
+
+    <div class="base64-tabs" role="tablist" aria-label="Режим конвертации">
+      <button class="base64-tab active" type="button" role="tab" aria-selected="true" data-mode="encode">
+        Изображение → Base64
+      </button>
+      <button class="base64-tab" type="button" role="tab" aria-selected="false" data-mode="decode">
+        Base64 → изображение
+      </button>
+    </div>
+
+    <section id="encode-panel">
+      <div class="dropzone" id="dropzone">
+        <input type="file" accept="image/*">
+        <p class="dropzone__title">Перетащите изображение сюда</p>
+        <p class="dropzone__hint">или нажмите для выбора файла</p>
+        <div class="dropzone__formats">
+          <span class="fmt-badge">JPG</span>
+          <span class="fmt-badge">PNG</span>
+          <span class="fmt-badge">WEBP</span>
+        </div>
+      </div>
+
+      <div class="tool-panel hidden" id="encode-result">
+        <div class="tool-panel__head">
+          <h3>Результат</h3>
+          <button class="btn btn-sm btn-secondary" id="encode-clear" type="button">Выбрать другой файл</button>
+        </div>
+        <div class="tool-panel__body">
+          <div class="base64-file">
+            <img class="base64-file__preview" id="source-preview" alt="">
+            <div>
+              <div class="fw-bold" id="source-name"></div>
+              <div class="text-muted text-sm" id="source-meta"></div>
+            </div>
+          </div>
+
+          <div class="form-row mt-16">
+            <div class="form-group">
+              <label for="output-type">Формат строки</label>
+              <select id="output-type">
+                <option value="data-url">Data URL</option>
+                <option value="base64">Только Base64</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group mt-16">
+            <label for="base64-output">Base64</label>
+            <input class="base64-field" id="base64-output" type="text" readonly spellcheck="false">
+          </div>
+
+          <div class="base64-actions mt-16">
+            <button class="btn btn-primary" id="copy-output" type="button">Копировать</button>
+            <button class="btn btn-secondary" id="download-text" type="button">Скачать TXT</button>
+            <span class="text-muted text-sm" id="output-length"></span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="hidden" id="decode-panel">
+      <div class="tool-panel base64-input-panel">
+        <div class="tool-panel__head">
+          <h3>Строка Base64</h3>
+          <button class="btn btn-sm btn-secondary" id="decode-clear" type="button">Очистить</button>
+        </div>
+        <div class="tool-panel__body">
+          <div class="form-group">
+            <label for="base64-input">Data URL или чистая строка Base64</label>
+            <input class="base64-field" id="base64-input" type="text" spellcheck="false" placeholder="data:image/png;base64,...">
+          </div>
+
+          <div class="form-row mt-16">
+            <div class="form-group">
+              <label for="input-format">Формат чистой строки Base64</label>
+              <select id="input-format">
+                <option value="image/png">PNG</option>
+                <option value="image/jpeg">JPG</option>
+                <option value="image/webp">WebP</option>
+              </select>
+            </div>
+          </div>
+
+          <button class="btn btn-primary btn-lg mt-16" id="decode-btn" type="button">Преобразовать</button>
+        </div>
+      </div>
+
+      <div class="tool-panel hidden" id="decode-result">
+        <div class="tool-panel__head">
+          <h3>Изображение</h3>
+          <span class="text-muted text-sm" id="decoded-meta"></span>
+        </div>
+        <div class="tool-panel__body">
+          <div class="base64-preview">
+            <img id="decoded-preview" alt="Восстановленное изображение">
+          </div>
+          <button class="btn btn-success mt-16" id="download-image" type="button">Скачать изображение</button>
+        </div>
+      </div>
+    </section>
+  </div>
+</main>
+
+<script src="../js/core.js?v=2"></script>
+<script>
+(function () {
+  const tabs = document.querySelectorAll('.base64-tab');
+  const encodePanel = document.getElementById('encode-panel');
+  const decodePanel = document.getElementById('decode-panel');
+  const dropzoneEl = document.getElementById('dropzone');
+  const encodeResult = document.getElementById('encode-result');
+  const sourcePreview = document.getElementById('source-preview');
+  const sourceName = document.getElementById('source-name');
+  const sourceMeta = document.getElementById('source-meta');
+  const outputType = document.getElementById('output-type');
+  const output = document.getElementById('base64-output');
+  const outputLength = document.getElementById('output-length');
+  const input = document.getElementById('base64-input');
+  const inputFormat = document.getElementById('input-format');
+  const decodeResult = document.getElementById('decode-result');
+  const decodedPreview = document.getElementById('decoded-preview');
+  const decodedMeta = document.getElementById('decoded-meta');
+
+  let sourceDataUrl = '';
+  let sourceFile = null;
+  let decodedBlob = null;
+  let decodedUrl = '';
+  let decodedFilename = '';
+
+  tabs.forEach(tab => {
+    tab.addEventListener('click', () => {
+      const encode = tab.dataset.mode === 'encode';
+      tabs.forEach(item => {
+        const active = item === tab;
+        item.classList.toggle('active', active);
+        item.setAttribute('aria-selected', String(active));
+      });
+      UIUtils.setVisible(encodePanel, encode);
+      UIUtils.setVisible(decodePanel, !encode);
+    });
+  });
+
+  new Dropzone(dropzoneEl, {
+    accept: ['image/*'],
+    multiple: false,
+    async onFiles(files) {
+      const file = files[0];
+      if (!file) return;
+
+      try {
+        sourceDataUrl = await FileUtils.readAsDataURL(file);
+        sourceFile = file;
+        sourcePreview.src = sourceDataUrl;
+        sourceName.textContent = file.name;
+        sourceMeta.textContent = `${file.type || 'Изображение'} · ${FileUtils.formatSize(file.size)}`;
+        UIUtils.setVisible(dropzoneEl, false);
+        UIUtils.setVisible(encodeResult, true);
+        updateOutput();
+      } catch (err) {
+        console.error(err);
+        Toast.error('Не удалось прочитать изображение.');
+      }
+    }
+  });
+
+  function updateOutput() {
+    if (!sourceDataUrl) return;
+    output.value = outputType.value === 'base64'
+      ? sourceDataUrl.slice(sourceDataUrl.indexOf(',') + 1)
+      : sourceDataUrl;
+    outputLength.textContent = FileUtils.formatCount(output.value.length, ['символ', 'символа', 'символов']);
+  }
+
+  function resetEncode() {
+    sourceDataUrl = '';
+    sourceFile = null;
+    sourcePreview.removeAttribute('src');
+    output.value = '';
+    outputLength.textContent = '';
+    UIUtils.setVisible(encodeResult, false);
+    UIUtils.setVisible(dropzoneEl, true);
+  }
+
+  async function copyText(text) {
+    if (!text) return;
+    try {
+      await navigator.clipboard.writeText(text);
+      Toast.success('Скопировано в буфер обмена.');
+    } catch (err) {
+      output.focus();
+      output.select();
+      const copied = document.execCommand('copy');
+      if (copied) Toast.success('Скопировано в буфер обмена.');
+      else Toast.error('Не удалось скопировать текст.');
+    }
+  }
+
+  function clearDecodedResult() {
+    if (decodedUrl) URL.revokeObjectURL(decodedUrl);
+    decodedBlob = null;
+    decodedUrl = '';
+    decodedFilename = '';
+    decodedPreview.removeAttribute('src');
+    decodedMeta.textContent = '';
+    UIUtils.setVisible(decodeResult, false);
+  }
+
+  function decodeBase64(value) {
+    const trimmed = value.trim();
+    if (!trimmed) throw new Error('Пустая строка');
+
+    const dataUrlMatch = trimmed.match(/^data:([^;,]+)(?:;[^,]*)?;base64,([\s\S]+)$/i);
+    const mime = dataUrlMatch ? dataUrlMatch[1].toLowerCase() : inputFormat.value;
+    let base64 = (dataUrlMatch ? dataUrlMatch[2] : trimmed)
+      .replace(/\s/g, '')
+      .replace(/-/g, '+')
+      .replace(/_/g, '/');
+
+    if (!mime.startsWith('image/')) throw new Error('Строка не содержит изображение');
+    if (!base64 || !/^[A-Za-z0-9+/]*={0,2}$/.test(base64) || base64.length % 4 === 1) {
+      throw new Error('Некорректная строка Base64');
+    }
+    base64 = base64.replace(/=+$/, '');
+    base64 += '='.repeat((4 - base64.length % 4) % 4);
+
+    const binary = atob(base64);
+    const bytes = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+    return { blob: new Blob([bytes], { type: mime }), mime };
+  }
+
+  function extensionForMime(mime) {
+    const extensions = {
+      'image/jpeg': 'jpg',
+      'image/png': 'png',
+      'image/webp': 'webp'
+    };
+    return extensions[mime] || 'img';
+  }
+
+  outputType.addEventListener('change', updateOutput);
+  document.getElementById('encode-clear').addEventListener('click', resetEncode);
+  document.getElementById('copy-output').addEventListener('click', () => copyText(output.value));
+  document.getElementById('download-text').addEventListener('click', () => {
+    if (!output.value || !sourceFile) return;
+    const filename = sourceFile.name.replace(/\.[^.]+$/, '') + '-base64.txt';
+    FileUtils.downloadBlob(new Blob([output.value], { type: 'text/plain;charset=utf-8' }), filename);
+  });
+
+  document.getElementById('decode-clear').addEventListener('click', () => {
+    input.value = '';
+    clearDecodedResult();
+  });
+
+  document.getElementById('decode-btn').addEventListener('click', () => {
+    clearDecodedResult();
+    try {
+      const decoded = decodeBase64(input.value);
+      decodedBlob = decoded.blob;
+      decodedFilename = `akd-image.${extensionForMime(decoded.mime)}`;
+      decodedUrl = URL.createObjectURL(decodedBlob);
+      decodedPreview.src = decodedUrl;
+      decodedPreview.onload = () => {
+        decodedMeta.textContent = `${decodedPreview.naturalWidth} × ${decodedPreview.naturalHeight} · ${FileUtils.formatSize(decodedBlob.size)}`;
+      };
+      decodedPreview.onerror = () => {
+        clearDecodedResult();
+        Toast.error('Base64 не содержит корректное изображение.');
+      };
+      UIUtils.setVisible(decodeResult, true);
+    } catch (err) {
+      console.error(err);
+      Toast.error('Проверьте строку Base64 и выбранный формат.');
+    }
+  });
+
+  document.getElementById('download-image').addEventListener('click', () => {
+    if (decodedBlob) FileUtils.downloadBlob(decodedBlob, decodedFilename);
+  });
+
+  window.addEventListener('beforeunload', clearDecodedResult);
+})();
+</script>
+</body>
+</html>

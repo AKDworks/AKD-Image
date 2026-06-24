@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Генератор палитры — AKD Image</title>
+  <meta name="description" content="Извлеките визуально отличающиеся цвета из JPG, PNG или WebP локально в браузере.">
+  <link rel="stylesheet" href="../css/main.css?v=4">
+</head>
+<body>
+
+<script src="../js/layout.js?v=7"></script>
+
+<main>
+  <div class="container container--narrow tool-page">
+    <div class="tool-page__header">
+      <h1 class="tool-page__title">Генератор палитры</h1>
+      <p class="tool-page__subtitle">Получите визуально отличающиеся основные цвета изображения.</p>
+    </div>
+
+    <div class="dropzone" id="dropzone">
+      <input type="file" accept="image/jpeg,image/png,image/webp">
+      <p class="dropzone__title">Перетащите изображение сюда</p>
+      <p class="dropzone__hint">или нажмите для выбора файла</p>
+      <div class="dropzone__formats">
+        <span class="fmt-badge">JPG</span>
+        <span class="fmt-badge">PNG</span>
+        <span class="fmt-badge">WEBP</span>
+      </div>
+    </div>
+
+    <div class="tool-panel hidden" id="settings-panel">
+      <div class="tool-panel__head">
+        <h3>Настройки</h3>
+        <button class="btn btn-sm btn-secondary" id="clear-btn" type="button">Выбрать другое</button>
+      </div>
+      <div class="tool-panel__body">
+        <div class="palette-source">
+          <img class="palette-source__image" id="source-preview" alt="">
+          <div>
+            <div class="fw-bold" id="source-name"></div>
+            <div class="text-muted text-sm" id="source-meta"></div>
+          </div>
+        </div>
+
+        <div class="form-group mt-16">
+          <label for="color-count">Количество цветов</label>
+          <div class="range-row">
+            <input type="range" id="color-count" min="3" max="10" value="6">
+            <span id="color-count-value">6</span>
+          </div>
+        </div>
+
+        <button class="btn btn-primary btn-lg mt-16" id="generate-btn" type="button">Создать палитру</button>
+      </div>
+    </div>
+
+    <div class="result-area" id="result-area">
+      <hr class="divider">
+      <div class="palette-grid" id="palette-grid"></div>
+      <div class="palette-actions mt-16">
+        <button class="btn btn-success" id="download-palette" type="button">Скачать палитру PNG</button>
+        <span class="text-muted text-sm">Нажмите на цвет, чтобы скопировать HEX</span>
+      </div>
+    </div>
+  </div>
+</main>
+
+<script src="../js/core.js?v=2"></script>
+<script>
+(function () {
+  const ANALYSIS_SIZE = 180;
+  const MAX_ITERATIONS = 14;
+
+  const dropzoneEl = document.getElementById('dropzone');
+  const settingsPanel = document.getElementById('settings-panel');
+  const clearBtn = document.getElementById('clear-btn');
+  const sourcePreview = document.getElementById('source-preview');
+  const sourceName = document.getElementById('source-name');
+  const sourceMeta = document.getElementById('source-meta');
+  const colorCount = document.getElementById('color-count');
+  const colorCountValue = document.getElementById('color-count-value');
+  const generateBtn = document.getElementById('generate-btn');
+  const resultArea = document.getElementById('result-area');
+  const paletteGrid = document.getElementById('palette-grid');
+  const downloadBtn = document.getElementById('download-palette');
+
+  let sourceFile = null;
+  let sourceImage = null;
+  let sourceUrl = '';
+  let palette = [];
+
+  new Dropzone(dropzoneEl, {
+    accept: ['image/jpeg', 'image/png', 'image/webp'],
+    multiple: false,
+    async onFiles(files) {
+      const file = files[0];
+      if (!file) return;
+
+      resetSource();
+      sourceUrl = URL.createObjectURL(file);
+      try {
+        sourceImage = await FileUtils.loadImage(sourceUrl);
+        sourceFile = file;
+        sourcePreview.src = sourceUrl;
+        sourceName.textContent = file.name;
+        sourceMeta.textContent = `${sourceImage.naturalWidth} × ${sourceImage.naturalHeight} · ${FileUtils.formatSize(file.size)}`;
+        UIUtils.setVisible(dropzoneEl, false);
+        UIUtils.setVisible(settingsPanel, true);
+        resetResults();
+      } catch (err) {
+        console.error(err);
+        resetSource();
+        Toast.error('Не удалось загрузить изображение.');
+      }
+    }
+  });
+
+  colorCount.addEventListener('input', () => {
+    colorCountValue.textContent = colorCount.value;
+    resetResults();
+  });
+
+  function resetResults() {
+    palette = [];
+    paletteGrid.replaceChildren();
+    resultArea.classList.remove('visible');
+  }
+
+  function resetSource() {
+    if (sourceUrl) URL.revokeObjectURL(sourceUrl);
+    sourceUrl = '';
+    sourceFile = null;
+    sourceImage = null;
+    sourcePreview.removeAttribute('src');
+    resetResults();
+  }
+
+  function resetTool() {
+    resetSource();
+    UIUtils.setVisible(settingsPanel, false);
+    UIUtils.setVisible(dropzoneEl, true);
+  }
+
+  function analyzeImage(img) {
+    const scale = Math.min(1, ANALYSIS_SIZE / Math.max(img.naturalWidth, img.naturalHeight));
+    const width = Math.max(1, Math.round(img.naturalWidth * scale));
+    const height = Math.max(1, Math.round(img.naturalHeight * scale));
+    const canvas = document.createElement('canvas');
+    canvas.width = width;
+    canvas.height = height;
+    const ctx = canvas.getContext('2d', { willReadFrequently: true });
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = 'high';
+    ctx.drawImage(img, 0, 0, width, height);
+
+    const data = ctx.getImageData(0, 0, width, height).data;
+    const buckets = new Map();
+    for (let i = 0; i < data.length; i += 4) {
+      if (data[i + 3] < 128) continue;
+      const r = data[i];
+      const g = data[i + 1];
+      const b = data[i + 2];
+      const key = ((r >> 3) << 10) | ((g >> 3) << 5) | (b >> 3);
+      const bucket = buckets.get(key);
+      if (bucket) {
+        bucket.r += r;
+        bucket.g += g;
+        bucket.b += b;
+        bucket.count++;
+      } else {
+        buckets.set(key, { r, g, b, count: 1 });
+      }
+    }
+
+    return Array.from(buckets.values()).map(bucket => {
+      const rgb = [
+        bucket.r / bucket.count,
+        bucket.g / bucket.count,
+        bucket.b / bucket.count
+      ];
+      return { rgb, lab: rgbToLab(rgb), count: bucket.count };
+    });
+  }
+
+  function rgbToLab(rgb) {
+    let [r, g, b] = rgb.map(value => value / 255);
+    r = r > 0.04045 ? Math.pow((r + 0.055) / 1.055, 2.4) : r / 12.92;
+    g = g > 0.04045 ? Math.pow((g + 0.055) / 1.055, 2.4) : g / 12.92;
+    b = b > 0.04045 ? Math.pow((b + 0.055) / 1.055, 2.4) : b / 12.92;
+
+    let x = (r * 0.4124 + g * 0.3576 + b * 0.1805) / 0.95047;
+    let y = (r * 0.2126 + g * 0.7152 + b * 0.0722);
+    let z = (r * 0.0193 + g * 0.1192 + b * 0.9505) / 1.08883;
+    const transform = value => value > 0.008856
+      ? Math.cbrt(value)
+      : 7.787 * value + 16 / 116;
+    x = transform(x);
+    y = transform(y);
+    z = transform(z);
+    return [116 * y - 16, 500 * (x - y), 200 * (y - z)];
+  }
+
+  function colorDistance(a, b) {
+    const dl = a[0] - b[0];
+    const da = a[1] - b[1];
+    const db = a[2] - b[2];
+    return Math.sqrt(dl * dl + da * da + db * db);
+  }
+
+  function seedCenters(points, count) {
+    const firstIndex = points.reduce(
+      (best, point, index, array) => point.count > array[best].count ? index : best,
+      0
+    );
+    const centers = [points[firstIndex].lab.slice()];
+    const selected = new Set([firstIndex]);
+    const first = points[firstIndex];
+    const maxWeight = Math.log1p(first.count);
+
+    while (centers.length < count) {
+      let bestIndex = -1;
+      let bestPoint = null;
+      let bestScore = -1;
+      points.forEach((point, index) => {
+        if (selected.has(index)) return;
+        const distance = Math.min(...centers.map(center => colorDistance(point.lab, center)));
+        const weight = 0.35 + 0.65 * Math.log1p(point.count) / maxWeight;
+        const score = distance * distance * weight;
+        if (score > bestScore) {
+          bestScore = score;
+          bestPoint = point;
+          bestIndex = index;
+        }
+      });
+      selected.add(bestIndex);
+      centers.push(bestPoint.lab.slice());
+    }
+    return centers;
+  }
+
+  function clusterColors(points, requestedCount) {
+    if (!points.length) return [];
+    const count = Math.min(requestedCount, points.length);
+    let centers = seedCenters(points, count);
+    let assignments = new Array(points.length).fill(0);
+
+    for (let iteration = 0; iteration < MAX_ITERATIONS; iteration++) {
+      const sums = Array.from({ length: count }, () => ({
+        lab: [0, 0, 0],
+        rgb: [0, 0, 0],
+        weight: 0
+      }));
+
+      points.forEach((point, index) => {
+        let nearest = 0;
+        let nearestDistance = Infinity;
+        centers.forEach((center, centerIndex) => {
+          const distance = colorDistance(point.lab, center);
+          if (distance < nearestDistance) {
+            nearestDistance = distance;
+            nearest = centerIndex;
+          }
+        });
+        assignments[index] = nearest;
+        const sum = sums[nearest];
+        sum.weight += point.count;
+        for (let channel = 0; channel < 3; channel++) {
+          sum.lab[channel] += point.lab[channel] * point.count;
+          sum.rgb[channel] += point.rgb[channel] * point.count;
+        }
+      });
+
+      let movement = 0;
+      centers = sums.map((sum, index) => {
+        if (!sum.weight) return centers[index];
+        const center = sum.lab.map(value => value / sum.weight);
+        movement += colorDistance(centers[index], center);
+        return center;
+      });
+      if (movement < 0.1) break;
+    }
+
+    const clusters = Array.from({ length: count }, () => ({
+      lab: [0, 0, 0],
+      rgb: [0, 0, 0],
+      count: 0
+    }));
+    points.forEach((point, index) => {
+      const cluster = clusters[assignments[index]];
+      cluster.count += point.count;
+      for (let channel = 0; channel < 3; channel++) {
+        cluster.lab[channel] += point.lab[channel] * point.count;
+        cluster.rgb[channel] += point.rgb[channel] * point.count;
+      }
+    });
+
+    const total = clusters.reduce((sum, cluster) => sum + cluster.count, 0);
+    const ready = clusters.filter(cluster => cluster.count).map(cluster => {
+      cluster.lab = cluster.lab.map(value => value / cluster.count);
+      cluster.rgb = cluster.rgb.map(value => Math.round(value / cluster.count));
+      cluster.share = cluster.count / total;
+      return cluster;
+    });
+    return orderDistinctColors(ready);
+  }
+
+  function orderDistinctColors(colors) {
+    if (!colors.length) return [];
+    const remaining = colors.slice();
+    const ordered = [remaining.splice(
+      remaining.reduce((best, color, index, array) => color.count > array[best].count ? index : best, 0),
+      1
+    )[0]];
+    const maxCount = ordered[0].count;
+
+    while (remaining.length) {
+      let bestIndex = 0;
+      let bestScore = -1;
+      remaining.forEach((color, index) => {
+        const distance = Math.min(...ordered.map(selected => colorDistance(color.lab, selected.lab)));
+        const [r, g, b] = color.rgb.map(value => value / 255);
+        const saturation = Math.max(r, g, b) - Math.min(r, g, b);
+        const score = Math.min(distance / 80, 1) * 0.65
+          + color.count / maxCount * 0.25
+          + saturation * 0.1;
+        if (score > bestScore) {
+          bestScore = score;
+          bestIndex = index;
+        }
+      });
+      ordered.push(remaining.splice(bestIndex, 1)[0]);
+    }
+    return ordered;
+  }
+
+  function rgbToHex(rgb) {
+    return '#' + rgb.map(value => value.toString(16).padStart(2, '0')).join('').toUpperCase();
+  }
+
+  function textColor(rgb) {
+    const luminance = (rgb[0] * 299 + rgb[1] * 587 + rgb[2] * 114) / 1000;
+    return luminance > 150 ? '#1A1D23' : '#FFFFFF';
+  }
+
+  async function copyHex(hex) {
+    try {
+      await navigator.clipboard.writeText(hex);
+      Toast.success(`${hex} скопирован.`);
+    } catch (err) {
+      const input = document.createElement('input');
+      input.value = hex;
+      document.body.appendChild(input);
+      input.select();
+      const copied = document.execCommand('copy');
+      input.remove();
+      if (copied) Toast.success(`${hex} скопирован.`);
+      else Toast.error('Не удалось скопировать цвет.');
+    }
+  }
+
+  function renderPalette(colors) {
+    paletteGrid.replaceChildren();
+    colors.forEach(color => {
+      const hex = rgbToHex(color.rgb);
+      const item = document.createElement('button');
+      item.className = 'palette-color';
+      item.type = 'button';
+      item.title = `Копировать ${hex}`;
+
+      const swatch = document.createElement('span');
+      swatch.className = 'palette-color__swatch';
+      swatch.style.backgroundColor = hex;
+      swatch.style.color = textColor(color.rgb);
+      swatch.textContent = `${(color.share * 100).toFixed(1)}%`;
+
+      const info = document.createElement('span');
+      info.className = 'palette-color__info';
+      const value = document.createElement('strong');
+      value.textContent = hex;
+      const rgb = document.createElement('span');
+      rgb.textContent = `RGB ${color.rgb.join(', ')}`;
+      info.append(value, rgb);
+      item.append(swatch, info);
+      item.addEventListener('click', () => copyHex(hex));
+      paletteGrid.appendChild(item);
+    });
+  }
+
+  function createPaletteCanvas(colors) {
+    const width = 1200;
+    const swatchHeight = 280;
+    const footerHeight = 120;
+    const canvas = document.createElement('canvas');
+    canvas.width = width;
+    canvas.height = swatchHeight + footerHeight;
+    const ctx = canvas.getContext('2d');
+    const segmentWidth = width / colors.length;
+
+    colors.forEach((color, index) => {
+      const x = index * segmentWidth;
+      ctx.fillStyle = rgbToHex(color.rgb);
+      ctx.fillRect(x, 0, Math.ceil(segmentWidth), swatchHeight);
+      ctx.fillStyle = textColor(color.rgb);
+      ctx.font = '700 28px Arial, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText(rgbToHex(color.rgb), x + segmentWidth / 2, 235);
+    });
+
+    ctx.fillStyle = '#FFFFFF';
+    ctx.fillRect(0, swatchHeight, width, footerHeight);
+    ctx.fillStyle = '#1A1D23';
+    ctx.font = '700 30px Arial, sans-serif';
+    ctx.textAlign = 'left';
+    ctx.fillText('AKD Image Palette', 40, 350);
+    ctx.fillStyle = '#6B7280';
+    ctx.font = '22px Arial, sans-serif';
+    ctx.textAlign = 'right';
+    ctx.fillText(sourceFile ? sourceFile.name : '', width - 40, 350);
+    return canvas;
+  }
+
+  clearBtn.addEventListener('click', resetTool);
+
+  generateBtn.addEventListener('click', async () => {
+    if (!sourceImage) return;
+    generateBtn.disabled = true;
+    clearBtn.disabled = true;
+    generateBtn.innerHTML = '<span class="spinner"></span> Анализ...';
+    resetResults();
+
+    try {
+      await new Promise(resolve => requestAnimationFrame(resolve));
+      const points = analyzeImage(sourceImage);
+      if (!points.length) throw new Error('Нет непрозрачных пикселей');
+      palette = clusterColors(points, Number(colorCount.value));
+      renderPalette(palette);
+      resultArea.classList.add('visible');
+      Toast.success('Палитра создана.');
+    } catch (err) {
+      console.error(err);
+      Toast.error('Не удалось извлечь цвета из изображения.');
+    }
+
+    generateBtn.disabled = false;
+    clearBtn.disabled = false;
+    generateBtn.textContent = 'Создать палитру';
+  });
+
+  downloadBtn.addEventListener('click', async () => {
+    if (!palette.length) return;
+    const canvas = createPaletteCanvas(palette);
+    const blob = await FileUtils.canvasToBlob(canvas, 'image/png', 1);
+    const baseName = sourceFile.name.replace(/\.[^.]+$/, '');
+    FileUtils.downloadBlob(blob, `${baseName}-palette.png`);
+  });
+
+  window.addEventListener('beforeunload', resetSource);
+})();
+</script>
+</body>
+</html>
