@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Генератор favicon — AKD Image</title>
+  <meta name="description" content="Создайте favicon и набор PNG-иконок для сайта из JPG, PNG или WebP прямо в браузере.">
+  <link rel="stylesheet" href="../css/main.css?v=3">
+</head>
+<body>
+
+<script src="../js/layout.js?v=7"></script>
+
+<main>
+  <div class="container container--narrow tool-page">
+    <div class="tool-page__header">
+      <h1 class="tool-page__title">Генератор favicon</h1>
+      <p class="tool-page__subtitle">Создайте favicon.ico и набор PNG-иконок из изображения для браузеров, iOS и Android.</p>
+    </div>
+
+    <div class="dropzone" id="dropzone">
+      <input type="file" accept="image/jpeg,image/png,image/webp">
+      <p class="dropzone__title">Перетащите изображение сюда</p>
+      <p class="dropzone__hint">или нажмите для выбора файлов</p>
+      <div class="dropzone__formats">
+        <span class="fmt-badge">JPG</span>
+        <span class="fmt-badge">PNG</span>
+        <span class="fmt-badge">WEBP</span>
+      </div>
+    </div>
+
+    <div class="tool-panel hidden" id="settings-panel">
+      <div class="tool-panel__head">
+        <h3>Настройки</h3>
+        <button class="btn btn-sm btn-secondary" id="clear-btn" type="button">Выбрать другое</button>
+      </div>
+      <div class="tool-panel__body">
+        <div class="favicon-source">
+          <div class="favicon-source__preview">
+            <img id="source-preview" alt="">
+          </div>
+          <div>
+            <div class="fw-bold" id="source-name"></div>
+            <div class="text-muted text-sm" id="source-meta"></div>
+          </div>
+        </div>
+
+        <div class="form-row mt-16">
+          <div class="form-group">
+            <label>Размещение изображения</label>
+            <div class="radio-group">
+              <label class="radio-option">
+                <input type="radio" name="fit-mode" value="cover" checked>
+                Обрезать до квадрата
+              </label>
+              <label class="radio-option">
+                <input type="radio" name="fit-mode" value="contain">
+                Вписать целиком
+              </label>
+            </div>
+          </div>
+          <div class="form-group hidden" id="background-group">
+            <label for="background-color">Цвет фона</label>
+            <input class="color-input" id="background-color" type="color" value="#ffffff">
+          </div>
+        </div>
+
+        <div class="form-group mt-16">
+          <label>Размеры</label>
+          <div class="favicon-sizes">
+            <label class="favicon-size-option"><input type="checkbox" value="16" checked><span>16 × 16</span></label>
+            <label class="favicon-size-option"><input type="checkbox" value="32" checked><span>32 × 32</span></label>
+            <label class="favicon-size-option"><input type="checkbox" value="48" checked><span>48 × 48</span></label>
+            <label class="favicon-size-option"><input type="checkbox" value="180" checked><span>180 × 180</span></label>
+            <label class="favicon-size-option"><input type="checkbox" value="192" checked><span>192 × 192</span></label>
+            <label class="favicon-size-option"><input type="checkbox" value="512" checked><span>512 × 512</span></label>
+          </div>
+        </div>
+
+        <button class="btn btn-primary btn-lg mt-16" id="generate-btn" type="button">Создать favicon</button>
+      </div>
+    </div>
+
+    <div class="result-area" id="result-area">
+      <hr class="divider">
+      <div class="result-stats" id="result-stats"></div>
+      <div class="favicon-results" id="favicon-results"></div>
+      <button class="btn btn-success mt-16" id="download-all-btn" type="button">Скачать всё (ZIP)</button>
+    </div>
+  </div>
+</main>
+
+<script src="../js/core.js?v=2"></script>
+<script>
+(function () {
+  const filenames = {
+    16: 'favicon-16x16.png',
+    32: 'favicon-32x32.png',
+    48: 'favicon-48x48.png',
+    180: 'apple-touch-icon.png',
+    192: 'android-chrome-192x192.png',
+    512: 'android-chrome-512x512.png'
+  };
+
+  const dropzoneEl = document.getElementById('dropzone');
+  const settingsPanel = document.getElementById('settings-panel');
+  const clearBtn = document.getElementById('clear-btn');
+  const sourcePreview = document.getElementById('source-preview');
+  const sourceName = document.getElementById('source-name');
+  const sourceMeta = document.getElementById('source-meta');
+  const backgroundGroup = document.getElementById('background-group');
+  const backgroundColor = document.getElementById('background-color');
+  const sizeInputs = document.querySelectorAll('.favicon-size-option input');
+  const generateBtn = document.getElementById('generate-btn');
+  const resultArea = document.getElementById('result-area');
+  const resultStats = document.getElementById('result-stats');
+  const resultsEl = document.getElementById('favicon-results');
+  const downloadAllBtn = document.getElementById('download-all-btn');
+
+  let sourceFile = null;
+  let sourceImage = null;
+  let results = [];
+
+  new Dropzone(dropzoneEl, {
+    accept: ['image/jpeg', 'image/png', 'image/webp'],
+    multiple: false,
+    async onFiles(files) {
+      const file = files[0];
+      if (!file) return;
+
+      try {
+        const src = await FileUtils.readAsDataURL(file);
+        const img = await FileUtils.loadImage(src);
+        sourceFile = file;
+        sourceImage = img;
+        sourcePreview.src = src;
+        sourceName.textContent = file.name;
+        sourceMeta.textContent = `${img.naturalWidth} × ${img.naturalHeight} · ${FileUtils.formatSize(file.size)}`;
+        UIUtils.setVisible(dropzoneEl, false);
+        UIUtils.setVisible(settingsPanel, true);
+        resetResults();
+      } catch (err) {
+        console.error(err);
+        Toast.error('Не удалось загрузить изображение.');
+      }
+    }
+  });
+
+  document.querySelectorAll('input[name="fit-mode"]').forEach(input => {
+    input.addEventListener('change', () => {
+      UIUtils.setVisible(backgroundGroup, input.checked && input.value === 'contain');
+      resetResults();
+    });
+  });
+  backgroundColor.addEventListener('input', resetResults);
+  sizeInputs.forEach(input => input.addEventListener('change', resetResults));
+
+  function resetResults() {
+    results = [];
+    resultsEl.replaceChildren();
+    resultStats.replaceChildren();
+    resultArea.classList.remove('visible');
+  }
+
+  function resetTool() {
+    sourceFile = null;
+    sourceImage = null;
+    sourcePreview.removeAttribute('src');
+    resetResults();
+    UIUtils.setVisible(settingsPanel, false);
+    UIUtils.setVisible(dropzoneEl, true);
+  }
+
+  function createIconCanvas(size) {
+    const canvas = document.createElement('canvas');
+    canvas.width = size;
+    canvas.height = size;
+    const ctx = canvas.getContext('2d');
+    const mode = document.querySelector('input[name="fit-mode"]:checked').value;
+    const iw = sourceImage.naturalWidth;
+    const ih = sourceImage.naturalHeight;
+    const scale = mode === 'cover'
+      ? Math.max(size / iw, size / ih)
+      : Math.min(size / iw, size / ih);
+    const width = iw * scale;
+    const height = ih * scale;
+    const x = (size - width) / 2;
+    const y = (size - height) / 2;
+
+    if (mode === 'contain') {
+      ctx.fillStyle = backgroundColor.value;
+      ctx.fillRect(0, 0, size, size);
+    }
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = 'high';
+    ctx.drawImage(sourceImage, x, y, width, height);
+    return canvas;
+  }
+
+  async function createIco(entries) {
+    const icoEntries = entries.filter(entry => entry.size <= 48);
+    if (!icoEntries.length) return null;
+
+    const images = await Promise.all(icoEntries.map(async entry => ({
+      size: entry.size,
+      bytes: new Uint8Array(await entry.blob.arrayBuffer())
+    })));
+    const headerSize = 6 + images.length * 16;
+    const totalSize = headerSize + images.reduce((sum, image) => sum + image.bytes.length, 0);
+    const buffer = new ArrayBuffer(totalSize);
+    const view = new DataView(buffer);
+    const output = new Uint8Array(buffer);
+
+    view.setUint16(0, 0, true);
+    view.setUint16(2, 1, true);
+    view.setUint16(4, images.length, true);
+
+    let offset = headerSize;
+    images.forEach((image, index) => {
+      const entryOffset = 6 + index * 16;
+      view.setUint8(entryOffset, image.size === 256 ? 0 : image.size);
+      view.setUint8(entryOffset + 1, image.size === 256 ? 0 : image.size);
+      view.setUint8(entryOffset + 2, 0);
+      view.setUint8(entryOffset + 3, 0);
+      view.setUint16(entryOffset + 4, 1, true);
+      view.setUint16(entryOffset + 6, 32, true);
+      view.setUint32(entryOffset + 8, image.bytes.length, true);
+      view.setUint32(entryOffset + 12, offset, true);
+      output.set(image.bytes, offset);
+      offset += image.bytes.length;
+    });
+
+    return new Blob([buffer], { type: 'image/x-icon' });
+  }
+
+  function renderResults(entries, icoBlob) {
+    resultsEl.replaceChildren();
+    entries.forEach(entry => {
+      const item = document.createElement('div');
+      item.className = 'favicon-result';
+
+      const preview = document.createElement('div');
+      preview.className = 'favicon-result__preview';
+      const img = document.createElement('img');
+      img.src = entry.dataUrl;
+      img.alt = `${entry.size} на ${entry.size}`;
+      preview.appendChild(img);
+
+      const info = document.createElement('div');
+      info.className = 'favicon-result__info';
+      const title = document.createElement('strong');
+      title.textContent = `${entry.size} × ${entry.size}`;
+      const meta = document.createElement('span');
+      meta.textContent = `${entry.filename} · ${FileUtils.formatSize(entry.blob.size)}`;
+      info.append(title, meta);
+
+      const downloadBtn = document.createElement('button');
+      downloadBtn.className = 'btn btn-sm btn-secondary';
+      downloadBtn.type = 'button';
+      downloadBtn.textContent = 'Скачать';
+      downloadBtn.addEventListener('click', () => FileUtils.downloadBlob(entry.blob, entry.filename));
+
+      item.append(preview, info, downloadBtn);
+      resultsEl.appendChild(item);
+    });
+
+    if (icoBlob) {
+      const item = document.createElement('div');
+      item.className = 'favicon-result';
+
+      const preview = document.createElement('div');
+      preview.className = 'favicon-result__preview favicon-result__preview--ico';
+      preview.textContent = 'ICO';
+
+      const info = document.createElement('div');
+      info.className = 'favicon-result__info';
+      const title = document.createElement('strong');
+      title.textContent = 'favicon.ico';
+      const meta = document.createElement('span');
+      const icoSizes = entries.filter(entry => entry.size <= 48).map(entry => entry.size);
+      meta.textContent = `${icoSizes.join(', ')} px · ${FileUtils.formatSize(icoBlob.size)}`;
+      info.append(title, meta);
+
+      const downloadBtn = document.createElement('button');
+      downloadBtn.className = 'btn btn-sm btn-secondary';
+      downloadBtn.type = 'button';
+      downloadBtn.textContent = 'Скачать';
+      downloadBtn.addEventListener('click', () => FileUtils.downloadBlob(icoBlob, 'favicon.ico'));
+
+      item.append(preview, info, downloadBtn);
+      resultsEl.appendChild(item);
+    }
+  }
+
+  clearBtn.addEventListener('click', resetTool);
+
+  generateBtn.addEventListener('click', async () => {
+    if (!sourceImage) return;
+    const sizes = Array.from(sizeInputs)
+      .filter(input => input.checked)
+      .map(input => Number(input.value));
+
+    if (!sizes.length) {
+      Toast.error('Выберите хотя бы один размер.');
+      return;
+    }
+
+    generateBtn.disabled = true;
+    clearBtn.disabled = true;
+    generateBtn.innerHTML = '<span class="spinner"></span> Создание...';
+    resetResults();
+
+    try {
+      const entries = [];
+      for (const size of sizes) {
+        const canvas = createIconCanvas(size);
+        const blob = await FileUtils.canvasToBlob(canvas, 'image/png', 1);
+        entries.push({
+          size,
+          blob,
+          dataUrl: canvas.toDataURL('image/png'),
+          filename: filenames[size]
+        });
+      }
+
+      const icoBlob = await createIco(entries);
+      results = entries.map(entry => ({ blob: entry.blob, filename: entry.filename }));
+      if (icoBlob) results.push({ blob: icoBlob, filename: 'favicon.ico' });
+
+      renderResults(entries, icoBlob);
+      resultStats.innerHTML = `
+        <div class="stat-card"><div class="stat-card__label">PNG-иконки</div><div class="stat-card__value">${entries.length}</div></div>
+        <div class="stat-card stat-green"><div class="stat-card__label">favicon.ico</div><div class="stat-card__value">${icoBlob ? 'Готов' : 'Нет'}</div></div>
+      `;
+      resultArea.classList.add('visible');
+      Toast.success('Набор favicon создан.');
+    } catch (err) {
+      console.error(err);
+      Toast.error('Не удалось создать favicon.');
+    }
+
+    generateBtn.disabled = false;
+    clearBtn.disabled = false;
+    generateBtn.textContent = 'Создать favicon';
+  });
+
+  downloadAllBtn.addEventListener('click', async () => {
+    if (results.length) await FileUtils.downloadZip(results, 'akd-favicon.zip');
+  });
+})();
+</script>
+</body>
+</html>
