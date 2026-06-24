@@ -33,7 +33,7 @@
     <div class="tool-panel hidden" id="settings-panel">
       <div class="tool-panel__head">
         <h3>Действия</h3>
-        <button class="btn btn-sm btn-secondary" id="clear-btn">Очистить всё</button>
+        <button class="btn btn-sm btn-secondary" id="clear-btn">Выбрать другой файл</button>
       </div>
       <div class="tool-panel__body">
         <div class="flex gap-8 flex-wrap">
@@ -63,7 +63,7 @@
   </div>
 </main>
 
-<script src="../js/core.js?v=2"></script>
+<script src="../js/core.js?v=3"></script>
 <script>
 (function () {
   const dropzoneEl  = document.getElementById('dropzone');
@@ -131,7 +131,7 @@
   });
 
   function updateUI() {
-    const has = UIUtils.updateBatchLayout({ fileListEl, settingsEl, actionBarEl, countEl }, files.length);
+    const has = UIUtils.updateBatchLayout({ dropzoneEl, fileListEl, settingsEl, actionBarEl, countEl }, files.length);
     UIUtils.resetBatchResult({ resultArea, resultStats, downloadAllBtn: dlAllBtn });
     UIUtils.resetPreview({ previewBtn, previewCanvas }, has);
     results = [];
