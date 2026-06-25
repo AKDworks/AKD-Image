@@ -125,7 +125,7 @@
   </div>
 </main>
 
-<script src="../js/core.js?v=4"></script>
+<script src="../js/core.js?v=5"></script>
 <script>
 (function () {
   const dropzoneEl      = document.getElementById('dropzone');
@@ -193,15 +193,12 @@
   });
 
   async function loadImageFile(file) {
-    activeFile = file;
-    setEditingVisible(true);
-
-    const dataURL = await FileUtils.readAsDataURL(file);
-    sourceImg.src = dataURL;
-
-    sourceImg.onload = () => {
-      imgNaturalW = sourceImg.naturalWidth;
-      imgNaturalH = sourceImg.naturalHeight;
+    try {
+      const dataURL = await FileUtils.readAsDataURL(file);
+      const loadedImage = await FileUtils.loadImage(dataURL);
+      activeFile = file;
+      imgNaturalW = loadedImage.naturalWidth;
+      imgNaturalH = loadedImage.naturalHeight;
 
       inpX.max = imgNaturalW;
       inpY.max = imgNaturalH;
@@ -226,8 +223,15 @@
 
       cropState = { x, y, w, h };
 
-      setTimeout(updateUIFromState, 50);
-    };
+      sourceImg.onload = () => requestAnimationFrame(updateUIFromState);
+      sourceImg.src = dataURL;
+      setEditingVisible(true);
+    } catch (err) {
+      console.error(err);
+      activeFile = null;
+      setEditingVisible(false);
+      Toast.error(err.message || 'Не удалось загрузить изображение.');
+    }
   }
 
   window.addEventListener('resize', () => {

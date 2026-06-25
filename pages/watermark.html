@@ -86,7 +86,7 @@
           <div class="logo-url-card">
             <label class="logo-url-card__label">Или вставьте ссылку на SVG / картинку</label>
             <div class="logo-url-card__row">
-              <input type="text" class="logo-url-card__input" id="logo-url-input" placeholder="https://example.com/logo.svg или data:image...">
+              <input type="url" class="logo-url-card__input" id="logo-url-input" maxlength="2048" placeholder="https://example.com/logo.png">
               <button class="btn btn-secondary logo-url-card__button" id="logo-url-add">Добавить</button>
             </div>
             <div class="saved-logos" id="saved-logos-container">
@@ -97,7 +97,7 @@
           </div>
 
           <div class="logo-preview hidden mt-8" id="logo-preview-wrap">
-            <img class="logo-preview__img" id="logo-preview">
+            <img class="logo-preview__img" id="logo-preview" crossorigin="anonymous" referrerpolicy="no-referrer">
             <button class="btn btn-sm btn-secondary" id="remove-logo">Удалить</button>
           </div>
 
@@ -189,7 +189,7 @@
   </div>
 </main>
 
-<script src="../js/core.js?v=4"></script>
+<script src="../js/core.js?v=5"></script>
 <script>
 (function () {
   const dropzoneEl  = document.getElementById('dropzone');
@@ -251,15 +251,47 @@
   const logoPreviewWrap = document.getElementById('logo-preview-wrap');
   const logoPreviewEl   = document.getElementById('logo-preview');
 
+  const MAX_SAVED_LOGOS = 20;
+
+  function normalizeLogoUrl(value) {
+    const url = new URL(value);
+    if (url.protocol !== 'https:') throw new Error('Используйте ссылку с HTTPS');
+    if (url.username || url.password) throw new Error('Ссылка не должна содержать логин или пароль');
+    return url.href;
+  }
+
+  function saveLogoUrls() {
+    try {
+      localStorage.setItem('akd_watermark_svgs', JSON.stringify(savedLogos));
+    } catch (err) {
+      console.error(err);
+      Toast.error('Не удалось сохранить список ссылок.');
+    }
+  }
+
   let savedLogos = [];
   try {
-    savedLogos = JSON.parse(localStorage.getItem('akd_watermark_svgs') || '[]');
-  } catch(e) {}
+    const stored = JSON.parse(localStorage.getItem('akd_watermark_svgs') || '[]');
+    if (Array.isArray(stored)) {
+      savedLogos = stored
+        .filter(value => typeof value === 'string' && value.length <= 2048)
+        .map(value => {
+          try { return normalizeLogoUrl(value); } catch { return null; }
+        })
+        .filter(Boolean)
+        .slice(0, MAX_SAVED_LOGOS);
+    }
+  } catch (err) {
+    console.error(err);
+  }
 
   function renderSavedLogos() {
     savedLogosList.innerHTML = '';
     if (savedLogos.length === 0) {
-      savedLogosList.innerHTML = '<span class="saved-logos__empty">Список пуст</span>';
+      const empty = document.createElement('span');
+      empty.className = 'saved-logos__empty';
+      empty.textContent = 'Список пуст';
+      savedLogosList.appendChild(empty);
       return;
     }
     savedLogos.forEach((url, index) => {
@@ -274,7 +306,7 @@
 
       const delBtn = document.createElement('button');
       delBtn.className = 'btn-icon saved-logos__delete';
-      delBtn.innerHTML = '✕';
+      delBtn.textContent = '✕';
       delBtn.onclick = (e) => {
         e.stopPropagation();
         deleteLogoUrl(index);
@@ -288,8 +320,9 @@
 
   async function selectLogoUrl(url) {
     try {
-      logoImage = await FileUtils.loadImage(url);
-      logoPreviewEl.src = url;
+      const safeUrl = normalizeLogoUrl(url);
+      logoImage = await FileUtils.loadImage(safeUrl);
+      logoPreviewEl.src = safeUrl;
       logoPreviewWrap.classList.remove('hidden');
       Toast.success('Логотип загружен.');
     } catch(e) {
@@ -299,29 +332,41 @@
 
   function deleteLogoUrl(index) {
     savedLogos.splice(index, 1);
-    localStorage.setItem('akd_watermark_svgs', JSON.stringify(savedLogos));
+    saveLogoUrls();
     renderSavedLogos();
   }
 
   logoUrlAddBtn.addEventListener('click', () => {
-    const url = logoUrlInput.value.trim();
-    if (!url) return;
-    if (!savedLogos.includes(url)) {
-      savedLogos.push(url);
-      localStorage.setItem('akd_watermark_svgs', JSON.stringify(savedLogos));
-      renderSavedLogos();
-      logoUrlInput.value = '';
-      selectLogoUrl(url);
+    try {
+      const url = normalizeLogoUrl(logoUrlInput.value.trim());
+      if (!savedLogos.includes(url)) {
+        if (savedLogos.length >= MAX_SAVED_LOGOS) {
+          Toast.error(`Можно сохранить не более ${MAX_SAVED_LOGOS} ссылок.`);
+          return;
+        }
+        savedLogos.push(url);
+        saveLogoUrls();
+        renderSavedLogos();
+        logoUrlInput.value = '';
+        selectLogoUrl(url);
+      }
+    } catch (err) {
+      Toast.error(err.message || 'Введите корректную HTTPS-ссылку.');
     }
   });
 
   logoInput.addEventListener('change', async () => {
     const f = logoInput.files[0];
     if (!f) return;
-    const src  = await FileUtils.readAsDataURL(f);
-    logoImage  = await FileUtils.loadImage(src);
-    logoPreviewEl.src = src;
-    logoPreviewWrap.classList.remove('hidden');
+    try {
+      const src = await FileUtils.readAsDataURL(f);
+      logoImage = await FileUtils.loadImage(src);
+      logoPreviewEl.src = src;
+      logoPreviewWrap.classList.remove('hidden');
+    } catch (err) {
+      console.error(err);
+      Toast.error(err.message || 'Не удалось загрузить логотип.');
+    }
   });
 
   document.getElementById('remove-logo').addEventListener('click', () => {

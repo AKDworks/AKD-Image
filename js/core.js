@@ -36,37 +36,6 @@ const Toast = (() => {
 })();
 
 
-/* Modal */
-const Modal = (() => {
-  let overlay = null;
-
-  function open(title, contentHTML) {
-    overlay = document.createElement('div');
-    overlay.className = 'modal-overlay';
-    overlay.innerHTML = `
-      <div class="modal">
-        <div class="modal__head">
-          <h3>${title}</h3>
-          <button class="modal__close" aria-label="Закрыть">✕</button>
-        </div>
-        <div class="modal__body">${contentHTML}</div>
-      </div>
-    `;
-    overlay.querySelector('.modal__close').onclick = close;
-    overlay.addEventListener('click', e => { if (e.target === overlay) close(); });
-    document.body.appendChild(overlay);
-    document.body.style.overflow = 'hidden';
-  }
-
-  function close() {
-    if (overlay) { overlay.remove(); overlay = null; }
-    document.body.style.overflow = '';
-  }
-
-  return { open, close };
-})();
-
-
 /* UI */
 const UIUtils = {
   setDisabled(elements, disabled) {
@@ -124,6 +93,14 @@ const UIUtils = {
 
 /* Files */
 const FileUtils = {
+  MAX_FILE_SIZE: 50 * 1024 * 1024,
+  MAX_BATCH_FILES: 50,
+  MAX_BATCH_SIZE: 250 * 1024 * 1024,
+  MAX_ZIP_SIZE: 500 * 1024 * 1024,
+  MAX_IMAGE_PIXELS: 40 * 1000 * 1000,
+  MAX_IMAGE_SIDE: 16384,
+  SUPPORTED_IMAGE_TYPES: ['image/jpeg', 'image/png', 'image/webp'],
+
   formatSize(bytes) {
     if (bytes < 1024)       return bytes + ' B';
     if (bytes < 1048576)    return (bytes / 1024).toFixed(1) + ' KB';
@@ -159,10 +136,54 @@ const FileUtils = {
   },
 
   isSupportedImage(file) {
-    return ['image/jpeg', 'image/png', 'image/webp'].includes(file.type);
+    return this.SUPPORTED_IMAGE_TYPES.includes(file.type);
+  },
+
+  validateFile(file) {
+    if (!(file instanceof Blob)) throw new Error('Некорректный файл');
+    if (file.size > this.MAX_FILE_SIZE) {
+      throw new Error(`Файл превышает лимит ${this.formatSize(this.MAX_FILE_SIZE)}`);
+    }
+    return file;
+  },
+
+  validateImageSize(width, height) {
+    if (!width || !height) throw new Error('Изображение не содержит корректных размеров');
+    if (width > this.MAX_IMAGE_SIDE || height > this.MAX_IMAGE_SIDE) {
+      throw new Error(`Сторона изображения не должна превышать ${this.MAX_IMAGE_SIDE} px`);
+    }
+    if (width * height > this.MAX_IMAGE_PIXELS) {
+      throw new Error('Разрешение изображения превышает лимит 40 мегапикселей');
+    }
+  },
+
+  safeFilename(filename, fallback = 'download') {
+    const safe = String(filename || '')
+      .replace(/[<>:"/\\|?*\u0000-\u001F]/g, '_')
+      .replace(/\.+$/g, '')
+      .trim();
+    return safe.slice(0, 180) || fallback;
+  },
+
+  detectImageMime(bytes) {
+    if (bytes.length >= 8 &&
+        bytes[0] === 0x89 && bytes[1] === 0x50 && bytes[2] === 0x4E && bytes[3] === 0x47 &&
+        bytes[4] === 0x0D && bytes[5] === 0x0A && bytes[6] === 0x1A && bytes[7] === 0x0A) {
+      return 'image/png';
+    }
+    if (bytes.length >= 3 && bytes[0] === 0xFF && bytes[1] === 0xD8 && bytes[2] === 0xFF) {
+      return 'image/jpeg';
+    }
+    if (bytes.length >= 12 &&
+        String.fromCharCode(...bytes.slice(0, 4)) === 'RIFF' &&
+        String.fromCharCode(...bytes.slice(8, 12)) === 'WEBP') {
+      return 'image/webp';
+    }
+    return '';
   },
 
   readAsDataURL(file) {
+    this.validateFile(file);
     return new Promise((res, rej) => {
       const r = new FileReader();
       r.onload  = e => res(e.target.result);
@@ -172,6 +193,7 @@ const FileUtils = {
   },
 
   readAsArrayBuffer(file) {
+    this.validateFile(file);
     return new Promise((res, rej) => {
       const r = new FileReader();
       r.onload  = e => res(e.target.result);
@@ -181,28 +203,28 @@ const FileUtils = {
   },
 
   downloadBlob(blob, filename) {
+    if (!(blob instanceof Blob)) throw new Error('Некорректные данные для скачивания');
     const url = URL.createObjectURL(blob);
     const a   = document.createElement('a');
     a.href     = url;
-    a.download = filename;
+    a.download = this.safeFilename(filename);
     document.body.appendChild(a);
     a.click();
     setTimeout(() => { document.body.removeChild(a); URL.revokeObjectURL(url); }, 300);
   },
 
-  downloadDataURL(dataURL, filename) {
-    const a   = document.createElement('a');
-    a.href     = dataURL;
-    a.download = filename;
-    document.body.appendChild(a);
-    a.click();
-    setTimeout(() => document.body.removeChild(a), 300);
-  },
-
   loadImage(src) {
     return new Promise((res, rej) => {
       const img = new Image();
-      img.onload  = () => res(img);
+      if (/^https:\/\//i.test(src)) img.crossOrigin = 'anonymous';
+      img.onload = () => {
+        try {
+          this.validateImageSize(img.naturalWidth, img.naturalHeight);
+          res(img);
+        } catch (err) {
+          rej(err);
+        }
+      };
       img.onerror = () => rej(new Error('Не удалось загрузить изображение'));
       img.src = src;
     });
@@ -248,9 +270,15 @@ const FileUtils = {
 
   async downloadZip(entries, filename, successMessage = 'ZIP скачан.') {
     try {
+      const totalSize = entries.reduce((sum, entry) => sum + entry.blob.size, 0);
+      if (totalSize > this.MAX_ZIP_SIZE) {
+        throw new Error(`Размер ZIP превышает лимит ${this.formatSize(this.MAX_ZIP_SIZE)}`);
+      }
       const JSZipCtor = await this.loadJSZip();
       const zip = new JSZipCtor();
-      entries.forEach(entry => zip.file(entry.filename, entry.blob));
+      entries.forEach((entry, index) => {
+        zip.file(this.safeFilename(entry.filename, `file-${index + 1}`), entry.blob);
+      });
       const blob = await zip.generateAsync({ type: 'blob' });
       this.downloadBlob(blob, filename);
       if (successMessage) Toast.success(successMessage);
@@ -307,18 +335,35 @@ class Dropzone {
   }
 
   _handle(files) {
-    const list = Array.from(files);
+    let list = Array.from(files);
+    if (!this.opts.multiple) list = list.slice(0, 1);
+
+    if (list.length > FileUtils.MAX_BATCH_FILES) {
+      Toast.error(`Можно выбрать не более ${FileUtils.MAX_BATCH_FILES} файлов за один раз.`);
+      return;
+    }
+
+    const totalSize = list.reduce((sum, file) => sum + file.size, 0);
+    if (totalSize > FileUtils.MAX_BATCH_SIZE) {
+      Toast.error(`Общий размер файлов не должен превышать ${FileUtils.formatSize(FileUtils.MAX_BATCH_SIZE)}.`);
+      return;
+    }
+
     const valid = this.opts.accept.length
       ? list.filter(f => this.opts.accept.some(t => {
           if (t.endsWith('/*')) return f.type.startsWith(t.slice(0,-1));
           return f.type === t;
         }))
       : list;
+    const accepted = valid.filter(file => file.size <= FileUtils.MAX_FILE_SIZE);
 
     if (valid.length < list.length) {
       Toast.error('Некоторые файлы имеют неподдерживаемый формат.');
     }
-    if (valid.length) this.opts.onFiles(valid);
+    if (accepted.length < valid.length) {
+      Toast.error(`Некоторые файлы превышают лимит ${FileUtils.formatSize(FileUtils.MAX_FILE_SIZE)}.`);
+    }
+    if (accepted.length) this.opts.onFiles(accepted);
   }
 }
 
@@ -418,8 +463,13 @@ class FileListManager {
     if (file.type.startsWith('image/') && file.type !== 'image/svg+xml') {
       FileUtils.readAsDataURL(file).then(src => {
         const thumb = row.querySelector('.file-item__thumb');
-        thumb.outerHTML = `<img class="file-item__thumb" src="${src}" alt="">`;
-      });
+        if (!thumb) return;
+        const image = document.createElement('img');
+        image.className = 'file-item__thumb';
+        image.src = src;
+        image.alt = '';
+        thumb.replaceWith(image);
+      }).catch(() => {});
     }
 
     const item = { id, file, el: row };

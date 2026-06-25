@@ -137,7 +137,7 @@
   </div>
 </main>
 
-<script src="../js/core.js?v=4"></script>
+<script src="../js/core.js?v=5"></script>
 <script>
 (function () {
   const dropzoneEl  = document.getElementById('dropzone');
@@ -267,6 +267,7 @@
         nw = img.naturalWidth; nh = img.naturalHeight;
       }
 
+      FileUtils.validateImageSize(nw, nh);
       previewCanvas.width = nw;
       previewCanvas.height = nh;
       const ctx = previewCanvas.getContext('2d');
@@ -330,6 +331,7 @@
           targetH  = Math.round(origH * nr);
         }
 
+        FileUtils.validateImageSize(targetW, targetH);
         const canvas = document.createElement('canvas');
         canvas.width  = targetW;
         canvas.height = targetH;

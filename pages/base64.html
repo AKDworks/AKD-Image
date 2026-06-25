@@ -29,7 +29,7 @@
 
     <section id="encode-panel">
       <div class="dropzone" id="dropzone">
-        <input type="file" accept="image/*">
+        <input type="file" accept="image/jpeg,image/png,image/webp">
         <p class="dropzone__title">Перетащите изображение сюда</p>
         <p class="dropzone__hint">или нажмите для выбора файла</p>
         <div class="dropzone__formats">
@@ -120,7 +120,7 @@
   </div>
 </main>
 
-<script src="../js/core.js?v=4"></script>
+<script src="../js/core.js?v=5"></script>
 <script>
 (function () {
   const tabs = document.querySelectorAll('.base64-tab');
@@ -160,7 +160,7 @@
   });
 
   new Dropzone(dropzoneEl, {
-    accept: ['image/*'],
+    accept: ['image/jpeg', 'image/png', 'image/webp'],
     multiple: false,
     async onFiles(files) {
       const file = files[0];
@@ -235,9 +235,15 @@
       .replace(/-/g, '+')
       .replace(/_/g, '/');
 
-    if (!mime.startsWith('image/')) throw new Error('Строка не содержит изображение');
+    if (!FileUtils.SUPPORTED_IMAGE_TYPES.includes(mime)) {
+      throw new Error('Поддерживаются только JPG, PNG и WebP');
+    }
     if (!base64 || !/^[A-Za-z0-9+/]*={0,2}$/.test(base64) || base64.length % 4 === 1) {
       throw new Error('Некорректная строка Base64');
+    }
+    const decodedSize = Math.floor(base64.length * 3 / 4);
+    if (decodedSize > FileUtils.MAX_FILE_SIZE) {
+      throw new Error(`Изображение превышает лимит ${FileUtils.formatSize(FileUtils.MAX_FILE_SIZE)}`);
     }
     base64 = base64.replace(/=+$/, '');
     base64 += '='.repeat((4 - base64.length % 4) % 4);
@@ -245,6 +251,9 @@
     const binary = atob(base64);
     const bytes = new Uint8Array(binary.length);
     for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+    if (FileUtils.detectImageMime(bytes) !== mime) {
+      throw new Error('Формат данных не совпадает с выбранным типом изображения');
+    }
     return { blob: new Blob([bytes], { type: mime }), mime };
   }
 
@@ -280,7 +289,13 @@
       decodedUrl = URL.createObjectURL(decodedBlob);
       decodedPreview.src = decodedUrl;
       decodedPreview.onload = () => {
-        decodedMeta.textContent = `${decodedPreview.naturalWidth} × ${decodedPreview.naturalHeight} · ${FileUtils.formatSize(decodedBlob.size)}`;
+        try {
+          FileUtils.validateImageSize(decodedPreview.naturalWidth, decodedPreview.naturalHeight);
+          decodedMeta.textContent = `${decodedPreview.naturalWidth} × ${decodedPreview.naturalHeight} · ${FileUtils.formatSize(decodedBlob.size)}`;
+        } catch (err) {
+          clearDecodedResult();
+          Toast.error(err.message);
+        }
       };
       decodedPreview.onerror = () => {
         clearDecodedResult();
