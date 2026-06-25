@@ -281,6 +281,23 @@
   border: 1px solid var(--border);
   border-radius: var(--r-md);
   position: relative;
+  cursor: pointer;
+  transition: background var(--t), border-color var(--t), box-shadow var(--t);
+}
+.file-item:hover {
+  border-color: #C0C9D8;
+}
+.file-item.is-selected {
+  background: var(--accent-light);
+  border-color: var(--accent);
+  box-shadow: inset 0 0 0 1px var(--accent);
+}
+.file-item:focus-visible {
+  outline: 3px solid rgba(37,99,235,.2);
+  outline-offset: 1px;
+}
+.file-list.is-locked .file-item {
+  cursor: default;
 }
 .file-item__thumb {
   width: 44px; height: 44px;

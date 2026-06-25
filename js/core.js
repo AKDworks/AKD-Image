@@ -327,11 +327,33 @@ class FileListManager {
   constructor(containerEl) {
     this.container = containerEl;
     this.items = [];
+    this.selectedId = null;
+    this.locked = false;
+    this.container.setAttribute('role', 'listbox');
+    this.container.setAttribute('aria-label', 'Загруженные изображения');
   }
 
   clear() {
     this.items = [];
+    this.selectedId = null;
     this.container.innerHTML = '';
+  }
+
+  select(id, notify = true) {
+    if (!this.items.some(item => item.id === id)) return;
+    this.selectedId = id;
+    this.items.forEach(item => {
+      const selected = item.id === id;
+      item.el.classList.toggle('is-selected', selected);
+      item.el.setAttribute('aria-selected', String(selected));
+    });
+    if (notify) {
+      this.container.dispatchEvent(new CustomEvent('file-selected', { detail: { id } }));
+    }
+  }
+
+  getSelectedItem() {
+    return this.items.find(item => item.id === this.selectedId) || this.items[0] || null;
   }
 
   add(file) {
@@ -358,15 +380,40 @@ class FileListManager {
     placeholder.textContent = ext;
     name.textContent = file.name;
     name.title = file.name;
+    row.tabIndex = 0;
+    row.setAttribute('role', 'option');
+    row.setAttribute('aria-selected', 'false');
 
     this.container.appendChild(row);
 
     const btn = row.querySelector('.remove-btn');
-    btn.onclick = () => {
+    btn.onclick = event => {
+      event.stopPropagation();
+      const index = this.items.findIndex(item => item.id === id);
+      const wasSelected = this.selectedId === id;
       row.remove();
       this.items = this.items.filter(i => i.id !== id);
+      if (wasSelected) {
+        const next = this.items[Math.min(index, this.items.length - 1)];
+        this.selectedId = null;
+        if (next) this.select(next.id);
+      }
       this.container.dispatchEvent(new CustomEvent('file-removed', { detail: { id } }));
     };
+
+    const selectRow = () => {
+      if (!this.locked) this.select(id);
+    };
+    row.addEventListener('click', event => {
+      if (!event.target.closest('button')) selectRow();
+    });
+    row.addEventListener('keydown', event => {
+      if (event.target.closest('button')) return;
+      if (event.key === 'Enter' || event.key === ' ') {
+        event.preventDefault();
+        selectRow();
+      }
+    });
 
     if (file.type.startsWith('image/') && file.type !== 'image/svg+xml') {
       FileUtils.readAsDataURL(file).then(src => {
@@ -377,6 +424,7 @@ class FileListManager {
 
     const item = { id, file, el: row };
     this.items.push(item);
+    if (this.selectedId === null) this.select(id, false);
     return item;
   }
 
@@ -403,6 +451,8 @@ class FileListManager {
   }
 
   setLocked(locked) {
+    this.locked = locked;
+    this.container.classList.toggle('is-locked', locked);
     this.container.querySelectorAll('.remove-btn').forEach(btn => {
       btn.disabled = locked;
     });
@@ -419,6 +469,7 @@ class FileListManager {
     const existing = info.querySelector('.dl-btn');
     if (existing) existing.remove();
     dl.className += ' dl-btn';
+    dl.addEventListener('click', event => event.stopPropagation());
     info.appendChild(dl);
   }
 }

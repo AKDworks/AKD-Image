@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Повернуть и отразить — AKD Image</title>
   <meta name="description" content="Поворачивайте и отражайте JPG, PNG и WebP в браузере. Выберите угол, примените отражение и скачайте результат.">
-  <link rel="stylesheet" href="../css/main.css">
+  <link rel="stylesheet" href="../css/main.css?v=5">
 </head>
 <body>
 
@@ -44,7 +44,7 @@
           <button class="btn btn-secondary" id="flip-v">↕ Отразить по вертикали</button>
         </div>
 
-        <button class="btn btn-secondary mt-16 hidden" id="preview-btn">Предпросмотр (первое изображение)</button>
+        <button class="btn btn-secondary mt-16 hidden" id="preview-btn">Предпросмотр выбранного изображения</button>
         <canvas class="preview-canvas hidden" id="preview-canvas"></canvas>
 
       </div>
@@ -63,7 +63,7 @@
   </div>
 </main>
 
-<script src="../js/core.js?v=3"></script>
+<script src="../js/core.js?v=4"></script>
 <script>
 (function () {
   const dropzoneEl  = document.getElementById('dropzone');
@@ -120,6 +120,9 @@
     files = files.filter(f => f.item.id !== e.detail.id);
     updateUI();
   });
+  fileListEl.addEventListener('file-selected', () => {
+    if (!previewCanvas.classList.contains('hidden')) previewBtn.click();
+  });
 
   new Dropzone(dropzoneEl, {
     accept: ['image/jpeg','image/png','image/webp'],
@@ -140,7 +143,7 @@
   previewBtn.addEventListener('click', async () => {
     if (!files.length) return;
     await UIUtils.runPreview(previewCanvas, async () => {
-      const file = files[0].file;
+      const file = manager.getSelectedItem().file;
       const src = await FileUtils.readAsDataURL(file);
       const img = await FileUtils.loadImage(src);
 

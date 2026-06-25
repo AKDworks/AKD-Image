@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Водяной знак — AKD Image</title>
   <meta name="description" content="Добавляйте текстовый водяной знак или логотип на JPG, PNG и WebP прямо в браузере с локальной обработкой файлов.">
-  <link rel="stylesheet" href="../css/main.css">
+  <link rel="stylesheet" href="../css/main.css?v=5">
 </head>
 <body>
 
@@ -169,7 +169,7 @@
           </div>
         </div>
         <button class="btn btn-secondary mt-16 hidden" id="preview-btn">
-          Предпросмотр (первое изображение)
+          Предпросмотр выбранного изображения
         </button>
         <canvas class="preview-canvas hidden" id="preview-canvas"></canvas>
       </div>
@@ -189,7 +189,7 @@
   </div>
 </main>
 
-<script src="../js/core.js?v=3"></script>
+<script src="../js/core.js?v=4"></script>
 <script>
 (function () {
   const dropzoneEl  = document.getElementById('dropzone');
@@ -339,6 +339,9 @@
     files = files.filter(f => f.item.id !== e.detail.id);
     updateUI();
   });
+  fileListEl.addEventListener('file-selected', () => {
+    if (!previewCanvas.classList.contains('hidden')) previewBtn.click();
+  });
 
   new Dropzone(dropzoneEl, {
     accept: ['image/jpeg','image/png','image/webp'],
@@ -439,7 +442,7 @@
   previewBtn.addEventListener('click', async () => {
     if (!files.length) return;
     await UIUtils.runPreview(previewCanvas, async () => {
-      const dataURL = await FileUtils.readAsDataURL(files[0].file);
+      const dataURL = await FileUtils.readAsDataURL(manager.getSelectedItem().file);
       const img     = await FileUtils.loadImage(dataURL);
       const canvas  = await applyWatermark(img);
       previewCanvas.width  = canvas.width;
