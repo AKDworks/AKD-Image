@@ -25,22 +25,32 @@ main {
   justify-content: space-between;
   gap: 32px;
   height: 60px;
+  position: relative;
 }
 .header-side {
   display: flex;
   align-items: center;
+  position: relative;
+  z-index: 2;
 }
 .header-side--start { justify-content: flex-start; }
 .header-side--end { justify-content: flex-end; }
 .logo {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
   font-weight: 700;
   font-size: 1.15rem;
   color: var(--text);
   text-decoration: none;
   flex-shrink: 0;
+}
+.logo-mark {
+  width: 26px;
+  height: 26px;
+  display: block;
+  border-radius: 7px;
+  flex: 0 0 26px;
 }
 .logo-icon {
   width: 32px; height: 32px;
@@ -57,8 +67,9 @@ main {
   align-items: center;
   justify-content: center;
   gap: 4px;
-  flex: none;
-  margin: 0 auto;
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
 }
 .site-nav a {
   font-size: .875rem;
@@ -136,7 +147,8 @@ main {
   .site-nav { display: none; }
   .site-nav.open { 
     display: flex; flex-direction: column; 
-    position: absolute; top: 60px; left: 0; right: 0; 
+    position: absolute; top: 60px; left: 0; right: 0;
+    transform: none;
     background: var(--surface); border-bottom: 1px solid var(--border); 
     padding: 12px; z-index: 99; 
   }

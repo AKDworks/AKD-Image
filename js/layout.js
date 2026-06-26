@@ -22,6 +22,7 @@
       <div class="container inner">
         <div class="header-side header-side--start">
           <a href="${homeHref}" class="logo">
+            <img src="/favicon.svg" class="logo-mark" alt="" aria-hidden="true">
             AKD Image
           </a>
         </div>
