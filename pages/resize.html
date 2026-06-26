@@ -5,11 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Изменить размер изображения — AKD Image</title>
   <meta name="description" content="Изменяйте размер JPG, PNG и WebP по пикселям, процентам или длинной стороне без загрузки файлов на сервер.">
-  <link rel="stylesheet" href="../css/main.css?v=5">
+  <link rel="canonical" href="https://akdimage.vercel.app/resize">
+  <link rel="stylesheet" href="/css/main.css?v=5">
 </head>
 <body>
 
-<script src="../js/layout.js?v=7"></script>
+<script src="/js/layout.js?v=7"></script>
 
 <main>
   <div class="container container--narrow tool-page">
@@ -137,7 +138,7 @@
   </div>
 </main>
 
-<script src="../js/core.js?v=4"></script>
+<script src="/js/core.js?v=5"></script>
 <script>
 (function () {
   const dropzoneEl  = document.getElementById('dropzone');
@@ -267,6 +268,7 @@
         nw = img.naturalWidth; nh = img.naturalHeight;
       }
 
+      FileUtils.validateImageSize(nw, nh);
       previewCanvas.width = nw;
       previewCanvas.height = nh;
       const ctx = previewCanvas.getContext('2d');
@@ -330,6 +332,7 @@
           targetH  = Math.round(origH * nr);
         }
 
+        FileUtils.validateImageSize(targetW, targetH);
         const canvas = document.createElement('canvas');
         canvas.width  = targetW;
         canvas.height = targetH;
