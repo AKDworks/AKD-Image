@@ -51,6 +51,7 @@ main {
   display: block;
   border-radius: 7px;
   flex: 0 0 26px;
+  overflow: hidden;
 }
 .logo-icon {
   width: 32px; height: 32px;
