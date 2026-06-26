@@ -634,14 +634,17 @@
 /* Split tool */
 .split-preview {
   position: relative;
+  display: inline-block;
   max-width: 100%;
   margin-top: 16px;
   overflow: hidden;
   border: 1px solid var(--border);
   border-radius: var(--r-md);
+  vertical-align: top;
 }
 .split-preview__canvas {
   display: block;
+  width: 100%;
   max-width: 100%;
 }
 .split-preview__overlay {

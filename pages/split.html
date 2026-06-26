@@ -189,6 +189,7 @@
     previewCanvas.width = cachedImg.naturalWidth * scale;
     previewCanvas.height = cachedImg.naturalHeight * scale;
     ctx.drawImage(cachedImg, 0, 0, previewCanvas.width, previewCanvas.height);
+    previewWrap.style.width = `${previewCanvas.width}px`;
 
     const mode = document.querySelector('input[name="split-mode"]:checked').value;
     let cols = 1, rows = 1;
