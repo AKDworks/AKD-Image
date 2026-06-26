@@ -4,6 +4,152 @@
       "source": "/index.html",
       "destination": "/",
       "permanent": true
+    },
+    {
+      "source": "/pages/compress.html",
+      "destination": "/compress",
+      "permanent": true
+    },
+    {
+      "source": "/pages/resize.html",
+      "destination": "/resize",
+      "permanent": true
+    },
+    {
+      "source": "/pages/watermark.html",
+      "destination": "/watermark",
+      "permanent": true
+    },
+    {
+      "source": "/pages/crop.html",
+      "destination": "/crop",
+      "permanent": true
+    },
+    {
+      "source": "/pages/convert.html",
+      "destination": "/convert",
+      "permanent": true
+    },
+    {
+      "source": "/pages/rotate.html",
+      "destination": "/rotate",
+      "permanent": true
+    },
+    {
+      "source": "/pages/effects.html",
+      "destination": "/effects",
+      "permanent": true
+    },
+    {
+      "source": "/pages/meme.html",
+      "destination": "/meme",
+      "permanent": true
+    },
+    {
+      "source": "/pages/split.html",
+      "destination": "/split",
+      "permanent": true
+    },
+    {
+      "source": "/pages/round.html",
+      "destination": "/round",
+      "permanent": true
+    },
+    {
+      "source": "/pages/pixelate.html",
+      "destination": "/pixelate",
+      "permanent": true
+    },
+    {
+      "source": "/pages/exif.html",
+      "destination": "/exif",
+      "permanent": true
+    },
+    {
+      "source": "/pages/base64.html",
+      "destination": "/base64",
+      "permanent": true
+    },
+    {
+      "source": "/pages/favicon.html",
+      "destination": "/favicon",
+      "permanent": true
+    },
+    {
+      "source": "/pages/palette.html",
+      "destination": "/palette",
+      "permanent": true
+    },
+    {
+      "source": "/pages/privacy.html",
+      "destination": "/privacy",
+      "permanent": true
+    }
+  ],
+  "rewrites": [
+    {
+      "source": "/compress",
+      "destination": "/pages/compress.html"
+    },
+    {
+      "source": "/resize",
+      "destination": "/pages/resize.html"
+    },
+    {
+      "source": "/watermark",
+      "destination": "/pages/watermark.html"
+    },
+    {
+      "source": "/crop",
+      "destination": "/pages/crop.html"
+    },
+    {
+      "source": "/convert",
+      "destination": "/pages/convert.html"
+    },
+    {
+      "source": "/rotate",
+      "destination": "/pages/rotate.html"
+    },
+    {
+      "source": "/effects",
+      "destination": "/pages/effects.html"
+    },
+    {
+      "source": "/meme",
+      "destination": "/pages/meme.html"
+    },
+    {
+      "source": "/split",
+      "destination": "/pages/split.html"
+    },
+    {
+      "source": "/round",
+      "destination": "/pages/round.html"
+    },
+    {
+      "source": "/pixelate",
+      "destination": "/pages/pixelate.html"
+    },
+    {
+      "source": "/exif",
+      "destination": "/pages/exif.html"
+    },
+    {
+      "source": "/base64",
+      "destination": "/pages/base64.html"
+    },
+    {
+      "source": "/favicon",
+      "destination": "/pages/favicon.html"
+    },
+    {
+      "source": "/palette",
+      "destination": "/pages/palette.html"
+    },
+    {
+      "source": "/privacy",
+      "destination": "/pages/privacy.html"
     }
   ],
   "headers": [

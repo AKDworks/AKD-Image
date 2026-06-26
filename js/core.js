@@ -255,8 +255,7 @@ const FileUtils = {
 
     window.__akdJSZipPromise = new Promise((resolve, reject) => {
       const script = document.createElement('script');
-      const prefix = location.pathname.includes('/pages/') ? '../' : '';
-      script.src = prefix + 'js/vendor/jszip.min.js';
+      script.src = '/js/vendor/jszip.min.js';
       script.onload = () => resolve(window.JSZip);
       script.onerror = () => {
         window.__akdJSZipPromise = null;
