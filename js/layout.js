@@ -11,6 +11,7 @@
 
   const isRoot = !location.pathname.includes('/pages/');
   const prefix = isRoot ? '' : '../';
+  const homeHref = isRoot ? './' : '../';
 
   function navLinks() {
     return tools.map(t => {
@@ -25,7 +26,7 @@
     <header class="site-header">
       <div class="container inner">
         <div class="header-side header-side--start">
-          <a href="${prefix}index.html" class="logo">
+          <a href="${homeHref}" class="logo">
             AKD Image
           </a>
         </div>
@@ -33,7 +34,7 @@
           ${navLinks()}
         </nav>
         <div class="header-side header-side--end">
-          <a href="${prefix}index.html" class="header-btn">Все инструменты</a>
+          <a href="${homeHref}" class="header-btn">Все инструменты</a>
           <button class="nav-toggle" aria-label="Меню" aria-controls="site-nav" aria-expanded="false">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
           </button>
