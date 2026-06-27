@@ -20,6 +20,7 @@
     '/convert': '/pages/convert.html',
     '/rotate': '/pages/rotate.html',
     '/effects': '/pages/effects.html',
+    '/blur': '/pages/blur.html',
     '/meme': '/pages/meme.html',
     '/split': '/pages/split.html',
     '/round': '/pages/round.html',
@@ -71,7 +72,7 @@
   const footerHTML = `
     <footer class="site-footer">
       <div class="container inner">
-        <p class="footer-copy">© 2026 AKD Image — Бесплатные инструменты для работы с изображениями. Все права защищены.</p>
+        <p class="footer-copy">© 2026 AKD Image – Бесплатные инструменты для работы с изображениями. Все права защищены.</p>
         <ul class="footer-links">
           <li><a href="${routeHref('/privacy', '/pages/privacy.html')}">Конфиденциальность</a></li>
         </ul>

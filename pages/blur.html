@@ -3,9 +3,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Обрезать изображение – AKD Image</title>
-  <meta name="description" content="Обрезайте JPG, PNG и WebP по выбранной области или точным координатам. Файлы остаются на вашем устройстве.">
-  <link rel="canonical" href="https://akdimage.vercel.app/crop">
+  <title>Размытие области – AKD Image</title>
+  <meta name="description" content="Размывайте выбранную область JPG, PNG или WebP прямо в браузере. Удобно для скрытия лиц, номеров, логинов и личных данных.">
+  <link rel="canonical" href="https://akdimage.vercel.app/blur">
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="/css/main.css?v=5">
 </head>
@@ -17,11 +17,10 @@
   <div class="container container--narrow tool-page">
 
     <div class="tool-page__header">
-      <h1 class="tool-page__title">
-        Обрезать изображение
-      </h1>
-      <p class="tool-page__subtitle">Оставьте нужную часть изображения с помощью рамки, готового соотношения сторон или точных координат.</p>
+      <h1 class="tool-page__title">Размытие области</h1>
+      <p class="tool-page__subtitle">Выделите часть изображения и скройте ее мягким размытием. Файл обрабатывается локально в браузере.</p>
     </div>
+
     <div class="dropzone" id="dropzone">
       <input type="file" accept="image/jpeg,image/png,image/webp">
       <p class="dropzone__title">Перетащите изображение сюда</p>
@@ -32,16 +31,17 @@
         <span class="fmt-badge">WEBP</span>
       </div>
     </div>
+
     <div class="tool-panel hidden" id="workspace-panel">
       <div class="tool-panel__head">
-        <h3>Область обрезки</h3>
+        <h3>Область размытия</h3>
         <button class="btn btn-sm btn-secondary" id="change-img-btn">Выбрать другой файл</button>
       </div>
       <div class="tool-panel__body">
         <div class="crop-workspace">
-          <div class="crop-container" id="crop-container">
+          <div class="crop-container" id="blur-container">
             <img class="crop-image" id="source-img" alt="Редактируемое изображение">
-            <div class="crop-box" id="crop-box">
+            <div class="crop-box blur-box" id="blur-box">
               <div class="crop-handle handle-nw" data-handle="nw"></div>
               <div class="crop-handle handle-ne" data-handle="ne"></div>
               <div class="crop-handle handle-sw" data-handle="sw"></div>
@@ -55,46 +55,41 @@
         </div>
       </div>
     </div>
+
     <div class="tool-panel hidden" id="settings-panel">
       <div class="tool-panel__head">
-        <h3>Настройки обрезки</h3>
+        <h3>Настройки размытия</h3>
       </div>
       <div class="tool-panel__body">
-        <label class="ratio-label">Пропорции (Aspect Ratio)</label>
-        <div class="ratio-btn-grid" id="ratio-grid">
-          <button class="ratio-btn active" data-ratio="free">Свободно</button>
-          <button class="ratio-btn" data-ratio="1">1:1 (Квадрат)</button>
-          <button class="ratio-btn" data-ratio="0.8">4:5 (Instagram)</button>
-          <button class="ratio-btn" data-ratio="1.77777777778">16:9</button>
-          <button class="ratio-btn" data-ratio="1.33333333333">4:3</button>
-          <button class="ratio-btn" data-ratio="0.75">3:4</button>
-          <button class="ratio-btn" data-ratio="1.5">3:2</button>
-          <button class="ratio-btn" data-ratio="0.66666666667">2:3</button>
-          <button class="ratio-btn" data-ratio="1.25">5:4</button>
-          <button class="ratio-btn" data-ratio="2">2:1</button>
-          <button class="ratio-btn" data-ratio="2.33333333333">21:9</button>
-          <button class="ratio-btn" data-ratio="0.5625">9:16 (Story)</button>
+        <div class="form-group">
+          <label>Сила размытия</label>
+          <div class="range-row">
+            <input type="range" id="blur-radius" min="2" max="40" value="14">
+            <span id="blur-radius-val">14px</span>
+          </div>
         </div>
+
         <div class="form-row">
           <div class="form-group">
             <label>X (слева, px)</label>
-            <input type="number" id="crop-x" value="0" min="0">
+            <input type="number" id="area-x" value="0" min="0">
           </div>
           <div class="form-group">
             <label>Y (сверху, px)</label>
-            <input type="number" id="crop-y" value="0" min="0">
+            <input type="number" id="area-y" value="0" min="0">
           </div>
           <div class="form-group">
             <label>Ширина (px)</label>
-            <input type="number" id="crop-w" value="100" min="1">
+            <input type="number" id="area-w" value="100" min="1">
           </div>
           <div class="form-group">
             <label>Высота (px)</label>
-            <input type="number" id="crop-h" value="100" min="1">
+            <input type="number" id="area-h" value="100" min="1">
           </div>
         </div>
 
         <hr class="divider">
+
         <div class="form-row">
           <div class="form-group">
             <label>Формат вывода</label>
@@ -115,14 +110,16 @@
         </div>
       </div>
     </div>
+
     <div class="hidden mt-16 flex gap-8 items-center" id="action-bar">
-      <button class="btn btn-primary btn-lg" id="apply-crop-btn">Обрезать изображение</button>
+      <button class="btn btn-primary btn-lg" id="apply-blur-btn">Размыть область</button>
     </div>
+
     <div class="result-area" id="result-area">
       <hr class="divider">
       <div class="result-stats" id="result-stats"></div>
       <div class="crop-result-preview">
-        <img class="crop-result-preview__img" id="result-img" alt="Результат обрезки">
+        <img class="crop-result-preview__img" id="result-img" alt="Результат размытия">
       </div>
       <div class="flex gap-8 mt-16 flex-wrap">
         <button class="btn btn-success" id="download-btn">Скачать результат</button>
@@ -136,43 +133,47 @@
 <script src="/js/core.js?v=5"></script>
 <script>
 (function () {
-  const dropzoneEl      = document.getElementById('dropzone');
-  const workspaceEl     = document.getElementById('workspace-panel');
-  const settingsEl      = document.getElementById('settings-panel');
-  const actionBarEl     = document.getElementById('action-bar');
-  const changeImgBtn    = document.getElementById('change-img-btn');
-  const applyCropBtn    = document.getElementById('apply-crop-btn');
-  const resultArea      = document.getElementById('result-area');
-  const resultStats     = document.getElementById('result-stats');
-  const resultImg       = document.getElementById('result-img');
-  const downloadBtn     = document.getElementById('download-btn');
-  const copyBtn         = document.getElementById('copy-btn');
+  const dropzoneEl   = document.getElementById('dropzone');
+  const workspaceEl  = document.getElementById('workspace-panel');
+  const settingsEl   = document.getElementById('settings-panel');
+  const actionBarEl  = document.getElementById('action-bar');
+  const changeImgBtn = document.getElementById('change-img-btn');
+  const applyBlurBtn = document.getElementById('apply-blur-btn');
+  const resultArea   = document.getElementById('result-area');
+  const resultStats  = document.getElementById('result-stats');
+  const resultImg    = document.getElementById('result-img');
+  const downloadBtn  = document.getElementById('download-btn');
+  const copyBtn      = document.getElementById('copy-btn');
 
-  const sourceImg       = document.getElementById('source-img');
-  const cropBox         = document.getElementById('crop-box');
-  const cropContainer   = document.getElementById('crop-container');
+  const sourceImg    = document.getElementById('source-img');
+  const blurBox      = document.getElementById('blur-box');
 
-  const inpX = document.getElementById('crop-x');
-  const inpY = document.getElementById('crop-y');
-  const inpW = document.getElementById('crop-w');
-  const inpH = document.getElementById('crop-h');
+  const inpX = document.getElementById('area-x');
+  const inpY = document.getElementById('area-y');
+  const inpW = document.getElementById('area-w');
+  const inpH = document.getElementById('area-h');
 
+  const blurRadius = document.getElementById('blur-radius');
+  const blurRadiusVal = document.getElementById('blur-radius-val');
   const qualityInput = document.getElementById('quality');
-  const qualityVal   = document.getElementById('quality-val');
-  const outputFmt    = document.getElementById('output-format');
-
-  qualityInput.addEventListener('input', () => { qualityVal.textContent = qualityInput.value + '%'; });
+  const qualityVal = document.getElementById('quality-val');
+  const outputFmt = document.getElementById('output-format');
 
   let activeFile = null;
   let imgNaturalW = 0;
   let imgNaturalH = 0;
-
-  // Original image coordinates.
-  let cropState = { x: 0, y: 0, w: 0, h: 0 };
-  let currentRatio = 'free';
-
+  let areaState = { x: 0, y: 0, w: 0, h: 0 };
   let renderW = 0;
   let renderH = 0;
+  let resultBlob = null;
+  let resultUrl = null;
+
+  blurRadius.addEventListener('input', () => {
+    blurRadiusVal.textContent = `${blurRadius.value}px`;
+  });
+  qualityInput.addEventListener('input', () => {
+    qualityVal.textContent = `${qualityInput.value}%`;
+  });
 
   new Dropzone(dropzoneEl, {
     accept: ['image/jpeg','image/png','image/webp'],
@@ -192,9 +193,9 @@
 
   changeImgBtn.addEventListener('click', () => {
     activeFile = null;
-    if (croppedUrl) {
-      URL.revokeObjectURL(croppedUrl);
-      croppedUrl = null;
+    if (resultUrl) {
+      URL.revokeObjectURL(resultUrl);
+      resultUrl = null;
     }
     resultImg.removeAttribute('src');
     setEditingVisible(false);
@@ -213,23 +214,11 @@
       inpW.max = imgNaturalW;
       inpH.max = imgNaturalH;
 
-      // 80% centered crop box.
-      let w = Math.round(imgNaturalW * 0.8);
-      let h = Math.round(imgNaturalH * 0.8);
-
-      if (currentRatio !== 'free') {
-        const ratio = parseFloat(currentRatio);
-        if (w / h > ratio) {
-          w = Math.round(h * ratio);
-        } else {
-          h = Math.round(w / ratio);
-        }
-      }
-
+      const w = Math.round(imgNaturalW * 0.35);
+      const h = Math.round(imgNaturalH * 0.25);
       const x = Math.round((imgNaturalW - w) / 2);
       const y = Math.round((imgNaturalH - h) / 2);
-
-      cropState = { x, y, w, h };
+      areaState = { x, y, w, h };
 
       sourceImg.onload = () => requestAnimationFrame(updateUIFromState);
       sourceImg.src = dataURL;
@@ -249,20 +238,18 @@
   function updateUIFromState() {
     renderW = sourceImg.offsetWidth;
     renderH = sourceImg.offsetHeight;
-
     if (!renderW || !renderH) return;
 
     const scale = renderW / imgNaturalW;
+    blurBox.style.left = `${areaState.x * scale}px`;
+    blurBox.style.top = `${areaState.y * scale}px`;
+    blurBox.style.width = `${areaState.w * scale}px`;
+    blurBox.style.height = `${areaState.h * scale}px`;
 
-    cropBox.style.left   = (cropState.x * scale) + 'px';
-    cropBox.style.top    = (cropState.y * scale) + 'px';
-    cropBox.style.width  = (cropState.w * scale) + 'px';
-    cropBox.style.height = (cropState.h * scale) + 'px';
-
-    inpX.value = Math.round(cropState.x);
-    inpY.value = Math.round(cropState.y);
-    inpW.value = Math.round(cropState.w);
-    inpH.value = Math.round(cropState.h);
+    inpX.value = Math.round(areaState.x);
+    inpY.value = Math.round(areaState.y);
+    inpW.value = Math.round(areaState.w);
+    inpH.value = Math.round(areaState.h);
   }
 
   function updateStateFromInputs() {
@@ -276,16 +263,7 @@
     w = Math.max(1, Math.min(imgNaturalW - x, w));
     h = Math.max(1, Math.min(imgNaturalH - y, h));
 
-    if (currentRatio !== 'free') {
-      const ratio = parseFloat(currentRatio);
-      h = Math.round(w / ratio);
-      if (y + h > imgNaturalH) {
-        h = imgNaturalH - y;
-        w = Math.round(h * ratio);
-      }
-    }
-
-    cropState = { x, y, w, h };
+    areaState = { x, y, w, h };
     updateUIFromState();
   }
 
@@ -293,40 +271,13 @@
     input.addEventListener('change', updateStateFromInputs);
   });
 
-  document.getElementById('ratio-grid').querySelectorAll('.ratio-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      document.getElementById('ratio-grid').querySelectorAll('.ratio-btn').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      currentRatio = btn.dataset.ratio;
-
-      if (currentRatio !== 'free') {
-        const ratio = parseFloat(currentRatio);
-        let w = cropState.w;
-        let h = Math.round(w / ratio);
-
-        if (cropState.y + h > imgNaturalH) {
-          h = imgNaturalH - cropState.y;
-          w = Math.round(h * ratio);
-        }
-        if (cropState.x + w > imgNaturalW) {
-          w = imgNaturalW - cropState.x;
-          h = Math.round(w / ratio);
-        }
-        cropState.w = w;
-        cropState.h = h;
-      }
-      updateUIFromState();
-    });
-  });
-
-  // Drag or resize the crop box.
   let isDragging = false;
   let dragMode = 'move';
   let startX = 0, startY = 0;
-  let startCrop = {};
+  let startArea = {};
 
-  cropBox.addEventListener('mousedown', startDrag);
-  cropBox.addEventListener('touchstart', startDrag, { passive: false });
+  blurBox.addEventListener('mousedown', startDrag);
+  blurBox.addEventListener('touchstart', startDrag, { passive: false });
 
   function startDrag(e) {
     e.preventDefault();
@@ -335,11 +286,8 @@
     const event = e.type.startsWith('touch') ? e.touches[0] : e;
     startX = event.clientX;
     startY = event.clientY;
-
-    startCrop = { ...cropState };
-
-    const handle = e.target.dataset.handle;
-    dragMode = handle ? handle : 'move';
+    startArea = { ...areaState };
+    dragMode = e.target.dataset.handle || 'move';
 
     window.addEventListener('mousemove', drag);
     window.addEventListener('touchmove', drag, { passive: false });
@@ -355,51 +303,30 @@
     const dx = (event.clientX - startX) * (imgNaturalW / renderW);
     const dy = (event.clientY - startY) * (imgNaturalH / renderH);
 
-    let x = startCrop.x;
-    let y = startCrop.y;
-    let w = startCrop.w;
-    let h = startCrop.h;
-
-    const ratio = currentRatio !== 'free' ? parseFloat(currentRatio) : null;
+    let x = startArea.x;
+    let y = startArea.y;
+    let w = startArea.w;
+    let h = startArea.h;
 
     if (dragMode === 'move') {
       x = Math.max(0, Math.min(imgNaturalW - w, x + dx));
       y = Math.max(0, Math.min(imgNaturalH - h, y + dy));
     } else {
-      if (dragMode.includes('e')) {
-        w = Math.max(10, Math.min(imgNaturalW - x, w + dx));
-        if (ratio) h = w / ratio;
-      }
-      if (dragMode.includes('s')) {
-        h = Math.max(10, Math.min(imgNaturalH - y, h + dy));
-        if (ratio) w = h * ratio;
-      }
+      if (dragMode.includes('e')) w = Math.max(10, Math.min(imgNaturalW - x, w + dx));
+      if (dragMode.includes('s')) h = Math.max(10, Math.min(imgNaturalH - y, h + dy));
       if (dragMode.includes('w')) {
         const nx = Math.max(0, Math.min(x + w - 10, x + dx));
         w = w + (x - nx);
         x = nx;
-        if (ratio) h = w / ratio;
       }
       if (dragMode.includes('n')) {
         const ny = Math.max(0, Math.min(y + h - 10, y + dy));
         h = h + (y - ny);
         y = ny;
-        if (ratio) w = h * ratio;
-      }
-
-      if (ratio) {
-        if (x + w > imgNaturalW) {
-          w = imgNaturalW - x;
-          h = w / ratio;
-        }
-        if (y + h > imgNaturalH) {
-          h = imgNaturalH - y;
-          w = h * ratio;
-        }
       }
     }
 
-    cropState = {
+    areaState = {
       x: Math.round(x),
       y: Math.round(y),
       w: Math.round(w),
@@ -417,76 +344,79 @@
     window.removeEventListener('touchend', endDrag);
   }
 
-  let croppedBlob = null;
-  let croppedUrl = null;
-  applyCropBtn.addEventListener('click', async () => {
+  function drawBlurredArea(canvas, ctx, radius) {
+    ctx.drawImage(sourceImg, 0, 0, canvas.width, canvas.height);
+
+    const blurCanvas = document.createElement('canvas');
+    blurCanvas.width = canvas.width;
+    blurCanvas.height = canvas.height;
+    const blurCtx = blurCanvas.getContext('2d');
+    blurCtx.filter = `blur(${radius}px)`;
+    blurCtx.drawImage(sourceImg, 0, 0, canvas.width, canvas.height);
+
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(areaState.x, areaState.y, areaState.w, areaState.h);
+    ctx.clip();
+    ctx.drawImage(blurCanvas, 0, 0);
+    ctx.restore();
+  }
+
+  applyBlurBtn.addEventListener('click', async () => {
     if (!activeFile) return;
 
-    applyCropBtn.disabled = true;
-    applyCropBtn.innerHTML = '<span class="spinner"></span> Обрезаю...';
+    applyBlurBtn.disabled = true;
+    applyBlurBtn.innerHTML = '<span class="spinner"></span> Размываю...';
 
     try {
       const canvas = document.createElement('canvas');
-      canvas.width  = cropState.w;
-      canvas.height = cropState.h;
+      canvas.width = imgNaturalW;
+      canvas.height = imgNaturalH;
       const ctx = canvas.getContext('2d');
+      drawBlurredArea(canvas, ctx, parseInt(blurRadius.value));
 
       const mime = outputFmt.value === 'same' ? activeFile.type : outputFmt.value;
       const quality = parseInt(qualityInput.value) / 100;
+      const outputCanvas = FileUtils.canvasForMime(canvas, mime);
+      resultBlob = await FileUtils.canvasToBlob(outputCanvas, mime, quality);
 
-      if (mime === 'image/jpeg') {
-        ctx.fillStyle = '#ffffff';
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-      }
+      if (resultUrl) URL.revokeObjectURL(resultUrl);
+      resultUrl = URL.createObjectURL(resultBlob);
+      resultImg.src = resultUrl;
 
-      ctx.drawImage(
-        sourceImg,
-        cropState.x, cropState.y, cropState.w, cropState.h,
-        0, 0, cropState.w, cropState.h
-      );
-
-      croppedBlob = await FileUtils.canvasToBlob(canvas, mime, quality);
-      if (croppedUrl) URL.revokeObjectURL(croppedUrl);
-      croppedUrl = URL.createObjectURL(croppedBlob);
       const ext = mime.split('/')[1].replace('jpeg','jpg');
+      const filename = activeFile.name.replace(/\.[^.]+$/, '') + '_blur.' + ext;
 
-      resultImg.src = croppedUrl;
       resultStats.innerHTML = `
-        <div class="stat-card"><div class="stat-card__label">Размер</div><div class="stat-card__value">${cropState.w}×${cropState.h}px</div></div>
-        <div class="stat-card"><div class="stat-card__label">Формат</div><div class="stat-card__value">${ext.toUpperCase()}</div></div>
-        <div class="stat-card stat-green"><div class="stat-card__label">Размер файла</div><div class="stat-card__value">${FileUtils.formatSize(croppedBlob.size)}</div></div>
+        <div class="stat-card"><div class="stat-card__label">Область</div><div class="stat-card__value">${areaState.w}×${areaState.h}px</div></div>
+        <div class="stat-card"><div class="stat-card__label">Размытие</div><div class="stat-card__value">${blurRadius.value}px</div></div>
+        <div class="stat-card stat-green"><div class="stat-card__label">Размер файла</div><div class="stat-card__value">${FileUtils.formatSize(resultBlob.size)}</div></div>
       `;
-
       resultArea.classList.add('visible');
 
-      const croppedFilename = activeFile.name.replace(/\.[^.]+$/, '') + '_crop.' + ext;
-
-      downloadBtn.onclick = () => FileUtils.downloadBlob(croppedBlob, croppedFilename);
+      downloadBtn.onclick = () => FileUtils.downloadBlob(resultBlob, filename);
       copyBtn.onclick = async () => {
         try {
           const copyBlob = mime === 'image/png'
-            ? croppedBlob
+            ? resultBlob
             : await FileUtils.canvasToBlob(canvas, 'image/png', 1);
-          const item = new ClipboardItem({ 'image/png': copyBlob });
-          await navigator.clipboard.write([item]);
+          await navigator.clipboard.write([new ClipboardItem({ 'image/png': copyBlob })]);
           Toast.success('Изображение скопировано в буфер.');
-        } catch (e) {
+        } catch (err) {
           Toast.error('Копирование не поддерживается браузером, скачайте изображение.');
         }
       };
 
-      Toast.success('Обрезка завершена.');
+      Toast.success('Область размыта.');
       resultArea.scrollIntoView({ behavior: 'smooth' });
-
     } catch (err) {
       console.error(err);
-      Toast.error('Не удалось обрезать изображение.');
+      Toast.error('Не удалось размыть область.');
     }
 
-    applyCropBtn.disabled = false;
-    applyCropBtn.innerHTML = 'Обрезать изображение';
+    applyBlurBtn.disabled = false;
+    applyBlurBtn.innerHTML = 'Размыть область';
   });
-
 })();
 </script>
 </body>
