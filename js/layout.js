@@ -20,6 +20,7 @@
     '/convert': '/pages/convert.html',
     '/rotate': '/pages/rotate.html',
     '/effects': '/pages/effects.html',
+    '/blur': '/pages/blur.html',
     '/meme': '/pages/meme.html',
     '/split': '/pages/split.html',
     '/round': '/pages/round.html',

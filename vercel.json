@@ -41,6 +41,11 @@
       "permanent": true
     },
     {
+      "source": "/pages/blur.html",
+      "destination": "/blur",
+      "permanent": true
+    },
+    {
       "source": "/pages/meme.html",
       "destination": "/meme",
       "permanent": true
@@ -114,6 +119,10 @@
     {
       "source": "/effects",
       "destination": "/pages/effects.html"
+    },
+    {
+      "source": "/blur",
+      "destination": "/pages/blur.html"
     },
     {
       "source": "/meme",

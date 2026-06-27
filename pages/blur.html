@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Размытие области – AKD Image</title>
+  <meta name="description" content="Размывайте выбранную область JPG, PNG или WebP прямо в браузере. Удобно для скрытия лиц, номеров, логинов и личных данных.">
+  <link rel="canonical" href="https://akdimage.vercel.app/blur">
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/css/main.css?v=5">
+</head>
+<body>
+
+<script src="/js/layout.js?v=7"></script>
+
+<main>
+  <div class="container container--narrow tool-page">
+
+    <div class="tool-page__header">
+      <h1 class="tool-page__title">Размытие области</h1>
+      <p class="tool-page__subtitle">Выделите часть изображения и скройте ее мягким размытием. Файл обрабатывается локально в браузере.</p>
+    </div>
+
+    <div class="dropzone" id="dropzone">
+      <input type="file" accept="image/jpeg,image/png,image/webp">
+      <p class="dropzone__title">Перетащите изображение сюда</p>
+      <p class="dropzone__hint">или нажмите для выбора файла</p>
+      <div class="dropzone__formats">
+        <span class="fmt-badge">JPG</span>
+        <span class="fmt-badge">PNG</span>
+        <span class="fmt-badge">WEBP</span>
+      </div>
+    </div>
+
+    <div class="tool-panel hidden" id="workspace-panel">
+      <div class="tool-panel__head">
+        <h3>Область размытия</h3>
+        <button class="btn btn-sm btn-secondary" id="change-img-btn">Выбрать другой файл</button>
+      </div>
+      <div class="tool-panel__body">
+        <div class="crop-workspace">
+          <div class="crop-container" id="blur-container">
+            <img class="crop-image" id="source-img" alt="Редактируемое изображение">
+            <div class="crop-box blur-box" id="blur-box">
+              <div class="crop-handle handle-nw" data-handle="nw"></div>
+              <div class="crop-handle handle-ne" data-handle="ne"></div>
+              <div class="crop-handle handle-sw" data-handle="sw"></div>
+              <div class="crop-handle handle-se" data-handle="se"></div>
+              <div class="crop-handle handle-n"  data-handle="n"></div>
+              <div class="crop-handle handle-s"  data-handle="s"></div>
+              <div class="crop-handle handle-w"  data-handle="w"></div>
+              <div class="crop-handle handle-e"  data-handle="e"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="tool-panel hidden" id="settings-panel">
+      <div class="tool-panel__head">
+        <h3>Настройки размытия</h3>
+      </div>
+      <div class="tool-panel__body">
+        <div class="form-group">
+          <label>Сила размытия</label>
+          <div class="range-row">
+            <input type="range" id="blur-radius" min="2" max="40" value="14">
+            <span id="blur-radius-val">14px</span>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>X (слева, px)</label>
+            <input type="number" id="area-x" value="0" min="0">
+          </div>
+          <div class="form-group">
+            <label>Y (сверху, px)</label>
+            <input type="number" id="area-y" value="0" min="0">
+          </div>
+          <div class="form-group">
+            <label>Ширина (px)</label>
+            <input type="number" id="area-w" value="100" min="1">
+          </div>
+          <div class="form-group">
+            <label>Высота (px)</label>
+            <input type="number" id="area-h" value="100" min="1">
+          </div>
+        </div>
+
+        <hr class="divider">
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>Формат вывода</label>
+            <select id="output-format">
+              <option value="same">Оставить оригинал</option>
+              <option value="image/jpeg">JPG</option>
+              <option value="image/png">PNG</option>
+              <option value="image/webp">WebP</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Качество (JPG / WebP)</label>
+            <div class="range-row">
+              <input type="range" id="quality" min="10" max="100" value="90">
+              <span id="quality-val">90%</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="hidden mt-16 flex gap-8 items-center" id="action-bar">
+      <button class="btn btn-primary btn-lg" id="apply-blur-btn">Размыть область</button>
+    </div>
+
+    <div class="result-area" id="result-area">
+      <hr class="divider">
+      <div class="result-stats" id="result-stats"></div>
+      <div class="crop-result-preview">
+        <img class="crop-result-preview__img" id="result-img" alt="Результат размытия">
+      </div>
+      <div class="flex gap-8 mt-16 flex-wrap">
+        <button class="btn btn-success" id="download-btn">Скачать результат</button>
+        <button class="btn btn-secondary" id="copy-btn">Копировать в буфер</button>
+      </div>
+    </div>
+
+  </div>
+</main>
+
+<script src="/js/core.js?v=5"></script>
+<script>
+(function () {
+  const dropzoneEl   = document.getElementById('dropzone');
+  const workspaceEl  = document.getElementById('workspace-panel');
+  const settingsEl   = document.getElementById('settings-panel');
+  const actionBarEl  = document.getElementById('action-bar');
+  const changeImgBtn = document.getElementById('change-img-btn');
+  const applyBlurBtn = document.getElementById('apply-blur-btn');
+  const resultArea   = document.getElementById('result-area');
+  const resultStats  = document.getElementById('result-stats');
+  const resultImg    = document.getElementById('result-img');
+  const downloadBtn  = document.getElementById('download-btn');
+  const copyBtn      = document.getElementById('copy-btn');
+
+  const sourceImg    = document.getElementById('source-img');
+  const blurBox      = document.getElementById('blur-box');
+
+  const inpX = document.getElementById('area-x');
+  const inpY = document.getElementById('area-y');
+  const inpW = document.getElementById('area-w');
+  const inpH = document.getElementById('area-h');
+
+  const blurRadius = document.getElementById('blur-radius');
+  const blurRadiusVal = document.getElementById('blur-radius-val');
+  const qualityInput = document.getElementById('quality');
+  const qualityVal = document.getElementById('quality-val');
+  const outputFmt = document.getElementById('output-format');
+
+  let activeFile = null;
+  let imgNaturalW = 0;
+  let imgNaturalH = 0;
+  let areaState = { x: 0, y: 0, w: 0, h: 0 };
+  let renderW = 0;
+  let renderH = 0;
+  let resultBlob = null;
+  let resultUrl = null;
+
+  blurRadius.addEventListener('input', () => {
+    blurRadiusVal.textContent = `${blurRadius.value}px`;
+  });
+  qualityInput.addEventListener('input', () => {
+    qualityVal.textContent = `${qualityInput.value}%`;
+  });
+
+  new Dropzone(dropzoneEl, {
+    accept: ['image/jpeg','image/png','image/webp'],
+    multiple: false,
+    onFiles(newFiles) {
+      if (newFiles[0]) loadImageFile(newFiles[0]);
+    }
+  });
+
+  function setEditingVisible(visible) {
+    UIUtils.setVisible(dropzoneEl, !visible);
+    UIUtils.setVisible(workspaceEl, visible);
+    UIUtils.setVisible(settingsEl, visible);
+    UIUtils.setVisible(actionBarEl, visible);
+    resultArea.classList.remove('visible');
+  }
+
+  changeImgBtn.addEventListener('click', () => {
+    activeFile = null;
+    if (resultUrl) {
+      URL.revokeObjectURL(resultUrl);
+      resultUrl = null;
+    }
+    resultImg.removeAttribute('src');
+    setEditingVisible(false);
+  });
+
+  async function loadImageFile(file) {
+    try {
+      const dataURL = await FileUtils.readAsDataURL(file);
+      const loadedImage = await FileUtils.loadImage(dataURL);
+      activeFile = file;
+      imgNaturalW = loadedImage.naturalWidth;
+      imgNaturalH = loadedImage.naturalHeight;
+
+      inpX.max = imgNaturalW;
+      inpY.max = imgNaturalH;
+      inpW.max = imgNaturalW;
+      inpH.max = imgNaturalH;
+
+      const w = Math.round(imgNaturalW * 0.35);
+      const h = Math.round(imgNaturalH * 0.25);
+      const x = Math.round((imgNaturalW - w) / 2);
+      const y = Math.round((imgNaturalH - h) / 2);
+      areaState = { x, y, w, h };
+
+      sourceImg.onload = () => requestAnimationFrame(updateUIFromState);
+      sourceImg.src = dataURL;
+      setEditingVisible(true);
+    } catch (err) {
+      console.error(err);
+      activeFile = null;
+      setEditingVisible(false);
+      Toast.error(err.message || 'Не удалось загрузить изображение.');
+    }
+  }
+
+  window.addEventListener('resize', () => {
+    if (activeFile) updateUIFromState();
+  });
+
+  function updateUIFromState() {
+    renderW = sourceImg.offsetWidth;
+    renderH = sourceImg.offsetHeight;
+    if (!renderW || !renderH) return;
+
+    const scale = renderW / imgNaturalW;
+    blurBox.style.left = `${areaState.x * scale}px`;
+    blurBox.style.top = `${areaState.y * scale}px`;
+    blurBox.style.width = `${areaState.w * scale}px`;
+    blurBox.style.height = `${areaState.h * scale}px`;
+
+    inpX.value = Math.round(areaState.x);
+    inpY.value = Math.round(areaState.y);
+    inpW.value = Math.round(areaState.w);
+    inpH.value = Math.round(areaState.h);
+  }
+
+  function updateStateFromInputs() {
+    let x = parseInt(inpX.value) || 0;
+    let y = parseInt(inpY.value) || 0;
+    let w = parseInt(inpW.value) || 100;
+    let h = parseInt(inpH.value) || 100;
+
+    x = Math.max(0, Math.min(imgNaturalW - 1, x));
+    y = Math.max(0, Math.min(imgNaturalH - 1, y));
+    w = Math.max(1, Math.min(imgNaturalW - x, w));
+    h = Math.max(1, Math.min(imgNaturalH - y, h));
+
+    areaState = { x, y, w, h };
+    updateUIFromState();
+  }
+
+  [inpX, inpY, inpW, inpH].forEach(input => {
+    input.addEventListener('change', updateStateFromInputs);
+  });
+
+  let isDragging = false;
+  let dragMode = 'move';
+  let startX = 0, startY = 0;
+  let startArea = {};
+
+  blurBox.addEventListener('mousedown', startDrag);
+  blurBox.addEventListener('touchstart', startDrag, { passive: false });
+
+  function startDrag(e) {
+    e.preventDefault();
+    isDragging = true;
+
+    const event = e.type.startsWith('touch') ? e.touches[0] : e;
+    startX = event.clientX;
+    startY = event.clientY;
+    startArea = { ...areaState };
+    dragMode = e.target.dataset.handle || 'move';
+
+    window.addEventListener('mousemove', drag);
+    window.addEventListener('touchmove', drag, { passive: false });
+    window.addEventListener('mouseup', endDrag);
+    window.addEventListener('touchend', endDrag);
+  }
+
+  function drag(e) {
+    if (!isDragging) return;
+    e.preventDefault();
+
+    const event = e.type.startsWith('touch') ? e.touches[0] : e;
+    const dx = (event.clientX - startX) * (imgNaturalW / renderW);
+    const dy = (event.clientY - startY) * (imgNaturalH / renderH);
+
+    let x = startArea.x;
+    let y = startArea.y;
+    let w = startArea.w;
+    let h = startArea.h;
+
+    if (dragMode === 'move') {
+      x = Math.max(0, Math.min(imgNaturalW - w, x + dx));
+      y = Math.max(0, Math.min(imgNaturalH - h, y + dy));
+    } else {
+      if (dragMode.includes('e')) w = Math.max(10, Math.min(imgNaturalW - x, w + dx));
+      if (dragMode.includes('s')) h = Math.max(10, Math.min(imgNaturalH - y, h + dy));
+      if (dragMode.includes('w')) {
+        const nx = Math.max(0, Math.min(x + w - 10, x + dx));
+        w = w + (x - nx);
+        x = nx;
+      }
+      if (dragMode.includes('n')) {
+        const ny = Math.max(0, Math.min(y + h - 10, y + dy));
+        h = h + (y - ny);
+        y = ny;
+      }
+    }
+
+    areaState = {
+      x: Math.round(x),
+      y: Math.round(y),
+      w: Math.round(w),
+      h: Math.round(h)
+    };
+
+    updateUIFromState();
+  }
+
+  function endDrag() {
+    isDragging = false;
+    window.removeEventListener('mousemove', drag);
+    window.removeEventListener('touchmove', drag);
+    window.removeEventListener('mouseup', endDrag);
+    window.removeEventListener('touchend', endDrag);
+  }
+
+  function drawBlurredArea(canvas, ctx, radius) {
+    ctx.drawImage(sourceImg, 0, 0, canvas.width, canvas.height);
+
+    const blurCanvas = document.createElement('canvas');
+    blurCanvas.width = canvas.width;
+    blurCanvas.height = canvas.height;
+    const blurCtx = blurCanvas.getContext('2d');
+    blurCtx.filter = `blur(${radius}px)`;
+    blurCtx.drawImage(sourceImg, 0, 0, canvas.width, canvas.height);
+
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(areaState.x, areaState.y, areaState.w, areaState.h);
+    ctx.clip();
+    ctx.drawImage(blurCanvas, 0, 0);
+    ctx.restore();
+  }
+
+  applyBlurBtn.addEventListener('click', async () => {
+    if (!activeFile) return;
+
+    applyBlurBtn.disabled = true;
+    applyBlurBtn.innerHTML = '<span class="spinner"></span> Размываю...';
+
+    try {
+      const canvas = document.createElement('canvas');
+      canvas.width = imgNaturalW;
+      canvas.height = imgNaturalH;
+      const ctx = canvas.getContext('2d');
+      drawBlurredArea(canvas, ctx, parseInt(blurRadius.value));
+
+      const mime = outputFmt.value === 'same' ? activeFile.type : outputFmt.value;
+      const quality = parseInt(qualityInput.value) / 100;
+      const outputCanvas = FileUtils.canvasForMime(canvas, mime);
+      resultBlob = await FileUtils.canvasToBlob(outputCanvas, mime, quality);
+
+      if (resultUrl) URL.revokeObjectURL(resultUrl);
+      resultUrl = URL.createObjectURL(resultBlob);
+      resultImg.src = resultUrl;
+
+      const ext = mime.split('/')[1].replace('jpeg','jpg');
+      const filename = activeFile.name.replace(/\.[^.]+$/, '') + '_blur.' + ext;
+
+      resultStats.innerHTML = `
+        <div class="stat-card"><div class="stat-card__label">Область</div><div class="stat-card__value">${areaState.w}×${areaState.h}px</div></div>
+        <div class="stat-card"><div class="stat-card__label">Размытие</div><div class="stat-card__value">${blurRadius.value}px</div></div>
+        <div class="stat-card stat-green"><div class="stat-card__label">Размер файла</div><div class="stat-card__value">${FileUtils.formatSize(resultBlob.size)}</div></div>
+      `;
+      resultArea.classList.add('visible');
+
+      downloadBtn.onclick = () => FileUtils.downloadBlob(resultBlob, filename);
+      copyBtn.onclick = async () => {
+        try {
+          const copyBlob = mime === 'image/png'
+            ? resultBlob
+            : await FileUtils.canvasToBlob(canvas, 'image/png', 1);
+          await navigator.clipboard.write([new ClipboardItem({ 'image/png': copyBlob })]);
+          Toast.success('Изображение скопировано в буфер.');
+        } catch (err) {
+          Toast.error('Копирование не поддерживается браузером, скачайте изображение.');
+        }
+      };
+
+      Toast.success('Область размыта.');
+      resultArea.scrollIntoView({ behavior: 'smooth' });
+    } catch (err) {
+      console.error(err);
+      Toast.error('Не удалось размыть область.');
+    }
+
+    applyBlurBtn.disabled = false;
+    applyBlurBtn.innerHTML = 'Размыть область';
+  });
+})();
+</script>
+</body>
+</html>
