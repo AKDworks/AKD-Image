@@ -124,3 +124,77 @@
   /* Transitions */
   --t: 160ms ease;
 }
+
+html[data-theme="dark"] {
+  color-scheme: dark;
+
+  /* Palette */
+  --bg:         #101114;
+  --surface:    #181A20;
+  --border:     #2A2E37;
+  --text:       #F3F5F8;
+  --muted:      #A8B0BE;
+  --accent:     #60A5FA;
+  --accent-hover: #3B82F6;
+  --accent-light: rgba(96,165,250,.14);
+  --accent-soft:  rgba(96,165,250,.2);
+  --success:    #22C55E;
+  --success-hover: #16A34A;
+  --warn:       #F59E0B;
+  --danger:     #EF4444;
+  --text-inverse: #FFFFFF;
+  --border-hover: #3A4250;
+  --border-accent-soft: rgba(96,165,250,.45);
+  --border-accent-muted: rgba(96,165,250,.65);
+  --focus-ring: rgba(96,165,250,.2);
+  --focus-ring-strong: rgba(96,165,250,.28);
+
+  /* UI states */
+  --status-pending-bg: rgba(245,158,11,.16);
+  --status-pending-text: #FCD34D;
+  --status-done-bg: rgba(34,197,94,.16);
+  --status-done-text: #86EFAC;
+  --status-error-bg: rgba(239,68,68,.16);
+  --status-error-text: #FCA5A5;
+  --status-processing-bg: rgba(96,165,250,.16);
+  --status-processing-text: #93C5FD;
+
+  /* Feedback */
+  --alert-info-bg: rgba(96,165,250,.14);
+  --alert-info-text: #BFDBFE;
+  --alert-info-border: rgba(96,165,250,.35);
+  --alert-success-bg: rgba(34,197,94,.14);
+  --alert-success-text: #BBF7D0;
+  --alert-success-border: rgba(34,197,94,.35);
+  --alert-warn-bg: rgba(245,158,11,.14);
+  --alert-warn-text: #FDE68A;
+  --alert-warn-border: rgba(245,158,11,.35);
+  --alert-danger-bg: rgba(239,68,68,.14);
+  --alert-danger-text: #FECACA;
+  --alert-danger-border: rgba(239,68,68,.35);
+
+  /* Previews */
+  --checker-color: #30333A;
+  --checker-bg: #1B1D23;
+  --workspace-bg: #0B0C10;
+  --overlay-strong: rgba(0,0,0,.68);
+  --overlay-crop: rgba(0,0,0,.58);
+  --overlay-soft: rgba(255,255,255,.04);
+  --grid-line: rgba(248,113,113,.9);
+  --handle-bg: #F8FAFC;
+  --crop-box-glow: rgba(0,0,0,.5);
+  --preview-image-shadow: 0 4px 24px rgba(0,0,0,.35);
+
+  /* Icon backgrounds */
+  --icon-blue-bg: rgba(96,165,250,.14);
+  --icon-green-bg: rgba(34,197,94,.14);
+  --icon-orange-bg: rgba(245,158,11,.14);
+  --icon-purple-bg: rgba(167,139,250,.16);
+  --icon-pink-bg: rgba(244,114,182,.14);
+  --icon-teal-bg: rgba(45,212,191,.14);
+
+  /* Shadow */
+  --shadow-sm: 0 1px 3px rgba(0,0,0,.24);
+  --shadow-md: 0 4px 18px rgba(0,0,0,.28);
+  --shadow-lg: 0 8px 34px rgba(0,0,0,.34);
+}
