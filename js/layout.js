@@ -1,13 +1,5 @@
 /* Shared layout */
 (function () {
-  const tools = [
-    { href: '/compress',   page: '/pages/compress.html',   label: 'Сжать' },
-    { href: '/resize',     page: '/pages/resize.html',     label: 'Изменить размер' },
-    { href: '/watermark',  page: '/pages/watermark.html',  label: 'Водяной знак' },
-    { href: '/crop',       page: '/pages/crop.html',       label: 'Обрезать' },
-    { href: '/convert',    page: '/pages/convert.html',    label: 'Конвертировать' }
-  ];
-
   const localHosts = ['localhost', '127.0.0.1'];
   const isLocalStaticHost = localHosts.includes(location.hostname);
   const homeHref = '/';
@@ -35,12 +27,6 @@
 
   function routeHref(href, page) {
     return isLocalStaticHost ? page : href;
-  }
-
-  function navLinks() {
-    return tools.map(t => {
-      return `<a href="${routeHref(t.href, t.page)}">${t.label}</a>`;
-    }).join('');
   }
 
   function storedTheme() {
@@ -87,9 +73,6 @@
             AKD Image
           </a>
         </div>
-        <nav class="site-nav" id="site-nav">
-          ${navLinks()}
-        </nav>
         <div class="header-side header-side--end">
           <div class="theme-control" aria-label="Темная тема в бете">
             <button class="theme-toggle" id="theme-toggle" type="button" aria-label="Переключить тему" aria-pressed="false" title="Переключить тему">
@@ -104,9 +87,6 @@
             <span class="theme-beta">Бета</span>
           </div>
           <a href="${homeHref}" class="header-btn">Все инструменты</a>
-          <button class="nav-toggle" aria-label="Меню" aria-controls="site-nav" aria-expanded="false">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
-          </button>
         </div>
       </div>
     </header>
@@ -167,10 +147,6 @@
     document.body.insertAdjacentHTML('beforeend', footerHTML);
     document.body.insertAdjacentHTML('beforeend', toastContainer);
 
-    const nav = document.querySelector('.site-nav');
-    const toggle = document.querySelector('.nav-toggle');
-    const current = location.pathname.replace(/\/$/, '') || '/';
-
     initThemeToggle();
 
     if (isLocalStaticHost) {
@@ -180,14 +156,5 @@
       });
     }
 
-    toggle.addEventListener('click', () => {
-      const isOpen = nav.classList.toggle('open');
-      toggle.setAttribute('aria-expanded', String(isOpen));
-    });
-
-    document.querySelectorAll('.site-nav a').forEach(a => {
-      const href = a.getAttribute('href').replace(/\/$/, '') || '/';
-      if (href === current) a.classList.add('active');
-    });
   });
 })();
