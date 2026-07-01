@@ -117,7 +117,7 @@
 .form-group select:focus,
 .form-group textarea:focus {
   border-color: var(--accent);
-  box-shadow: 0 0 0 3px rgba(37,99,235,.12);
+  box-shadow: 0 0 0 3px var(--focus-ring);
 }
 .form-group input[type="range"] {
   accent-color: var(--accent);
@@ -201,7 +201,7 @@
   position: absolute;
   left: 3px; top: 3px;
   width: 16px; height: 16px;
-  background: white;
+  background: var(--handle-bg);
   border-radius: 50%;
   transition: transform var(--t);
   box-shadow: var(--shadow-sm);
@@ -227,7 +227,7 @@
 .btn:active { transform: scale(.98); }
 .btn-primary {
   background: var(--accent);
-  color: #fff;
+  color: var(--text-inverse);
 }
 .btn-primary:hover { background: var(--accent-hover); }
 .btn-secondary {
@@ -243,12 +243,12 @@
 }
 .btn-success {
   background: var(--success);
-  color: #fff;
+  color: var(--text-inverse);
 }
-.btn-success:hover { background: #15803D; }
+.btn-success:hover { background: var(--success-hover); }
 .btn-danger {
   background: var(--danger);
-  color: #fff;
+  color: var(--text-inverse);
 }
 .btn-sm { padding: 7px 14px; font-size: .8rem; }
 .btn-lg { padding: 13px 28px; font-size: 1rem; }
@@ -261,7 +261,7 @@
   color: var(--muted);
   transition: color var(--t), border-color var(--t);
 }
-.btn-icon:hover { color: var(--text); border-color: #C0C9D8; }
+.btn-icon:hover { color: var(--text); border-color: var(--border-hover); }
 .btn-icon:disabled { opacity: .45; cursor: not-allowed; }
 .btn:disabled { opacity: .45; cursor: not-allowed; }
 
@@ -285,7 +285,7 @@
   transition: background var(--t), border-color var(--t), box-shadow var(--t);
 }
 .file-item:hover {
-  border-color: #C0C9D8;
+  border-color: var(--border-hover);
 }
 .file-item.is-selected {
   background: var(--accent-light);
@@ -293,7 +293,7 @@
   box-shadow: inset 0 0 0 1px var(--accent);
 }
 .file-item:focus-visible {
-  outline: 3px solid rgba(37,99,235,.2);
+  outline: 3px solid var(--focus-ring-strong);
   outline-offset: 1px;
 }
 .file-list.is-locked .file-item {
@@ -334,10 +334,10 @@
   border-radius: 4px;
   white-space: nowrap;
 }
-.status-pending  { background: #FEF9C3; color: #854D0E; }
-.status-done     { background: #DCFCE7; color: #166534; }
-.status-error    { background: #FEE2E2; color: #991B1B; }
-.status-processing { background: #EFF6FF; color: #1D4ED8; }
+.status-pending  { background: var(--status-pending-bg); color: var(--status-pending-text); }
+.status-done     { background: var(--status-done-bg); color: var(--status-done-text); }
+.status-error    { background: var(--status-error-bg); color: var(--status-error-text); }
+.status-processing { background: var(--status-processing-bg); color: var(--status-processing-text); }
 
 /* Progress bar */
 .progress-bar {
@@ -389,10 +389,10 @@
   gap: 10px;
   margin-bottom: 16px;
 }
-.alert-info    { background: var(--accent-light); color: #1E40AF; border: 1px solid #BFDBFE; }
-.alert-success { background: #F0FDF4; color: #166534; border: 1px solid #BBF7D0; }
-.alert-warn    { background: #FFFBEB; color: #92400E; border: 1px solid #FDE68A; }
-.alert-danger  { background: #FEF2F2; color: #991B1B; border: 1px solid #FECACA; }
+.alert-info    { background: var(--alert-info-bg); color: var(--alert-info-text); border: 1px solid var(--alert-info-border); }
+.alert-success { background: var(--alert-success-bg); color: var(--alert-success-text); border: 1px solid var(--alert-success-border); }
+.alert-warn    { background: var(--alert-warn-bg); color: var(--alert-warn-text); border: 1px solid var(--alert-warn-border); }
+.alert-danger  { background: var(--alert-danger-bg); color: var(--alert-danger-text); border: 1px solid var(--alert-danger-border); }
 
 /* Toasts */
 .toast-container {
@@ -406,7 +406,7 @@
 }
 .toast {
   background: var(--text);
-  color: #fff;
+  color: var(--text-inverse);
   padding: 12px 18px;
   border-radius: var(--r-md);
   font-size: .85rem;
@@ -441,11 +441,11 @@
 }
 .preview-canvas--checker {
   background:
-    linear-gradient(45deg, #e5e7eb 25%, transparent 25%),
-    linear-gradient(-45deg, #e5e7eb 25%, transparent 25%),
-    linear-gradient(45deg, transparent 75%, #e5e7eb 75%),
-    linear-gradient(-45deg, transparent 75%, #e5e7eb 75%);
-  background-color: #fff;
+    linear-gradient(45deg, var(--checker-color) 25%, transparent 25%),
+    linear-gradient(-45deg, var(--checker-color) 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, var(--checker-color) 75%),
+    linear-gradient(-45deg, transparent 75%, var(--checker-color) 75%);
+  background-color: var(--checker-bg);
   background-position: 0 0, 0 8px, 8px -8px, -8px 0;
   background-size: 16px 16px;
 }
@@ -463,7 +463,7 @@
 
 .modal-overlay {
   position: fixed; inset: 0;
-  background: rgba(0,0,0,.6);
+  background: var(--overlay-strong);
   z-index: 200;
   display: flex;
   align-items: center;

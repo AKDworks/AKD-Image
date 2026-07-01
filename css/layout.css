@@ -58,7 +58,7 @@ main {
   background: var(--accent);
   border-radius: var(--r-sm);
   display: flex; align-items: center; justify-content: center;
-  color: #fff;
+  color: var(--text-inverse);
   font-weight: 800;
   font-size: .85rem;
   letter-spacing: -.5px;
@@ -99,7 +99,7 @@ main {
   white-space: nowrap;
   text-decoration: none;
 }
-.header-btn:hover { background: #DBEAFE; }
+.header-btn:hover { background: var(--accent-soft); }
 
 /* Mobile nav */
 .nav-toggle {

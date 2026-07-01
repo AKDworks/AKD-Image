@@ -50,9 +50,61 @@
   --accent:     #2563EB;
   --accent-hover: #1D4ED8;
   --accent-light: #EFF6FF;
+  --accent-soft:  #DBEAFE;
   --success:    #16A34A;
+  --success-hover: #15803D;
   --warn:       #D97706;
   --danger:     #DC2626;
+  --text-inverse: #FFFFFF;
+  --border-hover: #C0C9D8;
+  --border-accent-soft: #C7D7F8;
+  --border-accent-muted: #93B4F5;
+  --focus-ring: rgba(37,99,235,.12);
+  --focus-ring-strong: rgba(37,99,235,.2);
+
+  /* UI states */
+  --status-pending-bg: #FEF9C3;
+  --status-pending-text: #854D0E;
+  --status-done-bg: #DCFCE7;
+  --status-done-text: #166534;
+  --status-error-bg: #FEE2E2;
+  --status-error-text: #991B1B;
+  --status-processing-bg: #EFF6FF;
+  --status-processing-text: #1D4ED8;
+
+  /* Feedback */
+  --alert-info-bg: #EFF6FF;
+  --alert-info-text: #1E40AF;
+  --alert-info-border: #BFDBFE;
+  --alert-success-bg: #F0FDF4;
+  --alert-success-text: #166534;
+  --alert-success-border: #BBF7D0;
+  --alert-warn-bg: #FFFBEB;
+  --alert-warn-text: #92400E;
+  --alert-warn-border: #FDE68A;
+  --alert-danger-bg: #FEF2F2;
+  --alert-danger-text: #991B1B;
+  --alert-danger-border: #FECACA;
+
+  /* Previews */
+  --checker-color: #E5E7EB;
+  --checker-bg: #FFFFFF;
+  --workspace-bg: #1E1E24;
+  --overlay-strong: rgba(0,0,0,.6);
+  --overlay-crop: rgba(0,0,0,.5);
+  --overlay-soft: rgba(0,0,0,.03);
+  --grid-line: rgba(255,0,0,.8);
+  --handle-bg: #FFFFFF;
+  --crop-box-glow: rgba(0,0,0,.3);
+  --preview-image-shadow: 0 4px 20px rgba(0,0,0,.15);
+
+  /* Icon backgrounds */
+  --icon-blue-bg: #EFF6FF;
+  --icon-green-bg: #F0FDF4;
+  --icon-orange-bg: #FFF7ED;
+  --icon-purple-bg: #F5F3FF;
+  --icon-pink-bg: #FDF2F8;
+  --icon-teal-bg: #F0FDFA;
 
   /* Type */
   --font-ui:    'Inter', system-ui, -apple-system, sans-serif;
