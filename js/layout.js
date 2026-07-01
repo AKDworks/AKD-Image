@@ -1,17 +1,10 @@
 /* Shared layout */
 (function () {
-  const tools = [
-    { href: '/compress',   page: '/pages/compress.html',   label: 'Сжать' },
-    { href: '/resize',     page: '/pages/resize.html',     label: 'Изменить размер' },
-    { href: '/watermark',  page: '/pages/watermark.html',  label: 'Водяной знак' },
-    { href: '/crop',       page: '/pages/crop.html',       label: 'Обрезать' },
-    { href: '/convert',    page: '/pages/convert.html',    label: 'Конвертировать' },
-    { href: '/rotate',     page: '/pages/rotate.html',     label: 'Повернуть' }
-  ];
-
   const localHosts = ['localhost', '127.0.0.1'];
   const isLocalStaticHost = localHosts.includes(location.hostname);
   const homeHref = '/';
+  const themeStorageKey = 'akd-image-theme';
+  const systemDarkQuery = '(prefers-color-scheme: dark)';
   const localRoutes = {
     '/compress': '/pages/compress.html',
     '/resize': '/pages/resize.html',
@@ -36,11 +29,35 @@
     return isLocalStaticHost ? page : href;
   }
 
-  function navLinks() {
-    return tools.map(t => {
-      return `<a href="${routeHref(t.href, t.page)}">${t.label}</a>`;
-    }).join('');
+  function storedTheme() {
+    try {
+      return localStorage.getItem(themeStorageKey);
+    } catch {
+      return null;
+    }
   }
+
+  function systemTheme() {
+    return window.matchMedia?.(systemDarkQuery).matches ? 'dark' : 'light';
+  }
+
+  function currentTheme() {
+    return storedTheme() || systemTheme();
+  }
+
+  function applyTheme(theme) {
+    document.documentElement.dataset.theme = theme === 'dark' ? 'dark' : 'light';
+  }
+
+  function saveTheme(theme) {
+    try {
+      localStorage.setItem(themeStorageKey, theme);
+    } catch {
+      /* Theme still works for the current page even if storage is unavailable. */
+    }
+  }
+
+  applyTheme(currentTheme());
 
   const headerHTML = `
     <header class="site-header">
@@ -56,14 +73,20 @@
             AKD Image
           </a>
         </div>
-        <nav class="site-nav" id="site-nav">
-          ${navLinks()}
-        </nav>
         <div class="header-side header-side--end">
+          <div class="theme-control" aria-label="Темная тема в бете">
+            <button class="theme-toggle" id="theme-toggle" type="button" aria-label="Переключить тему" aria-pressed="false" title="Переключить тему">
+              <svg class="theme-icon theme-icon--moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true" focusable="false">
+                <path d="M21 12.8A8.5 8.5 0 1 1 11.2 3a6.5 6.5 0 0 0 9.8 9.8Z"/>
+              </svg>
+              <svg class="theme-icon theme-icon--sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true" focusable="false">
+                <circle cx="12" cy="12" r="4"/>
+                <path d="M12 2v2m0 16v2M4.93 4.93l1.41 1.41m11.32 11.32 1.41 1.41M2 12h2m16 0h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/>
+              </svg>
+            </button>
+            <span class="theme-beta">Бета</span>
+          </div>
           <a href="${homeHref}" class="header-btn">Все инструменты</a>
-          <button class="nav-toggle" aria-label="Меню" aria-controls="site-nav" aria-expanded="false">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
-          </button>
         </div>
       </div>
     </header>
@@ -90,14 +113,41 @@
 
   const toastContainer = `<div class="toast-container" id="toast-container"></div>`;
 
+  function initThemeToggle() {
+    const button = document.getElementById('theme-toggle');
+    if (!button) return;
+
+    function syncButton() {
+      const isDark = document.documentElement.dataset.theme === 'dark';
+      const label = isDark ? 'Включить светлую тему' : 'Включить темную тему';
+
+      button.setAttribute('aria-pressed', String(isDark));
+      button.setAttribute('aria-label', label);
+      button.setAttribute('title', label);
+    }
+
+    button.addEventListener('click', () => {
+      const nextTheme = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
+      applyTheme(nextTheme);
+      saveTheme(nextTheme);
+      syncButton();
+    });
+
+    window.matchMedia?.(systemDarkQuery).addEventListener('change', () => {
+      if (storedTheme()) return;
+      applyTheme(systemTheme());
+      syncButton();
+    });
+
+    syncButton();
+  }
+
   document.addEventListener('DOMContentLoaded', () => {
     document.body.insertAdjacentHTML('afterbegin', headerHTML);
     document.body.insertAdjacentHTML('beforeend', footerHTML);
     document.body.insertAdjacentHTML('beforeend', toastContainer);
 
-    const nav = document.querySelector('.site-nav');
-    const toggle = document.querySelector('.nav-toggle');
-    const current = location.pathname.replace(/\/$/, '') || '/';
+    initThemeToggle();
 
     if (isLocalStaticHost) {
       document.querySelectorAll('.tool-card[href^="/"]').forEach(link => {
@@ -106,14 +156,5 @@
       });
     }
 
-    toggle.addEventListener('click', () => {
-      const isOpen = nav.classList.toggle('open');
-      toggle.setAttribute('aria-expanded', String(isOpen));
-    });
-
-    document.querySelectorAll('.site-nav a').forEach(a => {
-      const href = a.getAttribute('href').replace(/\/$/, '') || '/';
-      if (href === current) a.classList.add('active');
-    });
   });
 })();
