@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Коллаж – AKD Image</title>
+  <meta name="description" content="Создайте коллаж из нескольких JPG, PNG или WebP прямо в браузере. Файлы обрабатываются локально и не загружаются на сервер.">
+  <link rel="canonical" href="https://akdimage.vercel.app/collage">
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/css/main.css?v=5">
+</head>
+<body>
+
+<script src="/js/layout.js?v=7"></script>
+
+<main>
+  <div class="container container--narrow tool-page">
+    <div class="tool-page__header">
+      <h1 class="tool-page__title">Коллаж</h1>
+      <p class="tool-page__subtitle">Соберите несколько изображений в один аккуратный коллаж с сеткой, фоном и настраиваемыми промежутками.</p>
+    </div>
+
+    <div class="dropzone" id="dropzone">
+      <input type="file" accept="image/jpeg,image/png,image/webp" multiple>
+      <p class="dropzone__title">Перетащите изображения сюда</p>
+      <p class="dropzone__hint">или нажмите для выбора файлов</p>
+      <div class="dropzone__formats">
+        <span class="fmt-badge">JPG</span>
+        <span class="fmt-badge">PNG</span>
+        <span class="fmt-badge">WEBP</span>
+      </div>
+    </div>
+
+    <div class="tool-panel hidden" id="settings-panel">
+      <div class="tool-panel__head">
+        <h3>Настройки коллажа</h3>
+        <button class="btn btn-sm btn-secondary" id="clear-btn" type="button">Выбрать другие файлы</button>
+      </div>
+      <div class="tool-panel__body">
+        <div class="form-row">
+          <div class="form-group">
+            <label for="layout-mode">Макет</label>
+            <select id="layout-mode">
+              <option value="auto">Авто-сетка</option>
+              <option value="grid">Своя сетка</option>
+              <option value="vertical">Вертикальная лента</option>
+              <option value="horizontal">Горизонтальная лента</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="fit-mode">Размещение</label>
+            <select id="fit-mode">
+              <option value="cover">Заполнить ячейку</option>
+              <option value="contain">Вписать целиком</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-row mt-16">
+          <div class="form-group" id="columns-group">
+            <label for="columns">Колонки</label>
+            <input type="number" id="columns" min="1" max="8" value="3">
+          </div>
+          <div class="form-group">
+            <label for="background">Фон</label>
+            <input type="color" id="background" value="#ffffff">
+          </div>
+        </div>
+
+        <div class="form-row mt-16">
+          <div class="form-group">
+            <label for="gap">Промежуток</label>
+            <div class="range-row">
+              <input type="range" id="gap" min="0" max="80" value="16">
+              <span id="gap-val">16 px</span>
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="padding">Отступ от края</label>
+            <div class="range-row">
+              <input type="range" id="padding" min="0" max="120" value="24">
+              <span id="padding-val">24 px</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-row mt-16">
+          <div class="form-group">
+            <label for="format">Формат</label>
+            <select id="format">
+              <option value="image/jpeg">JPG</option>
+              <option value="image/png">PNG</option>
+              <option value="image/webp">WebP</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="quality">Качество</label>
+            <div class="range-row">
+              <input type="range" id="quality" min="50" max="100" value="90">
+              <span id="quality-val">90%</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="file-list hidden" id="file-list"></div>
+
+    <div class="hidden mt-16 flex gap-8 items-center" id="action-bar">
+      <button class="btn btn-primary btn-lg" id="create-btn" type="button">Создать коллаж</button>
+      <span class="text-muted text-sm" id="file-count"></span>
+    </div>
+
+    <div class="result-area" id="result-area">
+      <hr class="divider">
+      <div class="result-stats" id="result-stats"></div>
+      <img id="preview" alt="Предпросмотр коллажа" style="display:none; width:100%; max-height:520px; object-fit:contain; border:1px solid var(--border); border-radius:8px; background:var(--surface); margin-bottom:16px;">
+      <button class="btn btn-success" id="download-btn" type="button">Скачать коллаж</button>
+    </div>
+  </div>
+</main>
+
+<script src="/js/core.js?v=5"></script>
+<script>
+(function () {
+  const dropzoneEl = document.getElementById('dropzone');
+  const settingsEl = document.getElementById('settings-panel');
+  const fileListEl = document.getElementById('file-list');
+  const actionBarEl = document.getElementById('action-bar');
+  const countEl = document.getElementById('file-count');
+  const clearBtn = document.getElementById('clear-btn');
+  const createBtn = document.getElementById('create-btn');
+  const downloadBtn = document.getElementById('download-btn');
+  const resultArea = document.getElementById('result-area');
+  const resultStats = document.getElementById('result-stats');
+  const previewEl = document.getElementById('preview');
+  const layoutSelect = document.getElementById('layout-mode');
+  const fitSelect = document.getElementById('fit-mode');
+  const columnsGroup = document.getElementById('columns-group');
+  const columnsInput = document.getElementById('columns');
+  const backgroundInput = document.getElementById('background');
+  const gapInput = document.getElementById('gap');
+  const gapVal = document.getElementById('gap-val');
+  const paddingInput = document.getElementById('padding');
+  const paddingVal = document.getElementById('padding-val');
+  const formatSelect = document.getElementById('format');
+  const qualityInput = document.getElementById('quality');
+  const qualityVal = document.getElementById('quality-val');
+
+  const manager = new FileListManager(fileListEl);
+  let files = [];
+  let resultBlob = null;
+  let previewUrl = '';
+
+  function setRangeLabel(input, label, unit) {
+    label.textContent = input.value + unit;
+  }
+
+  gapInput.addEventListener('input', () => setRangeLabel(gapInput, gapVal, ' px'));
+  paddingInput.addEventListener('input', () => setRangeLabel(paddingInput, paddingVal, ' px'));
+  qualityInput.addEventListener('input', () => setRangeLabel(qualityInput, qualityVal, '%'));
+  layoutSelect.addEventListener('change', () => {
+    columnsGroup.classList.toggle('hidden', layoutSelect.value !== 'grid');
+  });
+  columnsGroup.classList.add('hidden');
+
+  new Dropzone(dropzoneEl, {
+    accept: ['image/jpeg', 'image/png', 'image/webp'],
+    multiple: true,
+    onFiles(newFiles) {
+      newFiles.forEach(file => {
+        files.push({ file, item: manager.add(file) });
+      });
+      updateUI();
+    }
+  });
+
+  fileListEl.addEventListener('file-removed', event => {
+    files = files.filter(entry => entry.item.id !== event.detail.id);
+    updateUI();
+  });
+
+  clearBtn.addEventListener('click', () => {
+    files = [];
+    resultBlob = null;
+    manager.clear();
+    updateUI();
+  });
+
+  function updateUI() {
+    UIUtils.updateBatchLayout({ dropzoneEl, fileListEl, settingsEl, actionBarEl, countEl }, files.length);
+    resetResult();
+  }
+
+  function resetResult() {
+    resultArea.classList.remove('visible');
+    resultStats.innerHTML = '';
+    previewEl.style.display = 'none';
+    if (previewUrl) URL.revokeObjectURL(previewUrl);
+    previewUrl = '';
+    resultBlob = null;
+  }
+
+  function resolveGrid(count) {
+    const mode = layoutSelect.value;
+    if (mode === 'vertical') return { cols: 1, rows: count };
+    if (mode === 'horizontal') return { cols: count, rows: 1 };
+    if (mode === 'grid') {
+      const cols = Math.min(count, Math.max(1, Number(columnsInput.value) || 1));
+      return { cols, rows: Math.ceil(count / cols) };
+    }
+    const cols = Math.ceil(Math.sqrt(count));
+    return { cols, rows: Math.ceil(count / cols) };
+  }
+
+  function fitToLimits(width, height) {
+    return Math.min(
+      1,
+      FileUtils.MAX_IMAGE_SIDE / width,
+      FileUtils.MAX_IMAGE_SIDE / height,
+      Math.sqrt(FileUtils.MAX_IMAGE_PIXELS / (width * height))
+    );
+  }
+
+  function drawImageInCell(ctx, img, x, y, width, height) {
+    const cover = fitSelect.value === 'cover';
+    const scale = cover
+      ? Math.max(width / img.naturalWidth, height / img.naturalHeight)
+      : Math.min(width / img.naturalWidth, height / img.naturalHeight);
+    const drawWidth = img.naturalWidth * scale;
+    const drawHeight = img.naturalHeight * scale;
+    const drawX = x + (width - drawWidth) / 2;
+    const drawY = y + (height - drawHeight) / 2;
+
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(x, y, width, height);
+    ctx.clip();
+    ctx.drawImage(img, drawX, drawY, drawWidth, drawHeight);
+    ctx.restore();
+  }
+
+  async function loadEntries() {
+    const entries = [];
+    for (let i = 0; i < files.length; i++) {
+      const { file, item } = files[i];
+      manager.setStatus(item.id, 'Загрузка...', 'status-processing');
+      manager.setProgress(item.id, 20);
+      const src = await FileUtils.readAsDataURL(file);
+      const img = await FileUtils.loadImage(src);
+      entries.push({ file, item, img });
+      manager.setProgress(item.id, 60);
+    }
+    return entries;
+  }
+
+  async function createCollage() {
+    const entries = await loadEntries();
+    const { cols, rows } = resolveGrid(entries.length);
+    const gap = Number(gapInput.value);
+    const padding = Number(paddingInput.value);
+    const maxWidth = Math.min(900, Math.max(...entries.map(entry => entry.img.naturalWidth)));
+    const maxHeight = Math.min(900, Math.max(...entries.map(entry => entry.img.naturalHeight)));
+    const rawWidth = padding * 2 + cols * maxWidth + gap * (cols - 1);
+    const rawHeight = padding * 2 + rows * maxHeight + gap * (rows - 1);
+    const scale = fitToLimits(rawWidth, rawHeight);
+    const cellWidth = Math.max(1, Math.floor(maxWidth * scale));
+    const cellHeight = Math.max(1, Math.floor(maxHeight * scale));
+    const realGap = Math.floor(gap * scale);
+    const realPadding = Math.floor(padding * scale);
+    const canvas = document.createElement('canvas');
+    canvas.width = realPadding * 2 + cols * cellWidth + realGap * (cols - 1);
+    canvas.height = realPadding * 2 + rows * cellHeight + realGap * (rows - 1);
+
+    const ctx = canvas.getContext('2d');
+    ctx.fillStyle = backgroundInput.value;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = 'high';
+
+    entries.forEach((entry, index) => {
+      const col = index % cols;
+      const row = Math.floor(index / cols);
+      const x = realPadding + col * (cellWidth + realGap);
+      const y = realPadding + row * (cellHeight + realGap);
+      drawImageInCell(ctx, entry.img, x, y, cellWidth, cellHeight);
+      manager.setProgress(entry.item.id, 100);
+      manager.setStatus(entry.item.id, 'Готово', 'status-done');
+      manager.setMeta(entry.item.id, `${entry.img.naturalWidth} × ${entry.img.naturalHeight}`);
+    });
+
+    const outputCanvas = FileUtils.canvasForMime(canvas, formatSelect.value);
+    const blob = await FileUtils.canvasToBlob(outputCanvas, formatSelect.value, Number(qualityInput.value) / 100);
+    return { blob, width: outputCanvas.width, height: outputCanvas.height, cols, rows };
+  }
+
+  function filename() {
+    const ext = formatSelect.value === 'image/png' ? 'png' : formatSelect.value === 'image/webp' ? 'webp' : 'jpg';
+    return `akd-collage.${ext}`;
+  }
+
+  createBtn.addEventListener('click', async () => {
+    if (!files.length) return;
+
+    createBtn.disabled = true;
+    UIUtils.setBatchLocked(manager, [clearBtn], true);
+    createBtn.innerHTML = '<span class="spinner"></span> Создаю коллаж...';
+    resetResult();
+
+    try {
+      const result = await createCollage();
+      resultBlob = result.blob;
+      previewUrl = URL.createObjectURL(resultBlob);
+      previewEl.src = previewUrl;
+      previewEl.style.display = 'block';
+      resultStats.innerHTML = `
+        <div class="stat-card"><div class="stat-card__label">Размер</div><div class="stat-card__value">${result.width} × ${result.height}</div></div>
+        <div class="stat-card"><div class="stat-card__label">Сетка</div><div class="stat-card__value">${result.cols} × ${result.rows}</div></div>
+        <div class="stat-card stat-green"><div class="stat-card__label">Файл</div><div class="stat-card__value">${FileUtils.formatSize(resultBlob.size)}</div></div>
+      `;
+      resultArea.classList.add('visible');
+      Toast.success('Коллаж создан.');
+    } catch (err) {
+      console.error(err);
+      Toast.error('Не удалось создать коллаж.');
+    }
+
+    createBtn.disabled = false;
+    UIUtils.setBatchLocked(manager, [clearBtn], false);
+    createBtn.textContent = 'Создать коллаж';
+  });
+
+  downloadBtn.addEventListener('click', () => {
+    if (resultBlob) FileUtils.downloadBlob(resultBlob, filename());
+  });
+})();
+</script>
+</body>
+</html>

@@ -52,6 +52,12 @@
     <loc>https://akdimage.vercel.app/palette</loc>
   </url>
   <url>
+    <loc>https://akdimage.vercel.app/pdf</loc>
+  </url>
+  <url>
+    <loc>https://akdimage.vercel.app/collage</loc>
+  </url>
+  <url>
     <loc>https://akdimage.vercel.app/privacy</loc>
   </url>
 </urlset>

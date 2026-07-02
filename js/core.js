@@ -267,6 +267,24 @@ const FileUtils = {
     return window.__akdJSZipPromise;
   },
 
+  loadJSPDF() {
+    if (window.jspdf?.jsPDF) return Promise.resolve(window.jspdf.jsPDF);
+    if (window.__akdJSPDFPromise) return window.__akdJSPDFPromise;
+
+    window.__akdJSPDFPromise = new Promise((resolve, reject) => {
+      const script = document.createElement('script');
+      script.src = '/js/vendor/jspdf.umd.min.js';
+      script.onload = () => resolve(window.jspdf.jsPDF);
+      script.onerror = () => {
+        window.__akdJSPDFPromise = null;
+        reject(new Error('Не удалось загрузить jsPDF'));
+      };
+      document.head.appendChild(script);
+    });
+
+    return window.__akdJSPDFPromise;
+  },
+
   async downloadZip(entries, filename, successMessage = 'ZIP скачан.') {
     try {
       const totalSize = entries.reduce((sum, entry) => sum + entry.blob.size, 0);

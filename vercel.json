@@ -86,6 +86,16 @@
       "permanent": true
     },
     {
+      "source": "/pages/pdf.html",
+      "destination": "/pdf",
+      "permanent": true
+    },
+    {
+      "source": "/pages/collage.html",
+      "destination": "/collage",
+      "permanent": true
+    },
+    {
       "source": "/pages/privacy.html",
       "destination": "/privacy",
       "permanent": true
@@ -155,6 +165,14 @@
     {
       "source": "/palette",
       "destination": "/pages/palette.html"
+    },
+    {
+      "source": "/pdf",
+      "destination": "/pages/pdf.html"
+    },
+    {
+      "source": "/collage",
+      "destination": "/pages/collage.html"
     },
     {
       "source": "/privacy",
