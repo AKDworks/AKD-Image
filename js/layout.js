@@ -22,6 +22,8 @@
     '/base64': '/pages/base64.html',
     '/favicon': '/pages/favicon.html',
     '/palette': '/pages/palette.html',
+    '/pdf': '/pages/pdf.html',
+    '/collage': '/pages/collage.html',
     '/privacy': '/pages/privacy.html'
   };
 

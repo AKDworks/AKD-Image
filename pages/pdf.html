@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Изображения в PDF – AKD Image</title>
+  <meta name="description" content="Соберите JPG, PNG и WebP в один PDF прямо в браузере. Файлы обрабатываются локально и не загружаются на сервер.">
+  <link rel="canonical" href="https://akdimage.vercel.app/pdf">
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/css/main.css?v=5">
+</head>
+<body>
+
+<script src="/js/layout.js?v=7"></script>
+
+<main>
+  <div class="container container--narrow tool-page">
+    <div class="tool-page__header">
+      <h1 class="tool-page__title">Изображения в PDF</h1>
+      <p class="tool-page__subtitle">Объедините одно или несколько изображений в PDF с выбранным форматом страниц, отступами и режимом размещения.</p>
+    </div>
+
+    <div class="dropzone" id="dropzone">
+      <input type="file" accept="image/jpeg,image/png,image/webp" multiple>
+      <p class="dropzone__title">Перетащите изображения сюда</p>
+      <p class="dropzone__hint">или нажмите для выбора файлов</p>
+      <div class="dropzone__formats">
+        <span class="fmt-badge">JPG</span>
+        <span class="fmt-badge">PNG</span>
+        <span class="fmt-badge">WEBP</span>
+      </div>
+    </div>
+
+    <div class="tool-panel hidden" id="settings-panel">
+      <div class="tool-panel__head">
+        <h3>Настройки PDF</h3>
+        <button class="btn btn-sm btn-secondary" id="clear-btn" type="button">Выбрать другие файлы</button>
+      </div>
+      <div class="tool-panel__body">
+        <div class="form-row">
+          <div class="form-group">
+            <label for="page-size">Формат страницы</label>
+            <select id="page-size">
+              <option value="a4">A4</option>
+              <option value="a5">A5</option>
+              <option value="letter">Letter</option>
+              <option value="image">По размеру изображения</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="orientation">Ориентация</label>
+            <select id="orientation">
+              <option value="auto">Авто</option>
+              <option value="portrait">Портрет</option>
+              <option value="landscape">Альбом</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-row mt-16">
+          <div class="form-group">
+            <label for="fit-mode">Размещение</label>
+            <select id="fit-mode">
+              <option value="contain">Вписать целиком</option>
+              <option value="cover">Заполнить страницу</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="margin">Отступы</label>
+            <div class="range-row">
+              <input type="range" id="margin" min="0" max="80" value="24">
+              <span id="margin-val">24 pt</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-group mt-16">
+          <label for="quality">Качество изображений</label>
+          <div class="range-row">
+            <input type="range" id="quality" min="50" max="100" value="88">
+            <span id="quality-val">88%</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="file-list hidden" id="file-list"></div>
+
+    <div class="hidden mt-16 flex gap-8 items-center" id="action-bar">
+      <button class="btn btn-primary btn-lg" id="create-btn" type="button">Создать PDF</button>
+      <span class="text-muted text-sm" id="file-count"></span>
+    </div>
+
+    <div class="result-area" id="result-area">
+      <hr class="divider">
+      <div class="result-stats" id="result-stats"></div>
+      <button class="btn btn-success" id="download-btn" type="button">Скачать PDF</button>
+    </div>
+  </div>
+</main>
+
+<script src="/js/core.js?v=5"></script>
+<script>
+(function () {
+  const pageSizes = {
+    a4: [595.28, 841.89],
+    a5: [419.53, 595.28],
+    letter: [612, 792]
+  };
+
+  const dropzoneEl = document.getElementById('dropzone');
+  const settingsEl = document.getElementById('settings-panel');
+  const fileListEl = document.getElementById('file-list');
+  const actionBarEl = document.getElementById('action-bar');
+  const countEl = document.getElementById('file-count');
+  const clearBtn = document.getElementById('clear-btn');
+  const createBtn = document.getElementById('create-btn');
+  const downloadBtn = document.getElementById('download-btn');
+  const resultArea = document.getElementById('result-area');
+  const resultStats = document.getElementById('result-stats');
+  const pageSizeSelect = document.getElementById('page-size');
+  const orientationSelect = document.getElementById('orientation');
+  const fitModeSelect = document.getElementById('fit-mode');
+  const marginInput = document.getElementById('margin');
+  const marginVal = document.getElementById('margin-val');
+  const qualityInput = document.getElementById('quality');
+  const qualityVal = document.getElementById('quality-val');
+
+  const manager = new FileListManager(fileListEl);
+  let files = [];
+  let pdfBlob = null;
+
+  marginInput.addEventListener('input', () => {
+    marginVal.textContent = `${marginInput.value} pt`;
+  });
+  qualityInput.addEventListener('input', () => {
+    qualityVal.textContent = `${qualityInput.value}%`;
+  });
+
+  new Dropzone(dropzoneEl, {
+    accept: ['image/jpeg', 'image/png', 'image/webp'],
+    multiple: true,
+    onFiles(newFiles) {
+      newFiles.forEach(file => {
+        files.push({ file, item: manager.add(file) });
+      });
+      updateUI();
+    }
+  });
+
+  fileListEl.addEventListener('file-removed', event => {
+    files = files.filter(entry => entry.item.id !== event.detail.id);
+    updateUI();
+  });
+
+  clearBtn.addEventListener('click', () => {
+    files = [];
+    pdfBlob = null;
+    manager.clear();
+    updateUI();
+  });
+
+  function updateUI() {
+    UIUtils.updateBatchLayout({ dropzoneEl, fileListEl, settingsEl, actionBarEl, countEl }, files.length);
+    resultArea.classList.remove('visible');
+    resultStats.innerHTML = '';
+    pdfBlob = null;
+  }
+
+  function pageSizeForImage(img) {
+    const width = Math.max(72, img.naturalWidth * 0.75);
+    const height = Math.max(72, img.naturalHeight * 0.75);
+    return [width, height];
+  }
+
+  function resolvePageSize(img) {
+    const base = pageSizeSelect.value === 'image'
+      ? pageSizeForImage(img)
+      : pageSizes[pageSizeSelect.value].slice();
+    const orientation = orientationSelect.value;
+
+    if (orientation === 'portrait') return base[0] <= base[1] ? base : [base[1], base[0]];
+    if (orientation === 'landscape') return base[0] >= base[1] ? base : [base[1], base[0]];
+    return img.naturalWidth >= img.naturalHeight
+      ? [Math.max(base[0], base[1]), Math.min(base[0], base[1])]
+      : [Math.min(base[0], base[1]), Math.max(base[0], base[1])];
+  }
+
+  function placement(img, pageWidth, pageHeight) {
+    const margin = pageSizeSelect.value === 'image' ? 0 : Number(marginInput.value);
+    const boxWidth = Math.max(1, pageWidth - margin * 2);
+    const boxHeight = Math.max(1, pageHeight - margin * 2);
+    const scale = fitModeSelect.value === 'cover'
+      ? Math.max(boxWidth / img.naturalWidth, boxHeight / img.naturalHeight)
+      : Math.min(boxWidth / img.naturalWidth, boxHeight / img.naturalHeight);
+    const width = img.naturalWidth * scale;
+    const height = img.naturalHeight * scale;
+
+    return {
+      x: margin + (boxWidth - width) / 2,
+      y: margin + (boxHeight - height) / 2,
+      width,
+      height
+    };
+  }
+
+  function imageDataUrl(img) {
+    const canvas = document.createElement('canvas');
+    canvas.width = img.naturalWidth;
+    canvas.height = img.naturalHeight;
+    const ctx = canvas.getContext('2d');
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = 'high';
+    ctx.drawImage(img, 0, 0);
+    return canvas.toDataURL('image/jpeg', Number(qualityInput.value) / 100);
+  }
+
+  function pdfFilename() {
+    if (files.length === 1) {
+      return FileUtils.safeFilename(files[0].file.name.replace(/\.[^.]+$/, '') + '.pdf', 'akd-image.pdf');
+    }
+    return 'akd-images.pdf';
+  }
+
+  createBtn.addEventListener('click', async () => {
+    if (!files.length) return;
+
+    createBtn.disabled = true;
+    UIUtils.setBatchLocked(manager, [clearBtn], true);
+    createBtn.innerHTML = '<span class="spinner"></span> Создаю PDF...';
+    resultArea.classList.remove('visible');
+    resultStats.innerHTML = '';
+    pdfBlob = null;
+
+    try {
+      const jsPDF = await FileUtils.loadJSPDF();
+      let pdf = null;
+      let errors = 0;
+
+      for (let index = 0; index < files.length; index++) {
+        const { file, item } = files[index];
+        manager.setStatus(item.id, 'Обработка...', 'status-processing');
+        manager.setProgress(item.id, 20);
+
+        try {
+          const src = await FileUtils.readAsDataURL(file);
+          const img = await FileUtils.loadImage(src);
+          const [pageWidth, pageHeight] = resolvePageSize(img);
+
+          if (!pdf) {
+            pdf = new jsPDF({
+              unit: 'pt',
+              format: [pageWidth, pageHeight],
+              orientation: pageWidth >= pageHeight ? 'landscape' : 'portrait',
+              compress: true
+            });
+          } else {
+            pdf.addPage([pageWidth, pageHeight], pageWidth >= pageHeight ? 'landscape' : 'portrait');
+          }
+
+          manager.setProgress(item.id, 60);
+          const image = imageDataUrl(img);
+          const box = placement(img, pageWidth, pageHeight);
+          pdf.addImage(image, 'JPEG', box.x, box.y, box.width, box.height, undefined, 'FAST');
+          manager.setProgress(item.id, 100);
+          manager.setStatus(item.id, 'Готово', 'status-done');
+          manager.setMeta(item.id, `${img.naturalWidth} × ${img.naturalHeight} · страница ${index + 1}`);
+        } catch (err) {
+          errors++;
+          manager.setStatus(item.id, 'Ошибка', 'status-error');
+          console.error(err);
+        }
+      }
+
+      if (!pdf) throw new Error('PDF не создан');
+
+      pdfBlob = pdf.output('blob');
+      resultStats.innerHTML = `
+        <div class="stat-card"><div class="stat-card__label">Страниц</div><div class="stat-card__value">${files.length - errors}</div></div>
+        <div class="stat-card"><div class="stat-card__label">Файл</div><div class="stat-card__value">${FileUtils.formatSize(pdfBlob.size)}</div></div>
+        <div class="stat-card stat-green"><div class="stat-card__label">PDF</div><div class="stat-card__value">Готов</div></div>
+      `;
+      resultArea.classList.add('visible');
+      Toast.success('PDF создан.');
+
+      if (errors) {
+        Toast.error('Не удалось добавить ' + FileUtils.formatFilesCount(errors) + '.');
+      }
+    } catch (err) {
+      console.error(err);
+      Toast.error('Не удалось создать PDF.');
+    }
+
+    createBtn.disabled = false;
+    UIUtils.setBatchLocked(manager, [clearBtn], false);
+    createBtn.textContent = 'Создать PDF';
+  });
+
+  downloadBtn.addEventListener('click', () => {
+    if (pdfBlob) FileUtils.downloadBlob(pdfBlob, pdfFilename());
+  });
+})();
+</script>
+</body>
+</html>
