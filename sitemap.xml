@@ -58,6 +58,9 @@
     <loc>https://akdimage.vercel.app/collage</loc>
   </url>
   <url>
+    <loc>https://akdimage.vercel.app/annotate</loc>
+  </url>
+  <url>
     <loc>https://akdimage.vercel.app/privacy</loc>
   </url>
 </urlset>

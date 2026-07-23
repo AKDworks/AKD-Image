@@ -24,6 +24,7 @@
     '/palette': '/pages/palette.html',
     '/pdf': '/pages/pdf.html',
     '/collage': '/pages/collage.html',
+    '/annotate': '/pages/annotate.html',
     '/privacy': '/pages/privacy.html'
   };
 

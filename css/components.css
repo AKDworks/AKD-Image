@@ -137,12 +137,17 @@
   align-items: center;
   gap: 12px;
 }
+.range-row input[type="range"] {
+  min-width: 0;
+}
 .range-row span {
   font-size: .8rem;
   font-weight: 700;
   color: var(--accent);
-  min-width: 32px;
+  flex: 0 0 48px;
+  line-height: 1;
   text-align: right;
+  white-space: nowrap;
 }
 
 /* Radio group */
