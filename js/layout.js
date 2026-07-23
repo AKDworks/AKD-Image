@@ -33,7 +33,8 @@
 
   function storedTheme() {
     try {
-      return localStorage.getItem(themeStorageKey);
+      const theme = localStorage.getItem(themeStorageKey);
+      return ['system', 'light', 'dark'].includes(theme) ? theme : null;
     } catch {
       return null;
     }
@@ -43,23 +44,37 @@
     return window.matchMedia?.(systemDarkQuery).matches ? 'dark' : 'light';
   }
 
-  function currentTheme() {
-    return storedTheme() || systemTheme();
+  function currentThemeMode() {
+    return storedTheme() || 'system';
+  }
+
+  function activeThemeMode() {
+    return document.documentElement.dataset.themeMode || currentThemeMode();
+  }
+
+  function resolvedTheme(mode) {
+    return mode === 'system' ? systemTheme() : mode;
   }
 
   function applyTheme(theme) {
     document.documentElement.dataset.theme = theme === 'dark' ? 'dark' : 'light';
   }
 
-  function saveTheme(theme) {
+  function applyThemeMode(mode) {
+    const themeMode = ['system', 'light', 'dark'].includes(mode) ? mode : 'system';
+    document.documentElement.dataset.themeMode = themeMode;
+    applyTheme(resolvedTheme(themeMode));
+  }
+
+  function saveThemeMode(mode) {
     try {
-      localStorage.setItem(themeStorageKey, theme);
+      localStorage.setItem(themeStorageKey, mode);
     } catch {
       /* Theme still works for the current page even if storage is unavailable. */
     }
   }
 
-  applyTheme(currentTheme());
+  applyThemeMode(currentThemeMode());
 
   const headerHTML = `
     <header class="site-header">
@@ -76,16 +91,22 @@
           </a>
         </div>
         <div class="header-side header-side--end">
-          <div class="theme-control" aria-label="Темная тема в бете">
-            <button class="theme-toggle" id="theme-toggle" type="button" aria-label="Переключить тему" aria-pressed="false" title="Переключить тему">
-              <svg class="theme-icon theme-icon--moon" viewBox="0 -960 960 960" aria-hidden="true" focusable="false">
-                <path fill="currentColor" d="M484-80q-84 0-157.5-32t-128-86.5Q144-253 112-326.5T80-484q0-146 93-257.5T410-880q-18 99 11 193.5T521-521q71 71 165.5 100T880-410q-26 144-138 237T484-80Zm0-80q88 0 163-44t118-121q-86-8-163-43.5T464-465q-61-61-97-138t-43-163q-77 43-120.5 118.5T160-484q0 135 94.5 229.5T484-160Zm-20-305Z"/>
+          <div class="theme-control" id="theme-control" role="group" aria-label="Выбор темы">
+            <button class="theme-option" type="button" data-theme-mode="system" aria-label="Системная тема" title="Системная тема">
+              <svg viewBox="0 -960 960 960" aria-hidden="true" focusable="false">
+                <path fill="currentColor" d="M320-120v-80h120v-80H200q-33 0-56.5-23.5T120-360v-400q0-33 23.5-56.5T200-840h560q33 0 56.5 23.5T840-760v400q0 33-23.5 56.5T760-280H520v80h120v80H320ZM200-360h560v-400H200v400Zm0 0v-400 400Z"/>
               </svg>
-              <svg class="theme-icon theme-icon--sun" viewBox="0 -960 960 960" aria-hidden="true" focusable="false">
+            </button>
+            <button class="theme-option" type="button" data-theme-mode="light" aria-label="Светлая тема" title="Светлая тема">
+              <svg viewBox="0 -960 960 960" aria-hidden="true" focusable="false">
                 <path fill="currentColor" d="M440-800v-120h80v120h-80Zm0 760v-120h80v120h-80Zm360-400v-80h120v80H800Zm-760 0v-80h120v80H40Zm708-252-56-56 70-72 58 58-72 70ZM198-140l-58-58 72-70 56 56-70 72Zm564 0-70-72 56-56 72 70-58 58ZM212-692l-72-70 58-58 70 72-56 56Zm98 382q-70-70-70-170t70-170q70-70 170-70t170 70q70 70 70 170t-70 170q-70 70-170 70t-170-70Zm283.5-56.5Q640-413 640-480t-46.5-113.5Q547-640 480-640t-113.5 46.5Q320-547 320-480t46.5 113.5Q413-320 480-320t113.5-46.5ZM480-480Z"/>
               </svg>
             </button>
-            <span class="theme-beta">Бета</span>
+            <button class="theme-option" type="button" data-theme-mode="dark" aria-label="Темная тема" title="Темная тема">
+              <svg viewBox="0 -960 960 960" aria-hidden="true" focusable="false">
+                <path fill="currentColor" d="M484-80q-84 0-157.5-32t-128-86.5Q144-253 112-326.5T80-484q0-146 93-257.5T410-880q-18 99 11 193.5T521-521q71 71 165.5 100T880-410q-26 144-138 237T484-80Zm0-80q88 0 163-44t118-121q-86-8-163-43.5T464-465q-61-61-97-138t-43-163q-77 43-120.5 118.5T160-484q0 135 94.5 229.5T484-160Zm-20-305Z"/>
+              </svg>
+            </button>
           </div>
           <a href="${homeHref}" class="header-btn">Все инструменты</a>
         </div>
@@ -114,33 +135,37 @@
 
   const toastContainer = `<div class="toast-container" id="toast-container"></div>`;
 
-  function initThemeToggle() {
-    const button = document.getElementById('theme-toggle');
-    if (!button) return;
+  function initThemeControl() {
+    const control = document.getElementById('theme-control');
+    if (!control) return;
 
-    function syncButton() {
-      const isDark = document.documentElement.dataset.theme === 'dark';
-      const label = isDark ? 'Включить светлую тему' : 'Включить темную тему';
+    const buttons = Array.from(control.querySelectorAll('[data-theme-mode]'));
 
-      button.setAttribute('aria-pressed', String(isDark));
-      button.setAttribute('aria-label', label);
-      button.setAttribute('title', label);
+    function syncButtons() {
+      const activeMode = activeThemeMode();
+
+      buttons.forEach(button => {
+        const isActive = button.dataset.themeMode === activeMode;
+        button.classList.toggle('is-active', isActive);
+        button.setAttribute('aria-pressed', String(isActive));
+      });
     }
 
-    button.addEventListener('click', () => {
-      const nextTheme = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
-      applyTheme(nextTheme);
-      saveTheme(nextTheme);
-      syncButton();
+    buttons.forEach(button => {
+      button.addEventListener('click', () => {
+        const mode = button.dataset.themeMode;
+        applyThemeMode(mode);
+        saveThemeMode(mode);
+        syncButtons();
+      });
     });
 
     window.matchMedia?.(systemDarkQuery).addEventListener('change', () => {
-      if (storedTheme()) return;
-      applyTheme(systemTheme());
-      syncButton();
+      if (activeThemeMode() !== 'system') return;
+      applyThemeMode('system');
     });
 
-    syncButton();
+    syncButtons();
   }
 
   document.addEventListener('DOMContentLoaded', () => {
@@ -148,7 +173,7 @@
     document.body.insertAdjacentHTML('beforeend', footerHTML);
     document.body.insertAdjacentHTML('beforeend', toastContainer);
 
-    initThemeToggle();
+    initThemeControl();
 
     if (isLocalStaticHost) {
       document.querySelectorAll('.tool-card[href^="/"]').forEach(link => {
