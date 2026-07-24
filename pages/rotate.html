@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Повернуть и отразить – AKD Image</title>
-  <meta name="description" content="Поворачивайте и отражайте JPG, PNG и WebP в браузере. Выберите угол, примените отражение и скачайте результат.">
+  <meta name="description" content="Поворачивайте и отражайте JPG, PNG, WebP и AVIF в браузере. Выберите угол, примените отражение и скачайте результат.">
   <link rel="canonical" href="https://akdimage.vercel.app/rotate">
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="/css/main.css?v=5">
@@ -23,13 +23,14 @@
       <p class="tool-page__subtitle">Исправляйте ориентацию и зеркально отражайте сразу несколько изображений.</p>
     </div>
     <div class="dropzone" id="dropzone">
-      <input type="file" accept="image/jpeg,image/png,image/webp" multiple>
+      <input type="file" accept="image/jpeg,image/png,image/webp,image/avif" multiple>
       <p class="dropzone__title">Перетащите изображения сюда</p>
       <p class="dropzone__hint">или нажмите для выбора файлов</p>
       <div class="dropzone__formats">
         <span class="fmt-badge">JPG</span>
         <span class="fmt-badge">PNG</span>
         <span class="fmt-badge">WEBP</span>
+        <span class="fmt-badge">AVIF</span>
       </div>
     </div>
     <div class="tool-panel hidden" id="settings-panel">
@@ -65,7 +66,7 @@
   </div>
 </main>
 
-<script src="/js/core.js?v=5"></script>
+<script src="/js/core.js?v=7"></script>
 <script>
 (function () {
   const dropzoneEl  = document.getElementById('dropzone');
@@ -127,7 +128,7 @@
   });
 
   new Dropzone(dropzoneEl, {
-    accept: ['image/jpeg','image/png','image/webp'],
+    accept: ['image/jpeg','image/png','image/webp','image/avif'],
     multiple: true,
     onFiles(newFiles) {
       newFiles.forEach(f => files.push({ file: f, item: manager.add(f) }));
@@ -189,32 +190,17 @@
       manager.setProgress(item.id, 20);
 
       try {
-        const dataURL = await FileUtils.readAsDataURL(file);
-        manager.setProgress(item.id, 50);
-        const img = await FileUtils.loadImage(dataURL);
-        
-        const canvas = document.createElement('canvas');
-        const ctx = canvas.getContext('2d');
-        
-        const isSwapped = rotation === 90 || rotation === 270;
-        const w = isSwapped ? img.naturalHeight : img.naturalWidth;
-        const h = isSwapped ? img.naturalWidth : img.naturalHeight;
-        
-        canvas.width = w;
-        canvas.height = h;
-        
-        ctx.translate(w / 2, h / 2);
-        ctx.rotate((rotation * Math.PI) / 180);
-        
-        const scaleX = flipH ? -1 : 1;
-        const scaleY = flipV ? -1 : 1;
-        ctx.scale(scaleX, scaleY);
-        
-        ctx.drawImage(img, -img.naturalWidth / 2, -img.naturalHeight / 2);
-        
-        manager.setProgress(item.id, 80);
-        
-        const blob = await FileUtils.canvasToBlob(canvas, file.type, 0.95);
+        const processed = await ImageProcessor.process(file, {
+          type: 'rotate',
+          rotation,
+          flipH,
+          flipV,
+          mimeType: file.type,
+          quality: 0.95,
+        }, {
+          onProgress: progress => manager.setProgress(item.id, progress),
+        });
+        const { blob, width: w, height: h } = processed;
         const newFilename = file.name.replace(/\.[^.]+$/, '') + '_rotated.' + FileUtils.getExt(file.name);
         
         manager.setProgress(item.id, 100);
