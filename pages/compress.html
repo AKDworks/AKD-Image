@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Сжать изображение – AKD Image</title>
-  <meta name="description" content="Сжимайте JPG, PNG и WebP прямо в браузере. Изображения обрабатываются локально и не загружаются на сервер.">
+  <meta name="description" content="Сжимайте JPG, PNG, WebP и AVIF прямо в браузере. Изображения обрабатываются локально и не загружаются на сервер.">
   <link rel="canonical" href="https://akdimage.vercel.app/compress">
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="/css/main.css?v=5">
@@ -23,13 +23,14 @@
       <p class="tool-page__subtitle">Уменьшайте вес одного или нескольких изображений, выбирая подходящее качество и формат результата.</p>
     </div>
     <div class="dropzone" id="dropzone">
-      <input type="file" accept="image/jpeg,image/png,image/webp" multiple>
+      <input type="file" accept="image/jpeg,image/png,image/webp,image/avif" multiple>
       <p class="dropzone__title">Перетащите изображения сюда</p>
       <p class="dropzone__hint">или нажмите для выбора файлов</p>
       <div class="dropzone__formats">
         <span class="fmt-badge">JPG</span>
         <span class="fmt-badge">PNG</span>
         <span class="fmt-badge">WEBP</span>
+        <span class="fmt-badge">AVIF</span>
       </div>
     </div>
     <div class="tool-panel hidden" id="settings-panel">
@@ -40,7 +41,7 @@
       <div class="tool-panel__body">
         <div class="form-row">
           <div class="form-group">
-            <label>Качество (JPG / WebP)</label>
+            <label>Качество (JPG / WebP / AVIF)</label>
             <div class="range-row">
               <input type="range" id="quality" min="10" max="100" value="82">
               <span id="quality-val">82%</span>
@@ -53,6 +54,7 @@
               <option value="image/jpeg">JPG</option>
               <option value="image/png">PNG</option>
               <option value="image/webp">WebP</option>
+              <option value="image/avif">AVIF</option>
             </select>
           </div>
         </div>
@@ -80,7 +82,7 @@
   </div>
 </main>
 
-<script src="/js/core.js?v=5"></script>
+<script src="/js/core.js?v=6"></script>
 <script>
 (function () {
   const dropzoneEl   = document.getElementById('dropzone');
@@ -116,7 +118,7 @@
   });
 
   new Dropzone(dropzoneEl, {
-    accept: ['image/jpeg','image/png','image/webp'],
+    accept: ['image/jpeg','image/png','image/webp','image/avif'],
     multiple: true,
     onFiles(newFiles) {
       newFiles.forEach(f => {

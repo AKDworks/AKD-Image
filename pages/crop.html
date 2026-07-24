@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Обрезать изображение – AKD Image</title>
-  <meta name="description" content="Обрезайте JPG, PNG и WebP по выбранной области или точным координатам. Файлы остаются на вашем устройстве.">
+  <meta name="description" content="Обрезайте JPG, PNG, WebP и AVIF по выбранной области или точным координатам. Файлы остаются на вашем устройстве.">
   <link rel="canonical" href="https://akdimage.vercel.app/crop">
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="/css/main.css?v=5">
@@ -23,13 +23,14 @@
       <p class="tool-page__subtitle">Оставьте нужную часть изображения с помощью рамки, готового соотношения сторон или точных координат.</p>
     </div>
     <div class="dropzone" id="dropzone">
-      <input type="file" accept="image/jpeg,image/png,image/webp">
+      <input type="file" accept="image/jpeg,image/png,image/webp,image/avif">
       <p class="dropzone__title">Перетащите изображение сюда</p>
       <p class="dropzone__hint">или нажмите для выбора файла</p>
       <div class="dropzone__formats">
         <span class="fmt-badge">JPG</span>
         <span class="fmt-badge">PNG</span>
         <span class="fmt-badge">WEBP</span>
+        <span class="fmt-badge">AVIF</span>
       </div>
     </div>
     <div class="tool-panel hidden" id="workspace-panel">
@@ -103,10 +104,11 @@
               <option value="image/jpeg">JPG</option>
               <option value="image/png">PNG</option>
               <option value="image/webp">WebP</option>
+              <option value="image/avif">AVIF</option>
             </select>
           </div>
           <div class="form-group">
-            <label>Качество (JPG / WebP)</label>
+            <label>Качество (JPG / WebP / AVIF)</label>
             <div class="range-row">
               <input type="range" id="quality" min="10" max="100" value="90">
               <span id="quality-val">90%</span>
@@ -133,7 +135,7 @@
   </div>
 </main>
 
-<script src="/js/core.js?v=5"></script>
+<script src="/js/core.js?v=6"></script>
 <script>
 (function () {
   const dropzoneEl      = document.getElementById('dropzone');
@@ -175,7 +177,7 @@
   let renderH = 0;
 
   new Dropzone(dropzoneEl, {
-    accept: ['image/jpeg','image/png','image/webp'],
+    accept: ['image/jpeg','image/png','image/webp','image/avif'],
     multiple: false,
     onFiles(newFiles) {
       if (newFiles[0]) loadImageFile(newFiles[0]);

@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Генератор палитры – AKD Image</title>
-  <meta name="description" content="Извлеките визуально отличающиеся цвета из JPG, PNG или WebP локально в браузере.">
+  <meta name="description" content="Извлеките визуально отличающиеся цвета из JPG, PNG, WebP или AVIF локально в браузере.">
   <link rel="canonical" href="https://akdimage.vercel.app/palette">
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="/css/main.css?v=5">
@@ -21,13 +21,14 @@
     </div>
 
     <div class="dropzone" id="dropzone">
-      <input type="file" accept="image/jpeg,image/png,image/webp">
+      <input type="file" accept="image/jpeg,image/png,image/webp,image/avif">
       <p class="dropzone__title">Перетащите изображение сюда</p>
       <p class="dropzone__hint">или нажмите для выбора файла</p>
       <div class="dropzone__formats">
         <span class="fmt-badge">JPG</span>
         <span class="fmt-badge">PNG</span>
         <span class="fmt-badge">WEBP</span>
+        <span class="fmt-badge">AVIF</span>
       </div>
     </div>
 
@@ -68,7 +69,7 @@
   </div>
 </main>
 
-<script src="/js/core.js?v=5"></script>
+<script src="/js/core.js?v=6"></script>
 <script>
 (function () {
   const ANALYSIS_SIZE = 180;
@@ -93,7 +94,7 @@
   let palette = [];
 
   new Dropzone(dropzoneEl, {
-    accept: ['image/jpeg', 'image/png', 'image/webp'],
+    accept: ['image/jpeg', 'image/png', 'image/webp', 'image/avif'],
     multiple: false,
     async onFiles(files) {
       const file = files[0];

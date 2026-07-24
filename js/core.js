@@ -99,7 +99,7 @@ const FileUtils = {
   MAX_ZIP_SIZE: 500 * 1024 * 1024,
   MAX_IMAGE_PIXELS: 40 * 1000 * 1000,
   MAX_IMAGE_SIDE: 16384,
-  SUPPORTED_IMAGE_TYPES: ['image/jpeg', 'image/png', 'image/webp'],
+  SUPPORTED_IMAGE_TYPES: ['image/jpeg', 'image/png', 'image/webp', 'image/avif'],
 
   formatSize(bytes) {
     if (bytes < 1024)       return bytes + ' B';
@@ -179,6 +179,17 @@ const FileUtils = {
         String.fromCharCode(...bytes.slice(8, 12)) === 'WEBP') {
       return 'image/webp';
     }
+    if (bytes.length >= 12 &&
+        String.fromCharCode(...bytes.slice(4, 8)) === 'ftyp') {
+      const boxSize = Math.min(
+        bytes.length,
+        (bytes[0] * 0x1000000) + (bytes[1] << 16) + (bytes[2] << 8) + bytes[3]
+      );
+      for (let offset = 8; offset + 4 <= boxSize; offset += 4) {
+        const brand = String.fromCharCode(...bytes.slice(offset, offset + 4));
+        if (brand === 'avif' || brand === 'avis') return 'image/avif';
+      }
+    }
     return '';
   },
 
@@ -230,9 +241,29 @@ const FileUtils = {
     });
   },
 
-  canvasToBlob(canvas, mimeType = 'image/jpeg', quality = 0.85) {
+  async canvasToBlob(canvas, mimeType = 'image/jpeg', quality = 0.85) {
+    if (mimeType === 'image/avif') {
+      try {
+        const { encodeCanvas } = await import('/js/vendor/avif/encode.js');
+        return await encodeCanvas(canvas, quality);
+      } catch (err) {
+        console.error(err);
+        throw new Error('Не удалось сохранить AVIF. Попробуйте уменьшить изображение или выбрать другой формат.');
+      }
+    }
+
     return new Promise((res, rej) => {
-      canvas.toBlob(b => b ? res(b) : rej(new Error('Ошибка canvas')), mimeType, quality);
+      canvas.toBlob(blob => {
+        if (!blob) {
+          rej(new Error('Не удалось сохранить изображение'));
+          return;
+        }
+        if (blob.type !== mimeType) {
+          rej(new Error('Браузер не поддерживает выбранный формат'));
+          return;
+        }
+        res(blob);
+      }, mimeType, quality);
     });
   },
 

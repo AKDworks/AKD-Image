@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Конвертировать изображение – AKD Image</title>
-  <meta name="description" content="Конвертируйте изображения между JPG, PNG и WebP локально в браузере без отправки файлов на сервер.">
+  <meta name="description" content="Конвертируйте изображения между JPG, PNG, WebP и AVIF локально в браузере без отправки файлов на сервер.">
   <link rel="canonical" href="https://akdimage.vercel.app/convert">
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="/css/main.css?v=5">
@@ -20,16 +20,17 @@
       <h1 class="tool-page__title">
         Конвертировать изображение
       </h1>
-      <p class="tool-page__subtitle">Преобразуйте изображения между JPG, PNG и WebP, сохраняя удобный баланс качества и размера.</p>
+      <p class="tool-page__subtitle">Преобразуйте изображения между JPG, PNG, WebP и AVIF, сохраняя удобный баланс качества и размера.</p>
     </div>
     <div class="dropzone" id="dropzone">
-      <input type="file" accept="image/jpeg,image/png,image/webp" multiple>
+      <input type="file" accept="image/jpeg,image/png,image/webp,image/avif" multiple>
       <p class="dropzone__title">Перетащите изображения сюда</p>
       <p class="dropzone__hint">или нажмите для выбора файлов</p>
       <div class="dropzone__formats">
         <span class="fmt-badge">JPG</span>
         <span class="fmt-badge">PNG</span>
         <span class="fmt-badge">WEBP</span>
+        <span class="fmt-badge">AVIF</span>
       </div>
     </div>
     <div class="tool-panel hidden" id="settings-panel">
@@ -45,10 +46,11 @@
               <option value="image/jpeg">JPG</option>
               <option value="image/png">PNG</option>
               <option value="image/webp">WebP</option>
+              <option value="image/avif">AVIF</option>
             </select>
           </div>
           <div class="form-group">
-            <label>Качество (JPG / WebP)</label>
+            <label>Качество (JPG / WebP / AVIF)</label>
             <div class="range-row">
               <input type="range" id="quality" min="10" max="100" value="90">
               <span id="quality-val">90%</span>
@@ -75,7 +77,7 @@
   </div>
 </main>
 
-<script src="/js/core.js?v=5"></script>
+<script src="/js/core.js?v=6"></script>
 <script>
 (function () {
   const dropzoneEl  = document.getElementById('dropzone');
@@ -108,7 +110,7 @@
   });
 
   new Dropzone(dropzoneEl, {
-    accept: ['image/jpeg','image/png','image/webp'],
+    accept: ['image/jpeg','image/png','image/webp','image/avif'],
     multiple: true,
     onFiles(newFiles) {
       newFiles.forEach(f => files.push({ file: f, item: manager.add(f) }));

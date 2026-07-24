@@ -31,13 +31,14 @@
 
     <section id="encode-panel">
       <div class="dropzone" id="dropzone">
-        <input type="file" accept="image/jpeg,image/png,image/webp">
+        <input type="file" accept="image/jpeg,image/png,image/webp,image/avif">
         <p class="dropzone__title">Перетащите изображение сюда</p>
         <p class="dropzone__hint">или нажмите для выбора файла</p>
         <div class="dropzone__formats">
           <span class="fmt-badge">JPG</span>
           <span class="fmt-badge">PNG</span>
           <span class="fmt-badge">WEBP</span>
+          <span class="fmt-badge">AVIF</span>
         </div>
       </div>
 
@@ -98,6 +99,7 @@
                 <option value="image/png">PNG</option>
                 <option value="image/jpeg">JPG</option>
                 <option value="image/webp">WebP</option>
+                <option value="image/avif">AVIF</option>
               </select>
             </div>
           </div>
@@ -122,7 +124,7 @@
   </div>
 </main>
 
-<script src="/js/core.js?v=5"></script>
+<script src="/js/core.js?v=6"></script>
 <script>
 (function () {
   const tabs = document.querySelectorAll('.base64-tab');
@@ -162,7 +164,7 @@
   });
 
   new Dropzone(dropzoneEl, {
-    accept: ['image/jpeg', 'image/png', 'image/webp'],
+    accept: ['image/jpeg', 'image/png', 'image/webp', 'image/avif'],
     multiple: false,
     async onFiles(files) {
       const file = files[0];
@@ -238,7 +240,7 @@
       .replace(/_/g, '/');
 
     if (!FileUtils.SUPPORTED_IMAGE_TYPES.includes(mime)) {
-      throw new Error('Поддерживаются только JPG, PNG и WebP');
+      throw new Error('Поддерживаются только JPG, PNG, WebP и AVIF');
     }
     if (!base64 || !/^[A-Za-z0-9+/]*={0,2}$/.test(base64) || base64.length % 4 === 1) {
       throw new Error('Некорректная строка Base64');
@@ -263,7 +265,8 @@
     const extensions = {
       'image/jpeg': 'jpg',
       'image/png': 'png',
-      'image/webp': 'webp'
+      'image/webp': 'webp',
+      'image/avif': 'avif'
     };
     return extensions[mime] || 'img';
   }
