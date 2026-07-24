@@ -7,7 +7,7 @@
   <meta name="description" content="Добавляйте и перемещайте текст, стрелки, круги, овалы, рамки и свободные пометки на JPG, PNG, WebP и AVIF прямо в браузере.">
   <link rel="canonical" href="https://akdimage.vercel.app/annotate">
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="/css/main.css?v=5">
+  <link rel="stylesheet" href="/css/main.css?v=6">
 </head>
 <body>
 
@@ -49,8 +49,16 @@
     </div>
 
     <div class="tool-panel hidden" id="settings-panel">
-      <div class="tool-panel__head">
+      <div class="tool-panel__head annotate-settings-head">
         <h3>Инструменты</h3>
+        <div class="annotate-panel-actions">
+          <button class="btn btn-sm btn-secondary annotate-panel-action" id="move-btn" type="button" data-tool="move" aria-pressed="false">
+            Переместить
+          </button>
+          <button class="btn btn-sm btn-primary annotate-panel-action" id="undo-btn" type="button" disabled>
+            Назад
+          </button>
+        </div>
       </div>
       <div class="tool-panel__body">
         <div class="annotate-tools" id="tool-buttons">
@@ -60,7 +68,6 @@
           <button class="btn btn-secondary" type="button" data-tool="oval">Овал</button>
           <button class="btn btn-secondary" type="button" data-tool="rect">Рамка</button>
           <button class="btn btn-secondary" type="button" data-tool="text">Текст</button>
-          <button class="btn btn-secondary" type="button" data-tool="move">Переместить</button>
         </div>
 
         <div class="form-row mt-16">
@@ -110,7 +117,6 @@
         </div>
 
         <div class="flex gap-8 mt-16 flex-wrap">
-          <button class="btn btn-secondary" id="undo-btn" type="button">Отменить</button>
           <button class="btn btn-secondary" id="clear-btn" type="button">Очистить разметку</button>
         </div>
       </div>
@@ -148,6 +154,7 @@
   const ctx = canvas.getContext('2d');
   const textEditor = document.getElementById('text-editor');
   const toolButtons = document.getElementById('tool-buttons');
+  const moveBtn = document.getElementById('move-btn');
   const strokeColor = document.getElementById('stroke-color');
   const strokeWidth = document.getElementById('stroke-width');
   const strokeWidthVal = document.getElementById('stroke-width-val');
@@ -175,6 +182,7 @@
   let movingActionIndex = -1;
   let selectedActionIndex = -1;
   let lastMovePoint = null;
+  let movingChanged = false;
   let activeTextPoint = null;
   let resultBlob = null;
   let resultUrl = null;
@@ -197,18 +205,24 @@
     }
   });
 
-  toolButtons.addEventListener('click', event => {
-    const button = event.target.closest('[data-tool]');
-    if (!button) return;
-
+  function selectTool(button) {
     activeTool = button.dataset.tool;
     closeTextEditor(true);
     selectedActionIndex = -1;
-    render();
-    toolButtons.querySelectorAll('[data-tool]').forEach(item => {
-      item.classList.toggle('is-active', item === button);
+    document.querySelectorAll('[data-tool]').forEach(item => {
+      const isActive = item === button;
+      item.classList.toggle('is-active', isActive);
+      item.setAttribute('aria-pressed', String(isActive));
     });
+    canvas.classList.toggle('is-move-mode', activeTool === 'move');
+    render();
+  }
+
+  toolButtons.addEventListener('click', event => {
+    const button = event.target.closest('[data-tool]');
+    if (button) selectTool(button);
   });
+  moveBtn.addEventListener('click', () => selectTool(moveBtn));
 
   changeImgBtn.addEventListener('click', () => {
     closeTextEditor(false);
@@ -220,6 +234,8 @@
     movingActionIndex = -1;
     selectedActionIndex = -1;
     lastMovePoint = null;
+    movingChanged = false;
+    updateUndoState();
     clearResult();
     UIUtils.setVisible(dropzoneEl, true);
     UIUtils.setVisible(workspaceEl, false);
@@ -271,7 +287,7 @@
         return;
       }
 
-      saveHistory();
+      movingChanged = false;
       lastMovePoint = point;
       canvas.setPointerCapture(event.pointerId);
       render();
@@ -298,6 +314,10 @@
   canvas.addEventListener('pointermove', event => {
     if (movingActionIndex !== -1 && lastMovePoint) {
       const point = canvasPoint(event);
+      if (!movingChanged) {
+        saveHistory();
+        movingChanged = true;
+      }
       moveAction(actions[movingActionIndex], point.x - lastMovePoint.x, point.y - lastMovePoint.y);
       lastMovePoint = point;
       clearResult();
@@ -355,6 +375,7 @@
       movingActionIndex = -1;
       selectedActionIndex = -1;
       lastMovePoint = null;
+      movingChanged = false;
       closeTextEditor(false);
       canvas.width = img.naturalWidth;
       canvas.height = img.naturalHeight;
@@ -391,6 +412,7 @@
 
     movingActionIndex = -1;
     lastMovePoint = null;
+    movingChanged = false;
     render();
   }
 
@@ -476,6 +498,11 @@
     if (showSelection && selectedActionIndex !== -1 && actions[selectedActionIndex]) {
       drawSelection(actions[selectedActionIndex]);
     }
+    updateUndoState();
+  }
+
+  function updateUndoState() {
+    undoBtn.disabled = actions.length === 0 && history.length === 0;
   }
 
   function drawAction(action) {
