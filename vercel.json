@@ -96,6 +96,11 @@
       "permanent": true
     },
     {
+      "source": "/pages/annotate.html",
+      "destination": "/annotate",
+      "permanent": true
+    },
+    {
       "source": "/pages/privacy.html",
       "destination": "/privacy",
       "permanent": true
@@ -173,6 +178,10 @@
     {
       "source": "/collage",
       "destination": "/pages/collage.html"
+    },
+    {
+      "source": "/annotate",
+      "destination": "/pages/annotate.html"
     },
     {
       "source": "/privacy",

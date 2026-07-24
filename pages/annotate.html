@@ -1,0 +1,779 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Пометки на изображении – AKD Image</title>
+  <meta name="description" content="Добавляйте и перемещайте текст, стрелки, круги, овалы, рамки и свободные пометки на JPG, PNG и WebP прямо в браузере.">
+  <link rel="canonical" href="https://akdimage.vercel.app/annotate">
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/css/main.css?v=5">
+</head>
+<body>
+
+<script src="/js/layout.js?v=7"></script>
+
+<main>
+  <div class="container container--narrow tool-page">
+
+    <div class="tool-page__header">
+      <h1 class="tool-page__title">Пометки на изображении</h1>
+      <p class="tool-page__subtitle">Добавьте текст, обводку, стрелку, круг, овал или свободную пометку на фото и скриншот. Готовые пометки можно перемещать.</p>
+    </div>
+
+    <div class="dropzone" id="dropzone">
+      <input type="file" accept="image/jpeg,image/png,image/webp">
+      <p class="dropzone__title">Перетащите изображение сюда</p>
+      <p class="dropzone__hint">или нажмите для выбора файла</p>
+      <div class="dropzone__formats">
+        <span class="fmt-badge">JPG</span>
+        <span class="fmt-badge">PNG</span>
+        <span class="fmt-badge">WEBP</span>
+      </div>
+    </div>
+
+    <div class="tool-panel hidden" id="workspace-panel">
+      <div class="tool-panel__head">
+        <h3>Разметка</h3>
+        <button class="btn btn-sm btn-secondary" id="change-img-btn" type="button">Выбрать другой файл</button>
+      </div>
+      <div class="tool-panel__body">
+        <div class="annotate-workspace">
+          <div class="annotate-stage" id="annotate-stage">
+            <canvas class="annotate-canvas" id="annotate-canvas"></canvas>
+            <textarea class="annotate-text-input hidden" id="text-editor" rows="1" maxlength="80" placeholder="Введите текст"></textarea>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="tool-panel hidden" id="settings-panel">
+      <div class="tool-panel__head">
+        <h3>Инструменты</h3>
+      </div>
+      <div class="tool-panel__body">
+        <div class="annotate-tools" id="tool-buttons">
+          <button class="btn btn-secondary is-active" type="button" data-tool="pen">Кисть</button>
+          <button class="btn btn-secondary" type="button" data-tool="arrow">Стрелка</button>
+          <button class="btn btn-secondary" type="button" data-tool="circle">Круг</button>
+          <button class="btn btn-secondary" type="button" data-tool="oval">Овал</button>
+          <button class="btn btn-secondary" type="button" data-tool="rect">Рамка</button>
+          <button class="btn btn-secondary" type="button" data-tool="text">Текст</button>
+          <button class="btn btn-secondary" type="button" data-tool="move">Переместить</button>
+        </div>
+
+        <div class="form-row mt-16">
+          <div class="form-group">
+            <label for="stroke-color">Цвет</label>
+            <input class="color-input" type="color" id="stroke-color" value="#2563EB">
+          </div>
+          <div class="form-group">
+            <label for="stroke-width">Толщина</label>
+            <div class="range-row">
+              <input type="range" id="stroke-width" min="2" max="48" value="8">
+              <span id="stroke-width-val">8 px</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-row mt-16">
+          <div class="form-group">
+            <label for="font-size">Размер текста</label>
+            <div class="range-row">
+              <input type="range" id="font-size" min="14" max="160" value="48">
+              <span id="font-size-val">48 px</span>
+            </div>
+          </div>
+        </div>
+
+        <hr class="divider">
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="output-format">Формат вывода</label>
+            <select id="output-format">
+              <option value="same">Оставить оригинал</option>
+              <option value="image/jpeg">JPG</option>
+              <option value="image/png">PNG</option>
+              <option value="image/webp">WebP</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="quality">Качество (JPG / WebP)</label>
+            <div class="range-row">
+              <input type="range" id="quality" min="10" max="100" value="92">
+              <span id="quality-val">92%</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="flex gap-8 mt-16 flex-wrap">
+          <button class="btn btn-secondary" id="undo-btn" type="button">Отменить</button>
+          <button class="btn btn-secondary" id="clear-btn" type="button">Очистить разметку</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="hidden mt-16 flex gap-8 items-center" id="action-bar">
+      <button class="btn btn-primary btn-lg" id="save-btn" type="button">Подготовить результат</button>
+    </div>
+
+    <div class="result-area" id="result-area">
+      <hr class="divider">
+      <div class="result-stats" id="result-stats"></div>
+      <div class="crop-result-preview">
+        <img class="crop-result-preview__img" id="result-img" alt="Размеченное изображение">
+      </div>
+      <div class="flex gap-8 mt-16 flex-wrap">
+        <button class="btn btn-success" id="download-btn" type="button">Скачать результат</button>
+        <button class="btn btn-secondary" id="copy-btn" type="button">Копировать в буфер</button>
+      </div>
+    </div>
+
+  </div>
+</main>
+
+<script src="/js/core.js?v=5"></script>
+<script>
+(function () {
+  const dropzoneEl = document.getElementById('dropzone');
+  const workspaceEl = document.getElementById('workspace-panel');
+  const settingsEl = document.getElementById('settings-panel');
+  const actionBarEl = document.getElementById('action-bar');
+  const changeImgBtn = document.getElementById('change-img-btn');
+  const stage = document.getElementById('annotate-stage');
+  const canvas = document.getElementById('annotate-canvas');
+  const ctx = canvas.getContext('2d');
+  const textEditor = document.getElementById('text-editor');
+  const toolButtons = document.getElementById('tool-buttons');
+  const strokeColor = document.getElementById('stroke-color');
+  const strokeWidth = document.getElementById('stroke-width');
+  const strokeWidthVal = document.getElementById('stroke-width-val');
+  const fontSize = document.getElementById('font-size');
+  const fontSizeVal = document.getElementById('font-size-val');
+  const outputFmt = document.getElementById('output-format');
+  const qualityInput = document.getElementById('quality');
+  const qualityVal = document.getElementById('quality-val');
+  const undoBtn = document.getElementById('undo-btn');
+  const clearBtn = document.getElementById('clear-btn');
+  const saveBtn = document.getElementById('save-btn');
+  const resultArea = document.getElementById('result-area');
+  const resultStats = document.getElementById('result-stats');
+  const resultImg = document.getElementById('result-img');
+  const downloadBtn = document.getElementById('download-btn');
+  const copyBtn = document.getElementById('copy-btn');
+
+  let activeFile = null;
+  let sourceImg = null;
+  let activeTool = 'pen';
+  let actions = [];
+  let history = [];
+  let draftAction = null;
+  let drawing = false;
+  let movingActionIndex = -1;
+  let selectedActionIndex = -1;
+  let lastMovePoint = null;
+  let activeTextPoint = null;
+  let resultBlob = null;
+  let resultUrl = null;
+
+  strokeWidth.addEventListener('input', () => {
+    strokeWidthVal.textContent = `${strokeWidth.value} px`;
+  });
+  fontSize.addEventListener('input', () => {
+    fontSizeVal.textContent = `${fontSize.value} px`;
+  });
+  qualityInput.addEventListener('input', () => {
+    qualityVal.textContent = `${qualityInput.value}%`;
+  });
+
+  new Dropzone(dropzoneEl, {
+    accept: ['image/jpeg', 'image/png', 'image/webp'],
+    multiple: false,
+    onFiles(files) {
+      if (files[0]) loadImageFile(files[0]);
+    }
+  });
+
+  toolButtons.addEventListener('click', event => {
+    const button = event.target.closest('[data-tool]');
+    if (!button) return;
+
+    activeTool = button.dataset.tool;
+    closeTextEditor(true);
+    selectedActionIndex = -1;
+    render();
+    toolButtons.querySelectorAll('[data-tool]').forEach(item => {
+      item.classList.toggle('is-active', item === button);
+    });
+  });
+
+  changeImgBtn.addEventListener('click', () => {
+    closeTextEditor(false);
+    activeFile = null;
+    sourceImg = null;
+    actions = [];
+    history = [];
+    draftAction = null;
+    movingActionIndex = -1;
+    selectedActionIndex = -1;
+    lastMovePoint = null;
+    clearResult();
+    UIUtils.setVisible(dropzoneEl, true);
+    UIUtils.setVisible(workspaceEl, false);
+    UIUtils.setVisible(settingsEl, false);
+    UIUtils.setVisible(actionBarEl, false);
+  });
+
+  undoBtn.addEventListener('click', () => {
+    closeTextEditor(false);
+    if (history.length) {
+      actions = history.pop();
+    } else {
+      actions.pop();
+    }
+    selectedActionIndex = -1;
+    clearResult();
+    render();
+  });
+
+  clearBtn.addEventListener('click', () => {
+    closeTextEditor(false);
+    if (actions.length) saveHistory();
+    actions = [];
+    selectedActionIndex = -1;
+    clearResult();
+    render();
+  });
+
+  canvas.addEventListener('pointerdown', event => {
+    if (!sourceImg) return;
+
+    const point = canvasPoint(event);
+
+    if (activeTool === 'text') {
+      event.preventDefault();
+      openTextEditor(point);
+      return;
+    }
+
+    closeTextEditor(true);
+
+    if (activeTool === 'move') {
+      event.preventDefault();
+      movingActionIndex = hitAction(point);
+      selectedActionIndex = movingActionIndex;
+
+      if (movingActionIndex === -1) {
+        render();
+        return;
+      }
+
+      saveHistory();
+      lastMovePoint = point;
+      canvas.setPointerCapture(event.pointerId);
+      render();
+      return;
+    }
+
+    drawing = true;
+    canvas.setPointerCapture(event.pointerId);
+
+    draftAction = {
+      type: activeTool,
+      color: strokeColor.value,
+      width: Number(strokeWidth.value)
+    };
+
+    if (activeTool === 'pen') {
+      draftAction.points = [point];
+    } else {
+      draftAction.start = { ...point };
+      draftAction.end = { ...point };
+    }
+  });
+
+  canvas.addEventListener('pointermove', event => {
+    if (movingActionIndex !== -1 && lastMovePoint) {
+      const point = canvasPoint(event);
+      moveAction(actions[movingActionIndex], point.x - lastMovePoint.x, point.y - lastMovePoint.y);
+      lastMovePoint = point;
+      clearResult();
+      render();
+      return;
+    }
+
+    if (!drawing || !draftAction) return;
+
+    const point = canvasPoint(event);
+    if (draftAction.type === 'pen') {
+      draftAction.points.push(point);
+    } else {
+      draftAction.end = point;
+    }
+    render(draftAction);
+  });
+
+  canvas.addEventListener('pointerup', event => {
+    if (movingActionIndex !== -1) finishMoving(event);
+    else finishDrawing(event);
+  });
+  canvas.addEventListener('pointercancel', event => {
+    if (movingActionIndex !== -1) finishMoving(event);
+    else finishDrawing(event);
+  });
+
+  textEditor.addEventListener('keydown', event => {
+    if (event.key === 'Enter' && !event.shiftKey) {
+      event.preventDefault();
+      closeTextEditor(true);
+    }
+    if (event.key === 'Escape') {
+      event.preventDefault();
+      closeTextEditor(false);
+    }
+  });
+
+  textEditor.addEventListener('blur', () => {
+    setTimeout(() => {
+      if (document.activeElement !== textEditor) closeTextEditor(true);
+    }, 80);
+  });
+
+  async function loadImageFile(file) {
+    try {
+      const dataUrl = await FileUtils.readAsDataURL(file);
+      const img = await FileUtils.loadImage(dataUrl);
+
+      activeFile = file;
+      sourceImg = img;
+      actions = [];
+      history = [];
+      draftAction = null;
+      movingActionIndex = -1;
+      selectedActionIndex = -1;
+      lastMovePoint = null;
+      closeTextEditor(false);
+      canvas.width = img.naturalWidth;
+      canvas.height = img.naturalHeight;
+
+      clearResult();
+      render();
+      UIUtils.setVisible(dropzoneEl, false);
+      UIUtils.setVisible(workspaceEl, true);
+      UIUtils.setVisible(settingsEl, true);
+      UIUtils.setVisible(actionBarEl, true);
+    } catch (err) {
+      console.error(err);
+      Toast.error('Не удалось загрузить изображение.');
+    }
+  }
+
+  function finishDrawing(event) {
+    if (!drawing || !draftAction) return;
+
+    drawing = false;
+    if (canvas.hasPointerCapture(event.pointerId)) canvas.releasePointerCapture(event.pointerId);
+
+    if (isMeaningfulAction(draftAction)) {
+      saveHistory();
+      actions.push(draftAction);
+      clearResult();
+    }
+    draftAction = null;
+    render();
+  }
+
+  function finishMoving(event) {
+    if (canvas.hasPointerCapture(event.pointerId)) canvas.releasePointerCapture(event.pointerId);
+
+    movingActionIndex = -1;
+    lastMovePoint = null;
+    render();
+  }
+
+  function canvasPoint(event) {
+    const rect = canvas.getBoundingClientRect();
+    const x = (event.clientX - rect.left) * (canvas.width / rect.width);
+    const y = (event.clientY - rect.top) * (canvas.height / rect.height);
+
+    return {
+      x: Math.max(0, Math.min(canvas.width, x)),
+      y: Math.max(0, Math.min(canvas.height, y))
+    };
+  }
+
+  function openTextEditor(point) {
+    closeTextEditor(true);
+
+    const rect = canvas.getBoundingClientRect();
+    const stageRect = stage.getBoundingClientRect();
+    const scaleX = rect.width / canvas.width;
+    const scaleY = rect.height / canvas.height;
+    const x = rect.left - stageRect.left + point.x * scaleX;
+    const y = rect.top - stageRect.top + point.y * scaleY;
+    const visualSize = Math.max(14, Number(fontSize.value) * scaleY);
+
+    activeTextPoint = point;
+    textEditor.value = '';
+    textEditor.style.left = `${x}px`;
+    textEditor.style.top = `${y}px`;
+    textEditor.style.minWidth = `${Math.max(120, visualSize * 4)}px`;
+    textEditor.style.fontSize = `${visualSize}px`;
+    textEditor.style.color = strokeColor.value;
+    textEditor.classList.remove('hidden');
+    requestAnimationFrame(() => {
+      textEditor.focus();
+    });
+  }
+
+  function closeTextEditor(commit) {
+    if (textEditor.classList.contains('hidden')) return;
+
+    const text = textEditor.value.trim();
+    if (commit && text && activeTextPoint) {
+      saveHistory();
+      actions.push({
+        type: 'text',
+        text,
+        color: strokeColor.value,
+        fontSize: Number(fontSize.value),
+        start: activeTextPoint
+      });
+      clearResult();
+      render();
+    }
+
+    activeTextPoint = null;
+    textEditor.value = '';
+    textEditor.classList.add('hidden');
+  }
+
+  function saveHistory() {
+    history.push(actions.map(action => JSON.parse(JSON.stringify(action))));
+    if (history.length > 50) history.shift();
+  }
+
+  function isMeaningfulAction(action) {
+    if (action.type === 'pen') return action.points.length > 1;
+    if (action.type === 'text') return Boolean(action.text?.trim());
+    return distance(action.start, action.end) > 4;
+  }
+
+  function distance(a, b) {
+    return Math.hypot(a.x - b.x, a.y - b.y);
+  }
+
+  function render(extraAction = null, showSelection = true) {
+    if (!sourceImg) return;
+
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.drawImage(sourceImg, 0, 0, canvas.width, canvas.height);
+    actions.forEach(drawAction);
+    if (extraAction) drawAction(extraAction);
+    if (showSelection && selectedActionIndex !== -1 && actions[selectedActionIndex]) {
+      drawSelection(actions[selectedActionIndex]);
+    }
+  }
+
+  function drawAction(action) {
+    ctx.save();
+    ctx.strokeStyle = action.color;
+    ctx.fillStyle = action.color;
+    ctx.lineWidth = action.width;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+
+    if (action.type === 'pen') drawPen(action);
+    if (action.type === 'arrow') drawArrow(action);
+    if (action.type === 'circle') drawCircle(action);
+    if (action.type === 'oval') drawOval(action);
+    if (action.type === 'rect') drawRect(action);
+    if (action.type === 'text') drawText(action);
+
+    ctx.restore();
+  }
+
+  function drawPen(action) {
+    const points = action.points;
+    if (points.length < 2) return;
+
+    ctx.beginPath();
+    ctx.moveTo(points[0].x, points[0].y);
+    for (let i = 1; i < points.length; i++) {
+      ctx.lineTo(points[i].x, points[i].y);
+    }
+    ctx.stroke();
+  }
+
+  function drawArrow(action) {
+    const { start, end, width } = action;
+    const angle = Math.atan2(end.y - start.y, end.x - start.x);
+    const headLength = Math.max(18, width * 4);
+    const headAngle = Math.PI / 7;
+
+    ctx.beginPath();
+    ctx.moveTo(start.x, start.y);
+    ctx.lineTo(end.x, end.y);
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.moveTo(end.x, end.y);
+    ctx.lineTo(end.x - headLength * Math.cos(angle - headAngle), end.y - headLength * Math.sin(angle - headAngle));
+    ctx.moveTo(end.x, end.y);
+    ctx.lineTo(end.x - headLength * Math.cos(angle + headAngle), end.y - headLength * Math.sin(angle + headAngle));
+    ctx.stroke();
+  }
+
+  function drawCircle(action) {
+    const { start, end } = action;
+    const size = Math.max(Math.abs(end.x - start.x), Math.abs(end.y - start.y));
+    const x = start.x + (end.x >= start.x ? size / 2 : -size / 2);
+    const y = start.y + (end.y >= start.y ? size / 2 : -size / 2);
+
+    ctx.beginPath();
+    ctx.arc(x, y, size / 2, 0, Math.PI * 2);
+    ctx.stroke();
+  }
+
+  function drawOval(action) {
+    const bounds = actionBounds(action);
+    const radiusX = bounds.w / 2;
+    const radiusY = bounds.h / 2;
+    if (radiusX <= 0 || radiusY <= 0) return;
+
+    ctx.beginPath();
+    ctx.ellipse(bounds.x + radiusX, bounds.y + radiusY, radiusX, radiusY, 0, 0, Math.PI * 2);
+    ctx.stroke();
+  }
+
+  function drawRect(action) {
+    const { start, end } = action;
+    const x = Math.min(start.x, end.x);
+    const y = Math.min(start.y, end.y);
+    const w = Math.abs(end.x - start.x);
+    const h = Math.abs(end.y - start.y);
+    ctx.strokeRect(x, y, w, h);
+  }
+
+  function drawText(action) {
+    const size = action.fontSize || 48;
+    ctx.font = `700 ${size}px Inter, system-ui, sans-serif`;
+    ctx.textBaseline = 'top';
+    ctx.lineWidth = Math.max(3, Math.round(size / 12));
+    ctx.strokeStyle = textOutline(action.color);
+    ctx.strokeText(action.text, action.start.x, action.start.y);
+    ctx.fillStyle = action.color;
+    ctx.fillText(action.text, action.start.x, action.start.y);
+  }
+
+  function hitAction(point) {
+    for (let i = actions.length - 1; i >= 0; i--) {
+      if (actionHit(actions[i], point)) return i;
+    }
+    return -1;
+  }
+
+  function actionHit(action, point) {
+    const pad = Math.max(10, (action.width || action.fontSize || 12) / 2 + 6);
+
+    if (action.type === 'pen') {
+      for (let i = 1; i < action.points.length; i++) {
+        if (distanceToSegment(point, action.points[i - 1], action.points[i]) <= pad) return true;
+      }
+      return false;
+    }
+
+    if (action.type === 'arrow') {
+      return distanceToSegment(point, action.start, action.end) <= pad || distance(point, action.end) <= pad * 1.6;
+    }
+
+    if (action.type === 'circle') {
+      const bounds = actionBounds(action);
+      const cx = bounds.x + bounds.w / 2;
+      const cy = bounds.y + bounds.h / 2;
+      const radius = bounds.w / 2;
+      return Math.abs(distance(point, { x: cx, y: cy }) - radius) <= pad;
+    }
+
+    if (action.type === 'oval') {
+      const bounds = actionBounds(action);
+      const rx = bounds.w / 2;
+      const ry = bounds.h / 2;
+      if (rx <= 0 || ry <= 0) return false;
+
+      const cx = bounds.x + rx;
+      const cy = bounds.y + ry;
+      const normalizedDistance = Math.sqrt(((point.x - cx) / rx) ** 2 + ((point.y - cy) / ry) ** 2);
+      const tolerance = pad / Math.max(8, Math.min(rx, ry));
+      return Math.abs(normalizedDistance - 1) <= tolerance;
+    }
+
+    if (action.type === 'rect' || action.type === 'text') {
+      const bounds = actionBounds(action);
+      return point.x >= bounds.x - pad &&
+        point.x <= bounds.x + bounds.w + pad &&
+        point.y >= bounds.y - pad &&
+        point.y <= bounds.y + bounds.h + pad;
+    }
+
+    return false;
+  }
+
+  function distanceToSegment(point, start, end) {
+    const dx = end.x - start.x;
+    const dy = end.y - start.y;
+    const lengthSq = dx * dx + dy * dy;
+    if (!lengthSq) return distance(point, start);
+
+    const t = Math.max(0, Math.min(1, ((point.x - start.x) * dx + (point.y - start.y) * dy) / lengthSq));
+    return distance(point, { x: start.x + t * dx, y: start.y + t * dy });
+  }
+
+  function actionBounds(action) {
+    if (action.type === 'pen') {
+      const xs = action.points.map(point => point.x);
+      const ys = action.points.map(point => point.y);
+      return normalizeBounds(Math.min(...xs), Math.min(...ys), Math.max(...xs), Math.max(...ys), action.width);
+    }
+
+    if (action.type === 'arrow' || action.type === 'oval' || action.type === 'rect') {
+      return normalizeBounds(action.start.x, action.start.y, action.end.x, action.end.y, action.width);
+    }
+
+    if (action.type === 'circle') {
+      const size = Math.max(Math.abs(action.end.x - action.start.x), Math.abs(action.end.y - action.start.y));
+      const endX = action.start.x + (action.end.x >= action.start.x ? size : -size);
+      const endY = action.start.y + (action.end.y >= action.start.y ? size : -size);
+      return normalizeBounds(action.start.x, action.start.y, endX, endY, action.width);
+    }
+
+    if (action.type === 'text') {
+      const size = action.fontSize || 48;
+      ctx.save();
+      ctx.font = `700 ${size}px Inter, system-ui, sans-serif`;
+      const width = ctx.measureText(action.text).width;
+      ctx.restore();
+      return normalizeBounds(action.start.x, action.start.y, action.start.x + width, action.start.y + size * 1.2, size / 12);
+    }
+
+    return { x: 0, y: 0, w: 0, h: 0 };
+  }
+
+  function normalizeBounds(x1, y1, x2, y2, padding = 0) {
+    const x = Math.min(x1, x2) - padding;
+    const y = Math.min(y1, y2) - padding;
+    const w = Math.abs(x2 - x1) + padding * 2;
+    const h = Math.abs(y2 - y1) + padding * 2;
+    return { x, y, w, h };
+  }
+
+  function drawSelection(action) {
+    const bounds = actionBounds(action);
+    ctx.save();
+    ctx.setLineDash([8, 6]);
+    ctx.lineWidth = Math.max(2, canvas.width / 700);
+    ctx.strokeStyle = '#2563EB';
+    ctx.strokeRect(bounds.x, bounds.y, bounds.w, bounds.h);
+    ctx.restore();
+  }
+
+  function moveAction(action, dx, dy) {
+    if (action.type === 'pen' && action.points) {
+      action.points.forEach(point => {
+        point.x += dx;
+        point.y += dy;
+      });
+      return;
+    }
+
+    if (action.start) {
+      action.start.x += dx;
+      action.start.y += dy;
+    }
+    if (action.end) {
+      action.end.x += dx;
+      action.end.y += dy;
+    }
+  }
+
+  function textOutline(color) {
+    const hex = color.replace('#', '');
+    const r = parseInt(hex.slice(0, 2), 16);
+    const g = parseInt(hex.slice(2, 4), 16);
+    const b = parseInt(hex.slice(4, 6), 16);
+    const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+    return luminance > 0.7 ? 'rgba(0,0,0,.72)' : 'rgba(255,255,255,.86)';
+  }
+
+  function outputMime() {
+    if (outputFmt.value !== 'same') return outputFmt.value;
+    return FileUtils.SUPPORTED_IMAGE_TYPES.includes(activeFile?.type) ? activeFile.type : 'image/png';
+  }
+
+  function outputName() {
+    const extByMime = {
+      'image/jpeg': 'jpg',
+      'image/png': 'png',
+      'image/webp': 'webp'
+    };
+    const base = activeFile ? activeFile.name.replace(/\.[^.]+$/, '') : 'image';
+    return FileUtils.safeFilename(`${base}_marked.${extByMime[outputMime()] || 'png'}`);
+  }
+
+  function clearResult() {
+    resultArea.classList.remove('visible');
+    resultStats.innerHTML = '';
+    resultImg.removeAttribute('src');
+    resultBlob = null;
+    if (resultUrl) URL.revokeObjectURL(resultUrl);
+    resultUrl = null;
+  }
+
+  saveBtn.addEventListener('click', async () => {
+    if (!sourceImg) return;
+
+    try {
+      render(null, false);
+      const mime = outputMime();
+      const outputCanvas = FileUtils.canvasForMime(canvas, mime);
+      resultBlob = await FileUtils.canvasToBlob(outputCanvas, mime, Number(qualityInput.value) / 100);
+      render();
+
+      if (resultUrl) URL.revokeObjectURL(resultUrl);
+      resultUrl = URL.createObjectURL(resultBlob);
+      resultImg.src = resultUrl;
+      resultStats.innerHTML = `
+        <div class="stat-card"><div class="stat-card__label">Размер</div><div class="stat-card__value">${canvas.width} × ${canvas.height}</div></div>
+        <div class="stat-card"><div class="stat-card__label">Пометок</div><div class="stat-card__value">${actions.length}</div></div>
+        <div class="stat-card stat-green"><div class="stat-card__label">Файл</div><div class="stat-card__value">${FileUtils.formatSize(resultBlob.size)}</div></div>
+      `;
+      resultArea.classList.add('visible');
+      Toast.success('Результат готов.');
+    } catch (err) {
+      console.error(err);
+      Toast.error('Не удалось подготовить результат.');
+    }
+  });
+
+  downloadBtn.addEventListener('click', () => {
+    if (resultBlob) FileUtils.downloadBlob(resultBlob, outputName());
+  });
+
+  copyBtn.addEventListener('click', async () => {
+    try {
+      if (!resultBlob) return;
+      const clipboardBlob = resultBlob.type === 'image/png'
+        ? resultBlob
+        : await FileUtils.canvasToBlob(canvas, 'image/png', 1);
+      await navigator.clipboard.write([new ClipboardItem({ 'image/png': clipboardBlob })]);
+      Toast.success('Изображение скопировано.');
+    } catch (err) {
+      console.error(err);
+      Toast.error('Не удалось скопировать изображение.');
+    }
+  });
+})();
+</script>
+</body>
+</html>

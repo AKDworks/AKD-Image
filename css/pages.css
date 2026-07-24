@@ -671,6 +671,56 @@
   transform: translateY(-50%);
 }
 
+/* Annotate tool */
+.annotate-workspace {
+  background: var(--workspace-bg);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  overflow: auto;
+  padding: 12px;
+  max-height: 72vh;
+  text-align: center;
+}
+.annotate-stage {
+  position: relative;
+  display: inline-block;
+  max-width: 100%;
+  vertical-align: top;
+}
+.annotate-canvas {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  border-radius: var(--r-sm);
+  background: var(--surface);
+  box-shadow: var(--preview-image-shadow);
+  touch-action: none;
+  cursor: crosshair;
+}
+.annotate-text-input {
+  position: absolute;
+  z-index: 2;
+  min-height: 1.35em;
+  max-width: min(420px, calc(100% - 12px));
+  padding: 2px 6px;
+  border: 1px solid var(--accent);
+  border-radius: var(--r-sm);
+  background: var(--surface);
+  color: var(--text);
+  font-family: var(--font-ui);
+  font-weight: 700;
+  line-height: 1.2;
+  resize: none;
+  outline: none;
+  box-shadow: 0 0 0 3px var(--focus-ring-strong);
+  transform: translateY(-2px);
+}
+.annotate-tools {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
 /* Crop tool */
 .crop-workspace {
   position: relative;
