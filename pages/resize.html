@@ -141,7 +141,7 @@
   </div>
 </main>
 
-<script src="/js/core.js?v=6"></script>
+<script src="/js/core.js?v=7"></script>
 <script>
 (function () {
   const dropzoneEl  = document.getElementById('dropzone');
@@ -307,47 +307,29 @@
       manager.setProgress(item.id, 20);
 
       try {
-        const dataURL = await FileUtils.readAsDataURL(file);
-        const img     = await FileUtils.loadImage(dataURL);
-        manager.setProgress(item.id, 50);
-
-        let origW = img.naturalWidth, origH = img.naturalHeight;
-        lastW = origW; lastH = origH;
-
-        let targetW, targetH;
-
-        if (mode === 'px') {
-          targetW = parseInt(widthInput.value)  || origW;
-          targetH = parseInt(heightInput.value) || origH;
-          if (noEnlarge.checked) {
-            targetW = Math.min(targetW, origW);
-            targetH = Math.min(targetH, origH);
-          }
-        } else if (mode === 'pct') {
-          const s = parseInt(scalePct.value) / 100;
-          targetW = Math.round(origW * s);
-          targetH = Math.round(origH * s);
-        } else {
-          const lp = parseInt(longestPx.value) || 1200;
-          const r  = origW > origH ? lp / origW : lp / origH;
-          const nr = noEnlarge.checked ? Math.min(r, 1) : r;
-          targetW  = Math.round(origW * nr);
-          targetH  = Math.round(origH * nr);
-        }
-
-        FileUtils.validateImageSize(targetW, targetH);
-        const canvas = document.createElement('canvas');
-        canvas.width  = targetW;
-        canvas.height = targetH;
-        const ctx = canvas.getContext('2d');
         const outMime = mime || file.type;
-        if (outMime === 'image/jpeg') {
-          ctx.fillStyle = '#fff'; ctx.fillRect(0,0,targetW,targetH);
-        }
-        ctx.drawImage(img, 0, 0, targetW, targetH);
-        manager.setProgress(item.id, 80);
-
-        const blob = await FileUtils.canvasToBlob(canvas, outMime, quality);
+        const processed = await ImageProcessor.process(file, {
+          type: 'resize',
+          mode,
+          width: parseInt(widthInput.value),
+          height: parseInt(heightInput.value),
+          scale: parseInt(scalePct.value),
+          longest: parseInt(longestPx.value),
+          noEnlarge: noEnlarge.checked,
+          mimeType: outMime,
+          quality,
+        }, {
+          onProgress: progress => manager.setProgress(item.id, progress),
+        });
+        const {
+          blob,
+          width: targetW,
+          height: targetH,
+          originalWidth: origW,
+          originalHeight: origH,
+        } = processed;
+        lastW = origW;
+        lastH = origH;
         const ext  = outMime.split('/')[1].replace('jpeg','jpg');
         const filename = file.name.replace(/\.[^.]+$/, '') + `_${targetW}x${targetH}_akd.` + ext;
 

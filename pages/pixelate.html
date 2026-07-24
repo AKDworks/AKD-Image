@@ -69,7 +69,7 @@
   </div>
 </main>
 
-<script src="/js/core.js?v=6"></script>
+<script src="/js/core.js?v=7"></script>
 <script>
 (function () {
   const dropzoneEl  = document.getElementById('dropzone');
@@ -185,21 +185,22 @@
       manager.setProgress(item.id, 20);
 
       try {
-        const src = await FileUtils.readAsDataURL(file);
-        manager.setProgress(item.id, 50);
-        const img = await FileUtils.loadImage(src);
-        
-        const canvas = applyPixelation(img, pSize);
-        manager.setProgress(item.id, 70);
-        
         const mime = file.type;
-        const blob = await FileUtils.canvasToBlob(canvas, mime, 0.95);
+        const processed = await ImageProcessor.process(file, {
+          type: 'pixelate',
+          pixelSize: pSize,
+          mimeType: mime,
+          quality: 0.95,
+        }, {
+          onProgress: progress => manager.setProgress(item.id, progress),
+        });
+        const { blob, width, height } = processed;
         
         manager.setProgress(item.id, 100);
         const filename = file.name.replace(/\.[^.]+$/, '') + '_pixel.' + FileUtils.getExt(file.name);
         
         manager.setStatus(item.id, 'Готово', 'status-done');
-        manager.setMeta(item.id, `${canvas.width}×${canvas.height} · ${FileUtils.formatSize(blob.size)}`);
+        manager.setMeta(item.id, `${width}×${height} · ${FileUtils.formatSize(blob.size)}`);
         manager.addDownload(item.id, blob, filename);
 
         results.push({ blob, filename });

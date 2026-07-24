@@ -75,7 +75,7 @@
   </div>
 </main>
 
-<script src="/js/core.js?v=6"></script>
+<script src="/js/core.js?v=7"></script>
 <script>
 (function () {
   const dropzoneEl  = document.getElementById('dropzone');
@@ -166,21 +166,15 @@
       manager.setProgress(item.id, 20);
 
       try {
-        const src = await FileUtils.readAsDataURL(file);
-        manager.setProgress(item.id, 50);
-        const img = await FileUtils.loadImage(src);
-        
-        const canvas = document.createElement('canvas');
-        canvas.width = img.naturalWidth;
-        canvas.height = img.naturalHeight;
-        const ctx = canvas.getContext('2d');
-        ctx.drawImage(img, 0, 0);
-        
-        manager.setProgress(item.id, 70);
-        
         const mime = file.type;
         // Canvas re-encoding drops embedded metadata.
-        const blob = await FileUtils.canvasToBlob(canvas, mime, q);
+        const { blob } = await ImageProcessor.process(file, {
+          type: 'transcode',
+          mimeType: mime,
+          quality: q,
+        }, {
+          onProgress: progress => manager.setProgress(item.id, progress),
+        });
         
         manager.setProgress(item.id, 100);
         const filename = file.name.replace(/\.[^.]+$/, '') + '_noexif.' + FileUtils.getExt(file.name);

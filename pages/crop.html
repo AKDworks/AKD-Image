@@ -135,7 +135,7 @@
   </div>
 </main>
 
-<script src="/js/core.js?v=6"></script>
+<script src="/js/core.js?v=7"></script>
 <script>
 (function () {
   const dropzoneEl      = document.getElementById('dropzone');
@@ -428,26 +428,20 @@
     applyCropBtn.innerHTML = '<span class="spinner"></span> Обрезаю...';
 
     try {
-      const canvas = document.createElement('canvas');
-      canvas.width  = cropState.w;
-      canvas.height = cropState.h;
-      const ctx = canvas.getContext('2d');
-
       const mime = outputFmt.value === 'same' ? activeFile.type : outputFmt.value;
       const quality = parseInt(qualityInput.value) / 100;
-
-      if (mime === 'image/jpeg') {
-        ctx.fillStyle = '#ffffff';
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-      }
-
-      ctx.drawImage(
-        sourceImg,
-        cropState.x, cropState.y, cropState.w, cropState.h,
-        0, 0, cropState.w, cropState.h
-      );
-
-      croppedBlob = await FileUtils.canvasToBlob(canvas, mime, quality);
+      const processed = await ImageProcessor.process(activeFile, {
+        type: 'crop',
+        area: {
+          x: cropState.x,
+          y: cropState.y,
+          width: cropState.w,
+          height: cropState.h,
+        },
+        mimeType: mime,
+        quality,
+      });
+      croppedBlob = processed.blob;
       if (croppedUrl) URL.revokeObjectURL(croppedUrl);
       croppedUrl = URL.createObjectURL(croppedBlob);
       const ext = mime.split('/')[1].replace('jpeg','jpg');
@@ -468,7 +462,11 @@
         try {
           const copyBlob = mime === 'image/png'
             ? croppedBlob
-            : await FileUtils.canvasToBlob(canvas, 'image/png', 1);
+            : (await ImageProcessor.process(croppedBlob, {
+                type: 'transcode',
+                mimeType: 'image/png',
+                quality: 1,
+              })).blob;
           const item = new ClipboardItem({ 'image/png': copyBlob });
           await navigator.clipboard.write([item]);
           Toast.success('Изображение скопировано в буфер.');

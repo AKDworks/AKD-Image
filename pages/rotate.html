@@ -66,7 +66,7 @@
   </div>
 </main>
 
-<script src="/js/core.js?v=6"></script>
+<script src="/js/core.js?v=7"></script>
 <script>
 (function () {
   const dropzoneEl  = document.getElementById('dropzone');
@@ -190,32 +190,17 @@
       manager.setProgress(item.id, 20);
 
       try {
-        const dataURL = await FileUtils.readAsDataURL(file);
-        manager.setProgress(item.id, 50);
-        const img = await FileUtils.loadImage(dataURL);
-        
-        const canvas = document.createElement('canvas');
-        const ctx = canvas.getContext('2d');
-        
-        const isSwapped = rotation === 90 || rotation === 270;
-        const w = isSwapped ? img.naturalHeight : img.naturalWidth;
-        const h = isSwapped ? img.naturalWidth : img.naturalHeight;
-        
-        canvas.width = w;
-        canvas.height = h;
-        
-        ctx.translate(w / 2, h / 2);
-        ctx.rotate((rotation * Math.PI) / 180);
-        
-        const scaleX = flipH ? -1 : 1;
-        const scaleY = flipV ? -1 : 1;
-        ctx.scale(scaleX, scaleY);
-        
-        ctx.drawImage(img, -img.naturalWidth / 2, -img.naturalHeight / 2);
-        
-        manager.setProgress(item.id, 80);
-        
-        const blob = await FileUtils.canvasToBlob(canvas, file.type, 0.95);
+        const processed = await ImageProcessor.process(file, {
+          type: 'rotate',
+          rotation,
+          flipH,
+          flipV,
+          mimeType: file.type,
+          quality: 0.95,
+        }, {
+          onProgress: progress => manager.setProgress(item.id, progress),
+        });
+        const { blob, width: w, height: h } = processed;
         const newFilename = file.name.replace(/\.[^.]+$/, '') + '_rotated.' + FileUtils.getExt(file.name);
         
         manager.setProgress(item.id, 100);

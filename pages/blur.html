@@ -132,7 +132,7 @@
   </div>
 </main>
 
-<script src="/js/core.js?v=6"></script>
+<script src="/js/core.js?v=7"></script>
 <script>
 (function () {
   const dropzoneEl   = document.getElementById('dropzone');
@@ -346,24 +346,6 @@
     window.removeEventListener('touchend', endDrag);
   }
 
-  function drawBlurredArea(canvas, ctx, radius) {
-    ctx.drawImage(sourceImg, 0, 0, canvas.width, canvas.height);
-
-    const blurCanvas = document.createElement('canvas');
-    blurCanvas.width = canvas.width;
-    blurCanvas.height = canvas.height;
-    const blurCtx = blurCanvas.getContext('2d');
-    blurCtx.filter = `blur(${radius}px)`;
-    blurCtx.drawImage(sourceImg, 0, 0, canvas.width, canvas.height);
-
-    ctx.save();
-    ctx.beginPath();
-    ctx.rect(areaState.x, areaState.y, areaState.w, areaState.h);
-    ctx.clip();
-    ctx.drawImage(blurCanvas, 0, 0);
-    ctx.restore();
-  }
-
   applyBlurBtn.addEventListener('click', async () => {
     if (!activeFile) return;
 
@@ -371,16 +353,21 @@
     applyBlurBtn.innerHTML = '<span class="spinner"></span> Размываю...';
 
     try {
-      const canvas = document.createElement('canvas');
-      canvas.width = imgNaturalW;
-      canvas.height = imgNaturalH;
-      const ctx = canvas.getContext('2d');
-      drawBlurredArea(canvas, ctx, parseInt(blurRadius.value));
-
       const mime = outputFmt.value === 'same' ? activeFile.type : outputFmt.value;
       const quality = parseInt(qualityInput.value) / 100;
-      const outputCanvas = FileUtils.canvasForMime(canvas, mime);
-      resultBlob = await FileUtils.canvasToBlob(outputCanvas, mime, quality);
+      const processed = await ImageProcessor.process(activeFile, {
+        type: 'blurArea',
+        area: {
+          x: areaState.x,
+          y: areaState.y,
+          width: areaState.w,
+          height: areaState.h,
+        },
+        radius: parseInt(blurRadius.value),
+        mimeType: mime,
+        quality,
+      });
+      resultBlob = processed.blob;
 
       if (resultUrl) URL.revokeObjectURL(resultUrl);
       resultUrl = URL.createObjectURL(resultBlob);
@@ -401,7 +388,11 @@
         try {
           const copyBlob = mime === 'image/png'
             ? resultBlob
-            : await FileUtils.canvasToBlob(canvas, 'image/png', 1);
+            : (await ImageProcessor.process(resultBlob, {
+                type: 'transcode',
+                mimeType: 'image/png',
+                quality: 1,
+              })).blob;
           await navigator.clipboard.write([new ClipboardItem({ 'image/png': copyBlob })]);
           Toast.success('Изображение скопировано в буфер.');
         } catch (err) {

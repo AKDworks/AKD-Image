@@ -125,7 +125,7 @@
   </div>
 </main>
 
-<script src="/js/core.js?v=6"></script>
+<script src="/js/core.js?v=7"></script>
 <script>
 (function () {
   const dropzoneEl  = document.getElementById('dropzone');
@@ -250,8 +250,20 @@
     try {
       const mime = outputFormat.value;
       const ext = mime.split('/')[1].replace('jpeg','jpg');
-      const outputCanvas = FileUtils.canvasForMime(canvas, mime);
-      const blob = await FileUtils.canvasToBlob(outputCanvas, mime, 0.9);
+      const { blob } = await ImageProcessor.process(activeFile, {
+        type: 'effects',
+        filters: {
+          brightness: Number(brightnessInput.value),
+          contrast: Number(contrastInput.value),
+          saturate: Number(saturateInput.value),
+          blur: Number(blurInput.value),
+          sepia: Number(sepiaInput.value),
+          grayscale: Number(grayscaleInput.value),
+          invert: Number(invertInput.value),
+        },
+        mimeType: mime,
+        quality: 0.9,
+      });
       const filename = activeFile.name.replace(/\.[^.]+$/, '') + '_effect.' + ext;
       FileUtils.downloadBlob(blob, filename);
       Toast.success('Изображение сохранено.');

@@ -340,6 +340,245 @@ const FileUtils = {
 };
 
 
+/* Background image processing */
+const ImageProcessor = (() => {
+  const pending = new Map();
+  let worker = null;
+  let workerDisabled = false;
+  let nextTaskId = 1;
+
+  function canUseWorker() {
+    return !workerDisabled &&
+      typeof Worker !== 'undefined' &&
+      typeof OffscreenCanvas !== 'undefined' &&
+      typeof createImageBitmap !== 'undefined';
+  }
+
+  function rejectPending(error) {
+    pending.forEach(task => task.reject(error));
+    pending.clear();
+  }
+
+  function disableWorker(error) {
+    workerDisabled = true;
+    if (worker) worker.terminate();
+    worker = null;
+    rejectPending(error);
+  }
+
+  function getWorker() {
+    if (worker) return worker;
+
+    worker = new Worker('/js/image-worker.js?v=1', { type: 'module' });
+    worker.addEventListener('message', event => {
+      const task = pending.get(event.data.id);
+      if (!task) return;
+
+      if (typeof event.data.progress === 'number') {
+        task.onProgress(event.data.progress);
+        return;
+      }
+
+      pending.delete(event.data.id);
+      if (event.data.error) {
+        task.reject(new Error(event.data.error));
+      } else {
+        task.onProgress(100);
+        task.resolve(event.data.result);
+      }
+    });
+    worker.addEventListener('error', event => {
+      disableWorker(new Error(event.message || 'Web Worker недоступен'));
+    });
+
+    return worker;
+  }
+
+  function runInWorker(file, task, onProgress) {
+    return new Promise((resolve, reject) => {
+      const id = nextTaskId++;
+      pending.set(id, { resolve, reject, onProgress });
+      getWorker().postMessage({ id, file, task });
+    });
+  }
+
+  function getResizeSize(width, height, task) {
+    let targetWidth = width;
+    let targetHeight = height;
+
+    if (task.mode === 'px') {
+      targetWidth = Number(task.width) || width;
+      targetHeight = Number(task.height) || height;
+      if (task.noEnlarge) {
+        targetWidth = Math.min(targetWidth, width);
+        targetHeight = Math.min(targetHeight, height);
+      }
+    } else if (task.mode === 'pct') {
+      const scale = (Number(task.scale) || 100) / 100;
+      targetWidth = Math.round(width * scale);
+      targetHeight = Math.round(height * scale);
+    } else {
+      const longest = Number(task.longest) || 1200;
+      const ratio = width > height ? longest / width : longest / height;
+      const scale = task.noEnlarge ? Math.min(ratio, 1) : ratio;
+      targetWidth = Math.round(width * scale);
+      targetHeight = Math.round(height * scale);
+    }
+
+    return {
+      width: Math.max(1, targetWidth),
+      height: Math.max(1, targetHeight),
+    };
+  }
+
+  function getOutputSize(image, task) {
+    if (task.type === 'resize') {
+      return getResizeSize(image.naturalWidth, image.naturalHeight, task);
+    }
+    if (task.type === 'crop') {
+      return {
+        width: Math.max(1, Math.round(task.area.width)),
+        height: Math.max(1, Math.round(task.area.height)),
+      };
+    }
+    if (task.type === 'rotate' && Math.abs(Number(task.rotation)) % 180 === 90) {
+      return { width: image.naturalHeight, height: image.naturalWidth };
+    }
+    return { width: image.naturalWidth, height: image.naturalHeight };
+  }
+
+  function drawOnMainThread(image, canvas, context, task) {
+    if (task.type === 'resize') {
+      context.drawImage(image, 0, 0, canvas.width, canvas.height);
+      return;
+    }
+
+    if (task.type === 'rotate') {
+      context.translate(canvas.width / 2, canvas.height / 2);
+      context.rotate((Number(task.rotation) || 0) * Math.PI / 180);
+      context.scale(task.flipH ? -1 : 1, task.flipV ? -1 : 1);
+      context.drawImage(image, -image.naturalWidth / 2, -image.naturalHeight / 2);
+      return;
+    }
+
+    if (task.type === 'pixelate') {
+      const pixelSize = Math.max(1, Number(task.pixelSize) || 10);
+      const smallWidth = Math.max(1, Math.floor(canvas.width / pixelSize));
+      const smallHeight = Math.max(1, Math.floor(canvas.height / pixelSize));
+      const smallCanvas = document.createElement('canvas');
+      smallCanvas.width = smallWidth;
+      smallCanvas.height = smallHeight;
+      smallCanvas.getContext('2d').drawImage(image, 0, 0, smallWidth, smallHeight);
+      context.imageSmoothingEnabled = false;
+      context.drawImage(
+        smallCanvas,
+        0, 0, smallWidth, smallHeight,
+        0, 0, canvas.width, canvas.height
+      );
+      return;
+    }
+
+    if (task.type === 'crop') {
+      const area = task.area;
+      context.drawImage(
+        image,
+        area.x, area.y, area.width, area.height,
+        0, 0, canvas.width, canvas.height
+      );
+      return;
+    }
+
+    if (task.type === 'effects') {
+      const filters = task.filters;
+      context.filter = [
+        `brightness(${filters.brightness}%)`,
+        `contrast(${filters.contrast}%)`,
+        `saturate(${filters.saturate}%)`,
+        `blur(${filters.blur}px)`,
+        `sepia(${filters.sepia}%)`,
+        `grayscale(${filters.grayscale}%)`,
+        `invert(${filters.invert}%)`,
+      ].join(' ');
+      context.drawImage(image, 0, 0);
+      return;
+    }
+
+    if (task.type === 'blurArea') {
+      context.drawImage(image, 0, 0);
+      const blurredCanvas = document.createElement('canvas');
+      blurredCanvas.width = canvas.width;
+      blurredCanvas.height = canvas.height;
+      const blurredContext = blurredCanvas.getContext('2d');
+      blurredContext.filter = `blur(${Math.max(0, Number(task.radius) || 0)}px)`;
+      blurredContext.drawImage(image, 0, 0);
+      context.save();
+      context.beginPath();
+      context.rect(task.area.x, task.area.y, task.area.width, task.area.height);
+      context.clip();
+      context.drawImage(blurredCanvas, 0, 0);
+      context.restore();
+      return;
+    }
+
+    context.drawImage(image, 0, 0);
+  }
+
+  async function runOnMainThread(file, task, onProgress) {
+    onProgress(25);
+    const source = await FileUtils.readAsDataURL(file);
+    const image = await FileUtils.loadImage(source);
+    const size = getOutputSize(image, task);
+    FileUtils.validateImageSize(size.width, size.height);
+
+    const canvas = document.createElement('canvas');
+    canvas.width = size.width;
+    canvas.height = size.height;
+    const context = canvas.getContext('2d');
+
+    if (task.mimeType === 'image/jpeg') {
+      context.fillStyle = '#ffffff';
+      context.fillRect(0, 0, canvas.width, canvas.height);
+    }
+
+    onProgress(55);
+    drawOnMainThread(image, canvas, context, task);
+    onProgress(80);
+    const blob = await FileUtils.canvasToBlob(canvas, task.mimeType, task.quality);
+    onProgress(100);
+
+    return {
+      blob,
+      width: canvas.width,
+      height: canvas.height,
+      originalWidth: image.naturalWidth,
+      originalHeight: image.naturalHeight,
+    };
+  }
+
+  async function process(file, task, options = {}) {
+    FileUtils.validateFile(file);
+    const onProgress = typeof options.onProgress === 'function'
+      ? options.onProgress
+      : () => {};
+
+    if (canUseWorker()) {
+      try {
+        return await runInWorker(file, task, onProgress);
+      } catch (error) {
+        console.warn('Фоновая обработка недоступна, используется обычный Canvas.', error);
+      }
+    }
+
+    return runOnMainThread(file, task, onProgress);
+  }
+
+  return {
+    process,
+    isWorkerSupported: canUseWorker,
+  };
+})();
+
+
 /* Dropzone */
 class Dropzone {
   constructor(el, opts = {}) {

@@ -82,7 +82,7 @@
   </div>
 </main>
 
-<script src="/js/core.js?v=6"></script>
+<script src="/js/core.js?v=7"></script>
 <script>
 (function () {
   const dropzoneEl   = document.getElementById('dropzone');
@@ -177,24 +177,15 @@
       manager.setProgress(item.id, 10);
 
       try {
-        let blob;
         const mime  = outputFmt.value === 'same' ? file.type : outputFmt.value;
         const q     = parseInt(qualityInput.value) / 100;
-
-        const dataURL = await FileUtils.readAsDataURL(file);
-        manager.setProgress(item.id, 40);
-        const img    = await FileUtils.loadImage(dataURL);
-        const canvas = document.createElement('canvas');
-        canvas.width  = img.naturalWidth;
-        canvas.height = img.naturalHeight;
-        const ctx    = canvas.getContext('2d');
-        if (mime === 'image/jpeg') {
-          ctx.fillStyle = '#fff';
-          ctx.fillRect(0, 0, canvas.width, canvas.height);
-        }
-        ctx.drawImage(img, 0, 0);
-        manager.setProgress(item.id, 70);
-        blob = await FileUtils.canvasToBlob(canvas, mime, q);
+        const { blob } = await ImageProcessor.process(file, {
+          type: 'transcode',
+          mimeType: mime,
+          quality: q,
+        }, {
+          onProgress: progress => manager.setProgress(item.id, progress),
+        });
 
         manager.setProgress(item.id, 100);
         const ext      = mime.split('/')[1].replace('jpeg','jpg');
