@@ -94,8 +94,11 @@
         <div class="header-side header-side--end">
           <div class="theme-control" id="theme-control" role="group" aria-label="Выбор темы">
             <button class="theme-option" type="button" data-theme-mode="system" aria-label="Системная тема" title="Системная тема">
-              <svg viewBox="0 -960 960 960" aria-hidden="true" focusable="false">
-                <path fill="currentColor" d="M320-120v-80h120v-80H200q-33 0-56.5-23.5T120-360v-400q0-33 23.5-56.5T200-840h560q33 0 56.5 23.5T840-760v400q0 33-23.5 56.5T760-280H520v80h120v80H320ZM200-360h560v-400H200v400Zm0 0v-400 400Z"/>
+              <svg class="theme-icon theme-icon--desktop" viewBox="0 -960 960 960" aria-hidden="true" focusable="false">
+                <path fill="currentColor" d="M320-120v-80h80v-80H160q-33 0-56.5-23.5T80-360v-400q0-33 23.5-56.5T160-840h640q33 0 56.5 23.5T880-760v400q0 33-23.5 56.5T800-280H560v80h80v80H320ZM160-360h640v-400H160v400Zm0 0v-400 400Z"/>
+              </svg>
+              <svg class="theme-icon theme-icon--mobile" viewBox="0 -960 960 960" aria-hidden="true" focusable="false">
+                <path fill="currentColor" d="M280-40q-33 0-56.5-23.5T200-120v-720q0-33 23.5-56.5T280-920h400q33 0 56.5 23.5T760-840v124q18 7 29 22t11 34v80q0 19-11 34t-29 22v404q0 33-23.5 56.5T680-40H280Zm0-80h400v-720H280v720Zm0 0v-720 720Zm228.5-611.5Q520-743 520-760t-11.5-28.5Q497-800 480-800t-28.5 11.5Q440-777 440-760t11.5 28.5Q463-720 480-720t28.5-11.5Z"/>
               </svg>
             </button>
             <button class="theme-option" type="button" data-theme-mode="light" aria-label="Светлая тема" title="Светлая тема">
