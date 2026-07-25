@@ -25,7 +25,8 @@
     '/pdf': '/pages/pdf.html',
     '/collage': '/pages/collage.html',
     '/annotate': '/pages/annotate.html',
-    '/privacy': '/pages/privacy.html'
+    '/privacy': '/pages/privacy.html',
+    '/about': '/pages/about.html'
   };
 
   function routeHref(href, page) {
@@ -123,6 +124,7 @@
       <div class="container inner">
         <p class="footer-copy">© 2026 AKD Image – Бесплатные инструменты для работы с изображениями. Все права защищены.</p>
         <ul class="footer-links">
+          <li><a href="${routeHref('/about', '/pages/about.html')}">О проекте</a></li>
           <li><a href="${routeHref('/privacy', '/pages/privacy.html')}">Конфиденциальность</a></li>
         </ul>
       </div>
