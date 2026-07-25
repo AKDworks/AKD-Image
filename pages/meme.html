@@ -80,7 +80,7 @@
   </div>
 </main>
 
-<script src="/js/core.js?v=8"></script>
+<script src="/js/core.js?v=9"></script>
 <script>
 (function () {
   const dropzoneEl  = document.getElementById('dropzone');
@@ -108,10 +108,6 @@
     files = files.filter(f => f.item.id !== e.detail.id);
     updateUI();
   });
-  fileListEl.addEventListener('file-selected', () => {
-    if (!previewCanvas.classList.contains('hidden')) previewBtn.click();
-  });
-
   new Dropzone(dropzoneEl, {
     accept: ['image/jpeg','image/png','image/webp','image/avif','image/gif'],
     multiple: true,
@@ -126,6 +122,7 @@
     UIUtils.resetBatchResult({ resultArea, resultStats, downloadAllBtn: dlAllBtn });
     UIUtils.resetPreview({ previewBtn, previewCanvas }, has);
     results = [];
+    if (has) previewScheduler.refresh();
   }
 
   clearBtn.addEventListener('click', () => { files = []; manager.clear(); updateUI(); });
@@ -169,18 +166,22 @@
     return canvas;
   }
 
-  previewBtn.addEventListener('click', async () => {
+  const previewScheduler = UIUtils.createPreviewScheduler(async isCurrent => {
     if (!files.length) return;
-    await UIUtils.runPreview(previewCanvas, async () => {
-      const dataURL = await FileUtils.readAsDataURL(manager.getSelectedItem().file);
-      const img     = await FileUtils.loadImage(dataURL);
-      const canvas  = await applyMeme(img);
-      previewCanvas.width  = canvas.width;
-      previewCanvas.height = canvas.height;
-      previewCanvas.getContext('2d').drawImage(canvas, 0, 0);
-      previewCanvas.classList.remove('hidden');
-    });
+    const dataURL = await FileUtils.readAsDataURL(manager.getSelectedItem().file);
+    const img = await FileUtils.loadImage(dataURL);
+    if (!isCurrent()) return;
+    const canvas = await applyMeme(img);
+    previewCanvas.width = canvas.width;
+    previewCanvas.height = canvas.height;
+    previewCanvas.getContext('2d').drawImage(canvas, 0, 0);
+    previewCanvas.classList.remove('hidden');
   });
+
+  previewBtn.addEventListener('click', previewScheduler.refresh);
+  fileListEl.addEventListener('file-selected', previewScheduler.refresh);
+  settingsEl.addEventListener('input', previewScheduler.schedule);
+  settingsEl.addEventListener('change', previewScheduler.schedule);
 
   applyBtn.addEventListener('click', async () => {
     if (!files.length) return;

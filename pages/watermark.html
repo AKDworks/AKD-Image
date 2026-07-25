@@ -153,27 +153,6 @@
           </label>
         </div>
 
-        <hr class="divider">
-        <div class="form-row">
-          <div class="form-group">
-            <label>Формат вывода</label>
-            <select id="output-format">
-              <option value="same">Оставить оригинал</option>
-              <option value="image/jpeg">JPG</option>
-              <option value="image/png">PNG</option>
-              <option value="image/webp">WebP</option>
-              <option value="image/avif">AVIF</option>
-              <option value="image/gif">GIF</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label>Качество / количество цветов GIF</label>
-            <div class="range-row">
-              <input type="range" id="quality" min="10" max="100" value="88">
-              <span id="quality-val">88%</span>
-            </div>
-          </div>
-        </div>
         <button class="btn btn-secondary mt-16 hidden" id="preview-btn">
           Предпросмотр выбранного изображения
         </button>
@@ -195,7 +174,7 @@
   </div>
 </main>
 
-<script src="/js/core.js?v=8"></script>
+<script src="/js/core.js?v=9"></script>
 <script>
 (function () {
   const dropzoneEl  = document.getElementById('dropzone');
@@ -219,13 +198,9 @@
   const wmOpacityVal = document.getElementById('wm-opacity-val');
   const wmPadding  = document.getElementById('wm-padding');
   const wmTile     = document.getElementById('wm-tile');
-  const qualityInput = document.getElementById('quality');
-  const qualityVal  = document.getElementById('quality-val');
-  const outputFmt   = document.getElementById('output-format');
   const logoSizeInput = document.getElementById('logo-size');
   const logoSizeVal   = document.getElementById('logo-size-val');
 
-  qualityInput.addEventListener('input', () => { qualityVal.textContent = qualityInput.value + '%'; });
   wmOpacity.addEventListener('input', () => { wmOpacityVal.textContent = wmOpacity.value + '%'; });
   logoSizeInput.addEventListener('input', () => { logoSizeVal.textContent = logoSizeInput.value + '%'; });
 
@@ -237,6 +212,7 @@
       tab.classList.add('active');
       document.getElementById('tab-text').classList.toggle('hidden', activeTab !== 'text');
       document.getElementById('tab-image').classList.toggle('hidden', activeTab !== 'image');
+      previewScheduler.schedule();
     });
   });
 
@@ -246,6 +222,7 @@
       document.querySelectorAll('.pos-btn').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
       selectedPos = btn.dataset.pos;
+      previewScheduler.schedule();
     });
   });
 
@@ -331,6 +308,7 @@
       logoPreviewEl.src = safeUrl;
       logoPreviewWrap.classList.remove('hidden');
       Toast.success('Логотип загружен.');
+      previewScheduler.refresh();
     } catch(e) {
       Toast.error('Не удалось загрузить изображение по ссылке.');
     }
@@ -369,6 +347,7 @@
       logoImage = await FileUtils.loadImage(src);
       logoPreviewEl.src = src;
       logoPreviewWrap.classList.remove('hidden');
+      previewScheduler.refresh();
     } catch (err) {
       console.error(err);
       Toast.error(err.message || 'Не удалось загрузить логотип.');
@@ -379,6 +358,7 @@
     logoImage = null;
     logoPreviewWrap.classList.add('hidden');
     logoInput.value = '';
+    previewScheduler.refresh();
   });
 
   renderSavedLogos();
@@ -390,10 +370,6 @@
     files = files.filter(f => f.item.id !== e.detail.id);
     updateUI();
   });
-  fileListEl.addEventListener('file-selected', () => {
-    if (!previewCanvas.classList.contains('hidden')) previewBtn.click();
-  });
-
   new Dropzone(dropzoneEl, {
     accept: ['image/jpeg','image/png','image/webp','image/avif','image/gif'],
     multiple: true,
@@ -407,8 +383,8 @@
     const has = UIUtils.updateBatchLayout({ dropzoneEl, fileListEl, settingsEl, actionBarEl, countEl }, files.length);
     UIUtils.resetBatchResult({ resultArea, resultStats, downloadAllBtn: dlAllBtn });
     UIUtils.resetPreview({ previewBtn, previewCanvas }, has);
-    UIUtils.syncGifOutput(outputFmt, files);
     results = [];
+    if (has) previewScheduler.refresh();
   }
 
   clearBtn.addEventListener('click', () => { files = []; manager.clear(); updateUI(); });
@@ -491,18 +467,22 @@
     return positions[pos] || positions['bottom-right'];
   }
 
-  previewBtn.addEventListener('click', async () => {
+  const previewScheduler = UIUtils.createPreviewScheduler(async isCurrent => {
     if (!files.length) return;
-    await UIUtils.runPreview(previewCanvas, async () => {
-      const dataURL = await FileUtils.readAsDataURL(manager.getSelectedItem().file);
-      const img     = await FileUtils.loadImage(dataURL);
-      const canvas  = await applyWatermark(img);
-      previewCanvas.width  = canvas.width;
-      previewCanvas.height = canvas.height;
-      previewCanvas.getContext('2d').drawImage(canvas, 0, 0);
-      previewCanvas.classList.remove('hidden');
-    });
+    const dataURL = await FileUtils.readAsDataURL(manager.getSelectedItem().file);
+    const img = await FileUtils.loadImage(dataURL);
+    if (!isCurrent()) return;
+    const canvas = await applyWatermark(img);
+    previewCanvas.width = canvas.width;
+    previewCanvas.height = canvas.height;
+    previewCanvas.getContext('2d').drawImage(canvas, 0, 0);
+    previewCanvas.classList.remove('hidden');
   });
+
+  previewBtn.addEventListener('click', previewScheduler.refresh);
+  fileListEl.addEventListener('file-selected', previewScheduler.refresh);
+  settingsEl.addEventListener('input', previewScheduler.schedule);
+  settingsEl.addEventListener('change', previewScheduler.schedule);
 
   applyBtn.addEventListener('click', async () => {
     if (!files.length) return;
@@ -521,8 +501,8 @@
       manager.setProgress(item.id, 20);
 
       try {
-        const mime    = FileUtils.resolveOutputMime(file, outputFmt.value);
-        const quality = parseInt(qualityInput.value) / 100;
+        const mime    = FileUtils.getFileMime(file);
+        const quality = 0.95;
         let blob;
 
         if (FileUtils.isGif(file)) {

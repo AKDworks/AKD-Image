@@ -70,7 +70,7 @@
   </div>
 </main>
 
-<script src="/js/core.js?v=8"></script>
+<script src="/js/core.js?v=9"></script>
 <script>
 (function () {
   const dropzoneEl  = document.getElementById('dropzone');
@@ -96,16 +96,13 @@
 
   pixelSizeInput.addEventListener('input', () => {
     pixelVal.textContent = pixelSizeInput.value;
+    previewScheduler.schedule();
   });
 
   fileListEl.addEventListener('file-removed', (e) => {
     files = files.filter(f => f.item.id !== e.detail.id);
     updateUI();
   });
-  fileListEl.addEventListener('file-selected', () => {
-    if (!previewCanvas.classList.contains('hidden')) previewBtn.click();
-  });
-
   new Dropzone(dropzoneEl, {
     accept: ['image/jpeg','image/png','image/webp','image/avif','image/gif'],
     multiple: true,
@@ -122,6 +119,7 @@
     UIUtils.resetBatchResult({ resultArea, resultStats, downloadAllBtn: dlAllBtn });
     UIUtils.resetPreview({ previewBtn, previewCanvas }, hasFiles);
     results = [];
+    if (hasFiles) previewScheduler.refresh();
   }
 
   clearBtn.addEventListener('click', () => {
@@ -152,23 +150,22 @@
     return canvas;
   }
 
-  previewBtn.addEventListener('click', async () => {
+  const previewScheduler = UIUtils.createPreviewScheduler(async isCurrent => {
     if (!files.length) return;
-    await UIUtils.runPreview(previewCanvas, async () => {
-      const file = manager.getSelectedItem().file;
-      const src = await FileUtils.readAsDataURL(file);
-      const img = await FileUtils.loadImage(src);
+    const file = manager.getSelectedItem().file;
+    const src = await FileUtils.readAsDataURL(file);
+    const img = await FileUtils.loadImage(src);
+    if (!isCurrent()) return;
+    const processedCanvas = applyPixelation(img, parseInt(pixelSizeInput.value) || 10);
 
-      const pSize = parseInt(pixelSizeInput.value) || 10;
-      const processedCanvas = applyPixelation(img, pSize);
-
-      previewCanvas.width = processedCanvas.width;
-      previewCanvas.height = processedCanvas.height;
-      const pCtx = previewCanvas.getContext('2d');
-      pCtx.drawImage(processedCanvas, 0, 0);
-      previewCanvas.classList.remove('hidden');
-    });
+    previewCanvas.width = processedCanvas.width;
+    previewCanvas.height = processedCanvas.height;
+    previewCanvas.getContext('2d').drawImage(processedCanvas, 0, 0);
+    previewCanvas.classList.remove('hidden');
   });
+
+  previewBtn.addEventListener('click', previewScheduler.refresh);
+  fileListEl.addEventListener('file-selected', previewScheduler.refresh);
 
   pixelateBtn.addEventListener('click', async () => {
     if (!files.length) return;

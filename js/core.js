@@ -94,6 +94,41 @@ const UIUtils = {
     }
   },
 
+  createPreviewScheduler(render, delay = 350) {
+    let timer = null;
+    let revision = 0;
+
+    const refresh = async () => {
+      const currentRevision = ++revision;
+      if (timer) {
+        clearTimeout(timer);
+        timer = null;
+      }
+
+      try {
+        await render(() => currentRevision === revision);
+      } catch (error) {
+        if (currentRevision !== revision) return;
+        console.error(error);
+        Toast.error('Не удалось обновить предпросмотр.');
+      }
+    };
+
+    return {
+      refresh,
+      schedule() {
+        revision++;
+        if (timer) clearTimeout(timer);
+        timer = setTimeout(refresh, delay);
+      },
+      cancel() {
+        revision++;
+        if (timer) clearTimeout(timer);
+        timer = null;
+      },
+    };
+  },
+
   showBatchResult(parts, count) {
     if (parts.resultArea) parts.resultArea.classList.add('visible');
     this.setVisible(parts.downloadAllBtn, count > 1);
@@ -120,6 +155,7 @@ const FileUtils = {
 
   formatPct(before, after) {
     if (before === 0) return '0%';
+    if (before === after) return '0%';
     const pct = ((before - after) / before * 100).toFixed(1);
     return (pct > 0 ? '-' : '+') + Math.abs(pct) + '%';
   },

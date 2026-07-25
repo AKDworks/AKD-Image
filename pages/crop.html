@@ -96,27 +96,6 @@
           </div>
         </div>
 
-        <hr class="divider">
-        <div class="form-row">
-          <div class="form-group">
-            <label>Формат вывода</label>
-            <select id="output-format">
-              <option value="same">Оставить оригинал</option>
-              <option value="image/jpeg">JPG</option>
-              <option value="image/png">PNG</option>
-              <option value="image/webp">WebP</option>
-              <option value="image/avif">AVIF</option>
-              <option value="image/gif">GIF</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label>Качество / количество цветов GIF</label>
-            <div class="range-row">
-              <input type="range" id="quality" min="10" max="100" value="90">
-              <span id="quality-val">90%</span>
-            </div>
-          </div>
-        </div>
       </div>
     </div>
     <div class="hidden mt-16 flex gap-8 items-center" id="action-bar">
@@ -137,7 +116,7 @@
   </div>
 </main>
 
-<script src="/js/core.js?v=8"></script>
+<script src="/js/core.js?v=9"></script>
 <script>
 (function () {
   const dropzoneEl      = document.getElementById('dropzone');
@@ -160,12 +139,6 @@
   const inpY = document.getElementById('crop-y');
   const inpW = document.getElementById('crop-w');
   const inpH = document.getElementById('crop-h');
-
-  const qualityInput = document.getElementById('quality');
-  const qualityVal   = document.getElementById('quality-val');
-  const outputFmt    = document.getElementById('output-format');
-
-  qualityInput.addEventListener('input', () => { qualityVal.textContent = qualityInput.value + '%'; });
 
   let activeFile = null;
   let imgNaturalW = 0;
@@ -196,7 +169,6 @@
 
   changeImgBtn.addEventListener('click', () => {
     activeFile = null;
-    UIUtils.syncGifOutput(outputFmt, []);
     if (croppedUrl) {
       URL.revokeObjectURL(croppedUrl);
       croppedUrl = null;
@@ -210,7 +182,6 @@
       const dataURL = await FileUtils.readAsDataURL(file);
       const loadedImage = await FileUtils.loadImage(dataURL);
       activeFile = file;
-      UIUtils.syncGifOutput(outputFmt, [file]);
       imgNaturalW = loadedImage.naturalWidth;
       imgNaturalH = loadedImage.naturalHeight;
 
@@ -243,7 +214,6 @@
     } catch (err) {
       console.error(err);
       activeFile = null;
-      UIUtils.syncGifOutput(outputFmt, []);
       setEditingVisible(false);
       Toast.error(err.message || 'Не удалось загрузить изображение.');
     }
@@ -433,8 +403,8 @@
     applyCropBtn.innerHTML = '<span class="spinner"></span> Обрезаю...';
 
     try {
-      const mime = FileUtils.resolveOutputMime(activeFile, outputFmt.value);
-      const quality = parseInt(qualityInput.value) / 100;
+      const mime = FileUtils.getFileMime(activeFile);
+      const quality = 0.95;
       const processed = await ImageProcessor.process(activeFile, {
         type: 'crop',
         area: {

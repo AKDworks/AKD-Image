@@ -67,7 +67,7 @@
   </div>
 </main>
 
-<script src="/js/core.js?v=8"></script>
+<script src="/js/core.js?v=9"></script>
 <script>
 (function () {
   const dropzoneEl  = document.getElementById('dropzone');
@@ -107,6 +107,7 @@
     const desc = statusParts.join(', ') || 'нет изменений';
     updateActionButtons();
     Toast.info('Выбрано: ' + desc);
+    previewScheduler.schedule();
   }
 
   function updateActionButtons() {
@@ -124,10 +125,6 @@
     files = files.filter(f => f.item.id !== e.detail.id);
     updateUI();
   });
-  fileListEl.addEventListener('file-selected', () => {
-    if (!previewCanvas.classList.contains('hidden')) previewBtn.click();
-  });
-
   new Dropzone(dropzoneEl, {
     accept: ['image/jpeg','image/png','image/webp','image/avif','image/gif'],
     multiple: true,
@@ -142,34 +139,32 @@
     UIUtils.resetBatchResult({ resultArea, resultStats, downloadAllBtn: dlAllBtn });
     UIUtils.resetPreview({ previewBtn, previewCanvas }, has);
     results = [];
+    if (has) previewScheduler.refresh();
   }
 
-  previewBtn.addEventListener('click', async () => {
+  const previewScheduler = UIUtils.createPreviewScheduler(async isCurrent => {
     if (!files.length) return;
-    await UIUtils.runPreview(previewCanvas, async () => {
-      const file = manager.getSelectedItem().file;
-      const src = await FileUtils.readAsDataURL(file);
-      const img = await FileUtils.loadImage(src);
+    const file = manager.getSelectedItem().file;
+    const src = await FileUtils.readAsDataURL(file);
+    const img = await FileUtils.loadImage(src);
+    if (!isCurrent()) return;
 
-      const ctx = previewCanvas.getContext('2d');
+    const ctx = previewCanvas.getContext('2d');
+    const isSwapped = rotation === 90 || rotation === 270;
+    const w = isSwapped ? img.naturalHeight : img.naturalWidth;
+    const h = isSwapped ? img.naturalWidth : img.naturalHeight;
 
-      const isSwapped = rotation === 90 || rotation === 270;
-      const w = isSwapped ? img.naturalHeight : img.naturalWidth;
-      const h = isSwapped ? img.naturalWidth : img.naturalHeight;
-
-      previewCanvas.width = w;
-      previewCanvas.height = h;
-
-      ctx.translate(w / 2, h / 2);
-      ctx.rotate((rotation * Math.PI) / 180);
-      const scaleX = flipH ? -1 : 1;
-      const scaleY = flipV ? -1 : 1;
-      ctx.scale(scaleX, scaleY);
-      ctx.drawImage(img, -img.naturalWidth / 2, -img.naturalHeight / 2);
-
-      previewCanvas.classList.remove('hidden');
-    });
+    previewCanvas.width = w;
+    previewCanvas.height = h;
+    ctx.translate(w / 2, h / 2);
+    ctx.rotate((rotation * Math.PI) / 180);
+    ctx.scale(flipH ? -1 : 1, flipV ? -1 : 1);
+    ctx.drawImage(img, -img.naturalWidth / 2, -img.naturalHeight / 2);
+    previewCanvas.classList.remove('hidden');
   });
+
+  previewBtn.addEventListener('click', previewScheduler.refresh);
+  fileListEl.addEventListener('file-selected', previewScheduler.refresh);
 
   clearBtn.addEventListener('click', () => {
     files = []; manager.clear(); updateUI();

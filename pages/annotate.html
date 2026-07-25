@@ -95,29 +95,6 @@
           </div>
         </div>
 
-        <hr class="divider">
-
-        <div class="form-row">
-          <div class="form-group">
-            <label for="output-format">Формат вывода</label>
-            <select id="output-format">
-              <option value="same">Оставить оригинал</option>
-              <option value="image/jpeg">JPG</option>
-              <option value="image/png">PNG</option>
-              <option value="image/webp">WebP</option>
-              <option value="image/avif">AVIF</option>
-              <option value="image/gif">GIF</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label for="quality">Качество / количество цветов GIF</label>
-            <div class="range-row">
-              <input type="range" id="quality" min="10" max="100" value="92">
-              <span id="quality-val">92%</span>
-            </div>
-          </div>
-        </div>
-
         <div class="flex gap-8 mt-16 flex-wrap">
           <button class="btn btn-secondary" id="clear-btn" type="button">Очистить разметку</button>
         </div>
@@ -143,7 +120,7 @@
   </div>
 </main>
 
-<script src="/js/core.js?v=8"></script>
+<script src="/js/core.js?v=9"></script>
 <script>
 (function () {
   const dropzoneEl = document.getElementById('dropzone');
@@ -162,9 +139,6 @@
   const strokeWidthVal = document.getElementById('stroke-width-val');
   const fontSize = document.getElementById('font-size');
   const fontSizeVal = document.getElementById('font-size-val');
-  const outputFmt = document.getElementById('output-format');
-  const qualityInput = document.getElementById('quality');
-  const qualityVal = document.getElementById('quality-val');
   const undoBtn = document.getElementById('undo-btn');
   const clearBtn = document.getElementById('clear-btn');
   const saveBtn = document.getElementById('save-btn');
@@ -195,10 +169,6 @@
   fontSize.addEventListener('input', () => {
     fontSizeVal.textContent = `${fontSize.value} px`;
   });
-  qualityInput.addEventListener('input', () => {
-    qualityVal.textContent = `${qualityInput.value}%`;
-  });
-
   new Dropzone(dropzoneEl, {
     accept: ['image/jpeg', 'image/png', 'image/webp', 'image/avif', 'image/gif'],
     multiple: false,
@@ -230,7 +200,6 @@
     closeTextEditor(false);
     activeFile = null;
     sourceImg = null;
-    UIUtils.syncGifOutput(outputFmt, []);
     actions = [];
     history = [];
     draftAction = null;
@@ -372,7 +341,6 @@
 
       activeFile = file;
       sourceImg = img;
-      UIUtils.syncGifOutput(outputFmt, [file]);
       actions = [];
       history = [];
       draftAction = null;
@@ -740,7 +708,7 @@
   }
 
   function outputMime() {
-    return FileUtils.resolveOutputMime(activeFile, outputFmt.value) || 'image/png';
+    return FileUtils.getFileMime(activeFile) || 'image/png';
   }
 
   function outputName() {
@@ -766,7 +734,7 @@
 
     try {
       const mime = outputMime();
-      const quality = Number(qualityInput.value) / 100;
+      const quality = 0.95;
 
       if (FileUtils.isGif(activeFile)) {
         const processed = await GifProcessor.process(activeFile, {

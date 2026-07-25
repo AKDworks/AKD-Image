@@ -40,14 +40,7 @@
       </div>
       <div class="tool-panel__body">
         
-        <div class="form-group">
-          <label>Качество сохранения (для JPG, WebP и AVIF)</label>
-          <div class="range-row">
-            <input type="range" id="quality" min="50" max="100" value="100">
-            <span id="quality-val">100%</span>
-          </div>
-          <p class="text-muted text-sm mt-8">EXIF удаляется автоматически при пересохранении изображения.</p>
-        </div>
+        <p class="text-muted text-sm">EXIF удаляется автоматически при пересохранении изображения.</p>
 
         <button class="btn btn-secondary mt-16 hidden" id="preview-btn">Предпросмотр выбранного изображения</button>
         <canvas class="preview-canvas hidden" id="preview-canvas"></canvas>
@@ -75,7 +68,7 @@
   </div>
 </main>
 
-<script src="/js/core.js?v=8"></script>
+<script src="/js/core.js?v=9"></script>
 <script>
 (function () {
   const dropzoneEl  = document.getElementById('dropzone');
@@ -89,19 +82,12 @@
   const resultStats = document.getElementById('result-stats');
   const dlAllBtn    = document.getElementById('download-all-btn');
 
-  const qualityInput = document.getElementById('quality');
-  const qualityVal   = document.getElementById('quality-val');
-
   const previewBtn  = document.getElementById('preview-btn');
   const previewCanvas = document.getElementById('preview-canvas');
 
   const manager = new FileListManager(fileListEl);
   let files = [];
   let results = [];
-
-  qualityInput.addEventListener('input', () => {
-    qualityVal.textContent = qualityInput.value + '%';
-  });
 
   fileListEl.addEventListener('file-removed', (e) => {
     files = files.filter(f => f.item.id !== e.detail.id);
@@ -158,7 +144,7 @@
     results = [];
     let errors = 0;
 
-    const q = parseInt(qualityInput.value) / 100;
+    const q = 0.95;
 
     for (const entry of files) {
       const { file, item } = entry;

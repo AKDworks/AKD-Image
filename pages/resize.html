@@ -87,29 +87,6 @@
           <p class="text-muted text-sm mt-8">Пропорции сохраняются автоматически.</p>
         </div>
 
-        <hr class="divider">
-
-        <div class="form-row">
-          <div class="form-group">
-            <label>Формат вывода</label>
-            <select id="output-format">
-              <option value="same">Оставить оригинал</option>
-              <option value="image/jpeg">JPG</option>
-              <option value="image/png">PNG</option>
-              <option value="image/webp">WebP</option>
-              <option value="image/avif">AVIF</option>
-              <option value="image/gif">GIF</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label>Качество / количество цветов GIF</label>
-            <div class="range-row">
-              <input type="range" id="quality" min="10" max="100" value="88">
-              <span id="quality-val">88%</span>
-            </div>
-          </div>
-        </div>
-
         <div class="toggle-row mt-8">
           <div>
             <div class="toggle-label">Не увеличивать маленькие изображения</div>
@@ -143,7 +120,7 @@
   </div>
 </main>
 
-<script src="/js/core.js?v=8"></script>
+<script src="/js/core.js?v=9"></script>
 <script>
 (function () {
   const dropzoneEl  = document.getElementById('dropzone');
@@ -165,9 +142,6 @@
   const scalePct      = document.getElementById('scale-pct');
   const scalePctVal   = document.getElementById('scale-pct-val');
   const longestPx     = document.getElementById('longest-px');
-  const qualityInput  = document.getElementById('quality');
-  const qualityVal    = document.getElementById('quality-val');
-  const outputFmt     = document.getElementById('output-format');
   const noEnlarge     = document.getElementById('no-enlarge');
 
   const manager = new FileListManager(fileListEl);
@@ -179,11 +153,6 @@
     files = files.filter(f => f.item.id !== e.detail.id);
     updateUI();
   });
-  fileListEl.addEventListener('file-selected', () => {
-    if (!previewCanvas.classList.contains('hidden')) previewBtn.click();
-  });
-
-  qualityInput.addEventListener('input', () => { qualityVal.textContent = qualityInput.value + '%'; });
   scalePct.addEventListener('input', () => { scalePctVal.textContent = scalePct.value + '%'; });
 
   document.querySelectorAll('input[name="resize-mode"]').forEach(r => {
@@ -234,6 +203,7 @@
         longestPx.value = Math.max(lastW, lastH);
         dimensionsInitialized = true;
       }
+      previewScheduler.refresh();
     } catch (err) {
       console.error(err);
     }
@@ -243,45 +213,49 @@
     const has = UIUtils.updateBatchLayout({ dropzoneEl, fileListEl, settingsEl, actionBarEl, countEl }, files.length);
     UIUtils.resetBatchResult({ resultArea, resultStats, downloadAllBtn: dlAllBtn });
     UIUtils.resetPreview({ previewBtn, previewCanvas }, has);
-    UIUtils.syncGifOutput(outputFmt, files);
     results = [];
+    if (has) previewScheduler.refresh();
   }
 
-  previewBtn.addEventListener('click', async () => {
+  const previewScheduler = UIUtils.createPreviewScheduler(async isCurrent => {
     if (!files.length) return;
-    await UIUtils.runPreview(previewCanvas, async () => {
-      const file = manager.getSelectedItem().file;
-      const src = await FileUtils.readAsDataURL(file);
-      const img = await FileUtils.loadImage(src);
-      const wStr = widthInput.value;
-      const hStr = heightInput.value;
-      const mode = document.querySelector('input[name="resize-mode"]:checked').value;
+    const file = manager.getSelectedItem().file;
+    const src = await FileUtils.readAsDataURL(file);
+    const img = await FileUtils.loadImage(src);
+    if (!isCurrent()) return;
+    const wStr = widthInput.value;
+    const hStr = heightInput.value;
+    const mode = document.querySelector('input[name="resize-mode"]:checked').value;
 
-      let nw = img.naturalWidth, nh = img.naturalHeight;
-      if (mode === 'px') {
-        nw = parseInt(wStr) || nw;
-        nh = parseInt(hStr) || nh;
-      } else if (mode === 'pct') {
-        const pct = parseInt(scalePct.value) / 100;
-        nw = Math.round(nw * pct);
-        nh = Math.round(nh * pct);
-      } else if (mode === 'longest') {
-        const lg = parseInt(longestPx.value) || 1200;
-        if (nw > nh) { nh = Math.round(nh * (lg / nw)); nw = lg; }
-        else { nw = Math.round(nw * (lg / nh)); nh = lg; }
-      }
-      if (noEnlarge.checked && (nw > img.naturalWidth || nh > img.naturalHeight)) {
-        nw = img.naturalWidth; nh = img.naturalHeight;
-      }
+    let nw = img.naturalWidth, nh = img.naturalHeight;
+    if (mode === 'px') {
+      nw = parseInt(wStr) || nw;
+      nh = parseInt(hStr) || nh;
+    } else if (mode === 'pct') {
+      const pct = parseInt(scalePct.value) / 100;
+      nw = Math.round(nw * pct);
+      nh = Math.round(nh * pct);
+    } else if (mode === 'longest') {
+      const lg = parseInt(longestPx.value) || 1200;
+      if (nw > nh) { nh = Math.round(nh * (lg / nw)); nw = lg; }
+      else { nw = Math.round(nw * (lg / nh)); nh = lg; }
+    }
+    if (noEnlarge.checked && (nw > img.naturalWidth || nh > img.naturalHeight)) {
+      nw = img.naturalWidth; nh = img.naturalHeight;
+    }
 
-      FileUtils.validateImageSize(nw, nh);
-      previewCanvas.width = nw;
-      previewCanvas.height = nh;
-      const ctx = previewCanvas.getContext('2d');
-      ctx.drawImage(img, 0, 0, nw, nh);
-      previewCanvas.classList.remove('hidden');
-    });
+    FileUtils.validateImageSize(nw, nh);
+    previewCanvas.width = nw;
+    previewCanvas.height = nh;
+    const ctx = previewCanvas.getContext('2d');
+    ctx.drawImage(img, 0, 0, nw, nh);
+    previewCanvas.classList.remove('hidden');
   });
+
+  previewBtn.addEventListener('click', previewScheduler.refresh);
+  fileListEl.addEventListener('file-selected', previewScheduler.refresh);
+  settingsEl.addEventListener('input', previewScheduler.schedule);
+  settingsEl.addEventListener('change', previewScheduler.schedule);
 
   clearBtn.addEventListener('click', () => {
     files = [];
@@ -300,9 +274,7 @@
     results = [];
     let errors = 0;
 
-    const mode    = document.querySelector('input[name="resize-mode"]:checked').value;
-    const mime    = outputFmt.value === 'same' ? null : outputFmt.value;
-    const quality = parseInt(qualityInput.value) / 100;
+    const mode = document.querySelector('input[name="resize-mode"]:checked').value;
 
     for (const entry of files) {
       const { file, item } = entry;
@@ -310,7 +282,7 @@
       manager.setProgress(item.id, 20);
 
       try {
-        const outMime = FileUtils.resolveOutputMime(file, mime || 'same');
+        const outMime = FileUtils.getFileMime(file);
         const processed = await ImageProcessor.process(file, {
           type: 'resize',
           mode,
@@ -320,7 +292,7 @@
           longest: parseInt(longestPx.value),
           noEnlarge: noEnlarge.checked,
           mimeType: outMime,
-          quality,
+          quality: 0.95,
         }, {
           onProgress: progress => manager.setProgress(item.id, progress),
         });

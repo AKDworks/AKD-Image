@@ -51,6 +51,7 @@
           <div class="form-group">
             <label>Формат вывода</label>
             <select id="output-format">
+              <option value="auto" selected>Автоматически (WebP)</option>
               <option value="same">Оставить оригинал</option>
               <option value="image/jpeg">JPG</option>
               <option value="image/png">PNG</option>
@@ -58,11 +59,12 @@
               <option value="image/avif">AVIF</option>
               <option value="image/gif">GIF</option>
             </select>
+            <p class="text-muted text-sm mt-8" id="format-hint">Для статичных изображений будет выбран WebP: обычно он заметно уменьшает размер файла.</p>
           </div>
         </div>
 
-        <button class="btn btn-secondary mt-16 hidden" id="preview-btn">Предпросмотр выбранного изображения</button>
         <canvas class="preview-canvas hidden" id="preview-canvas"></canvas>
+        <p class="text-muted text-sm mt-8 hidden" id="preview-meta"></p>
 
       </div>
     </div>
@@ -84,7 +86,7 @@
   </div>
 </main>
 
-<script src="/js/core.js?v=8"></script>
+<script src="/js/core.js?v=9"></script>
 <script>
 (function () {
   const dropzoneEl   = document.getElementById('dropzone');
@@ -97,11 +99,12 @@
   const resultArea   = document.getElementById('result-area');
   const resultStats  = document.getElementById('result-stats');
   const dlAllBtn     = document.getElementById('download-all-btn');
-  const previewBtn   = document.getElementById('preview-btn');
   const previewCanvas = document.getElementById('preview-canvas');
+  const previewMeta  = document.getElementById('preview-meta');
   const qualityInput = document.getElementById('quality');
   const qualityVal   = document.getElementById('quality-val');
   const outputFmt    = document.getElementById('output-format');
+  const formatHint   = document.getElementById('format-hint');
 
   const manager = new FileListManager(fileListEl);
   let files = [];
@@ -111,12 +114,14 @@
     files = files.filter(f => f.item.id !== e.detail.id);
     updateUI();
   });
-  fileListEl.addEventListener('file-selected', () => {
-    if (!previewCanvas.classList.contains('hidden')) previewBtn.click();
-  });
-
   qualityInput.addEventListener('input', () => {
     qualityVal.textContent = qualityInput.value + '%';
+    previewScheduler.schedule();
+  });
+
+  outputFmt.addEventListener('change', () => {
+    updateFormatHint();
+    previewScheduler.schedule();
   });
 
   new Dropzone(dropzoneEl, {
@@ -133,22 +138,84 @@
   function updateUI() {
     const hasFiles = UIUtils.updateBatchLayout({ dropzoneEl, fileListEl, settingsEl, actionBarEl, countEl }, files.length);
     UIUtils.resetBatchResult({ resultArea, resultStats, downloadAllBtn: dlAllBtn });
-    UIUtils.resetPreview({ previewBtn, previewCanvas }, hasFiles);
+    previewScheduler.cancel();
+    previewCanvas.classList.add('hidden');
+    previewMeta.classList.add('hidden');
+    previewMeta.textContent = '';
     UIUtils.syncGifOutput(outputFmt, files);
+    updateFormatHint();
     results = [];
+    if (hasFiles) previewScheduler.refresh();
   }
 
-  previewBtn.addEventListener('click', async () => {
-    if (!files.length) return;
-    await UIUtils.runPreview(previewCanvas, async () => {
-      const file = manager.getSelectedItem().file;
-      const src = await FileUtils.readAsDataURL(file);
-      const img = await FileUtils.loadImage(src);
-      previewCanvas.width = img.naturalWidth;
-      previewCanvas.height = img.naturalHeight;
-      previewCanvas.getContext('2d').drawImage(img, 0, 0);
-      previewCanvas.classList.remove('hidden');
+  fileListEl.addEventListener('file-selected', () => previewScheduler.refresh());
+
+  function getCompressionMime(file) {
+    if (FileUtils.isGif(file)) return 'image/gif';
+    if (outputFmt.value === 'auto') return 'image/webp';
+    return FileUtils.resolveOutputMime(file, outputFmt.value);
+  }
+
+  function updateFormatHint() {
+    if (outputFmt.disabled) {
+      formatHint.textContent = 'Анимация сохраняется в GIF, чтобы не потерять кадры.';
+      return;
+    }
+    if (outputFmt.value === 'auto') {
+      formatHint.textContent = 'Для статичных изображений будет выбран WebP: обычно он заметно уменьшает размер файла.';
+      return;
+    }
+    if (outputFmt.value === 'same' && files.some(({ file }) => FileUtils.getFileMime(file) === 'image/png')) {
+      formatHint.textContent = 'PNG сохраняется без потерь: ползунок качества на него не влияет, а новый файл может получиться больше исходного.';
+      return;
+    }
+    if (outputFmt.value === 'image/png') {
+      formatHint.textContent = 'PNG сохраняется без потерь: для уменьшения размера обычно лучше выбрать WebP или AVIF.';
+      return;
+    }
+    formatHint.textContent = 'Предпросмотр и итоговый файл будут созданы с текущими настройками.';
+  }
+
+  const previewScheduler = UIUtils.createPreviewScheduler(async isCurrent => {
+    const selected = manager.getSelectedItem();
+    if (!selected) return;
+
+    const file = selected.file;
+    const mime = getCompressionMime(file);
+    const quality = parseInt(qualityInput.value, 10) / 100;
+    previewMeta.textContent = 'Обновляю предпросмотр...';
+    previewMeta.classList.remove('hidden');
+
+    const processed = await ImageProcessor.process(file, {
+      type: 'transcode',
+      mimeType: mime,
+      quality,
     });
+    if (!isCurrent()) return;
+
+    const useOriginal = (outputFmt.value === 'auto' || FileUtils.isGif(file))
+      && processed.blob.size >= file.size;
+    const blob = useOriginal ? file : processed.blob;
+
+    const previewUrl = URL.createObjectURL(blob);
+    try {
+      const image = await FileUtils.loadImage(previewUrl);
+      if (!isCurrent()) return;
+
+      previewCanvas.width = image.naturalWidth;
+      previewCanvas.height = image.naturalHeight;
+      const context = previewCanvas.getContext('2d');
+      context.clearRect(0, 0, previewCanvas.width, previewCanvas.height);
+      context.drawImage(image, 0, 0);
+      previewCanvas.classList.remove('hidden');
+
+      const change = useOriginal ? '0%' : FileUtils.formatPct(file.size, blob.size);
+      const frameHint = FileUtils.isGif(file) ? ' · показан первый кадр' : '';
+      const fallbackHint = useOriginal ? ' · оставлен оригинал: новая версия тяжелее' : '';
+      previewMeta.textContent = `Предпросмотр: ${FileUtils.formatSize(file.size)} → ${FileUtils.formatSize(blob.size)} (${change})${frameHint}${fallbackHint}`;
+    } finally {
+      URL.revokeObjectURL(previewUrl);
+    }
   });
 
   function plural(n, a, b, c) {
@@ -168,7 +235,7 @@
   compressBtn.addEventListener('click', async () => {
     if (!files.length) return;
     compressBtn.disabled = true;
-    UIUtils.setBatchLocked(manager, [clearBtn, dlAllBtn, previewBtn], true);
+    UIUtils.setBatchLocked(manager, [clearBtn, dlAllBtn], true);
     compressBtn.innerHTML = '<span class="spinner"></span> Сжимаю...';
     results = [];
     let errors = 0;
@@ -180,9 +247,9 @@
       manager.setProgress(item.id, 10);
 
       try {
-        const mime  = FileUtils.resolveOutputMime(file, outputFmt.value);
+        let mime  = getCompressionMime(file);
         const q     = parseInt(qualityInput.value) / 100;
-        const { blob } = await ImageProcessor.process(file, {
+        const processed = await ImageProcessor.process(file, {
           type: 'transcode',
           mimeType: mime,
           quality: q,
@@ -190,12 +257,17 @@
           onProgress: progress => manager.setProgress(item.id, progress),
         });
 
+        const useOriginal = (outputFmt.value === 'auto' || FileUtils.isGif(file))
+          && processed.blob.size >= file.size;
+        const blob = useOriginal ? file : processed.blob;
+        if (useOriginal) mime = FileUtils.getFileMime(file);
+
         manager.setProgress(item.id, 100);
         const ext      = FileUtils.extensionForMime(mime);
         const filename = file.name.replace(/\.[^.]+$/, '') + '_akd.' + ext;
-        const pct      = FileUtils.formatPct(file.size, blob.size);
+        const pct      = useOriginal ? '0%' : FileUtils.formatPct(file.size, blob.size);
 
-        manager.setStatus(item.id, pct, 'status-done');
+        manager.setStatus(item.id, useOriginal ? 'Без изменений' : pct, 'status-done');
         manager.setMeta(item.id,
           FileUtils.formatSize(file.size) + '  ' + FileUtils.formatSize(blob.size));
         manager.addDownload(item.id, blob, filename);
@@ -227,7 +299,7 @@
     }
 
     compressBtn.disabled = false;
-    UIUtils.setBatchLocked(manager, [clearBtn, dlAllBtn, previewBtn], false);
+    UIUtils.setBatchLocked(manager, [clearBtn, dlAllBtn], false);
     compressBtn.innerHTML = 'Сжать всё';
   });
 
