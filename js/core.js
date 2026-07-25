@@ -990,6 +990,14 @@ class Dropzone {
       if (files.length) this._handle(files);
     });
 
+    document.addEventListener('paste', e => {
+      if (this._isTextTarget(e.target)) return;
+      const files = this._clipboardImages(e.clipboardData);
+      if (!files.length) return;
+      e.preventDefault();
+      this._handle(files);
+    });
+
     const input = el.querySelector('input[type="file"]');
     if (input) {
       input.multiple = this.opts.multiple;
@@ -1005,6 +1013,22 @@ class Dropzone {
         input && input.click();
       }
     });
+  }
+
+  _isTextTarget(target) {
+    return target instanceof Element && Boolean(target.closest('input, textarea, select, [contenteditable="true"]'));
+  }
+
+  _clipboardImages(clipboardData) {
+    if (!clipboardData) return [];
+    const files = Array.from(clipboardData.files || [])
+      .filter(file => FileUtils.getFileMime(file).startsWith('image/'));
+    if (files.length) return files;
+
+    return Array.from(clipboardData.items || [])
+      .filter(item => item.kind === 'file' && item.type.startsWith('image/'))
+      .map(item => item.getAsFile())
+      .filter(Boolean);
   }
 
   async _handle(files) {
