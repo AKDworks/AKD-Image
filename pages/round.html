@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Скругление углов – AKD Image</title>
-  <meta name="description" content="Скругляйте углы JPG, PNG, WebP и AVIF и сохраняйте результат как PNG с прозрачными краями.">
+  <meta name="description" content="Скругляйте углы JPG, PNG, WebP, AVIF и анимированных GIF с прозрачными краями прямо в браузере.">
   <link rel="canonical" href="https://akdimage.vercel.app/round">
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="/css/main.css?v=5">
@@ -21,7 +21,7 @@
       <p class="tool-page__subtitle">Задайте степень скругления и сохраните изображения как PNG с прозрачными краями.</p>
     </div>
     <div class="dropzone" id="dropzone">
-      <input type="file" accept="image/jpeg,image/png,image/webp,image/avif" multiple>
+      <input type="file" accept="image/jpeg,image/png,image/webp,image/avif,image/gif" multiple>
       <p class="dropzone__title">Перетащите изображения сюда</p>
       <p class="dropzone__hint">или нажмите для выбора файлов</p>
       <div class="dropzone__formats">
@@ -29,6 +29,7 @@
         <span class="fmt-badge">PNG</span>
         <span class="fmt-badge">WEBP</span>
         <span class="fmt-badge">AVIF</span>
+        <span class="fmt-badge">GIF</span>
       </div>
     </div>
     <div class="tool-panel hidden" id="settings-panel">
@@ -69,7 +70,7 @@
   </div>
 </main>
 
-<script src="/js/core.js?v=7"></script>
+<script src="/js/core.js?v=8"></script>
 <script>
 (function () {
   const dropzoneEl  = document.getElementById('dropzone');
@@ -107,7 +108,7 @@
   });
 
   new Dropzone(dropzoneEl, {
-    accept: ['image/jpeg','image/png','image/webp','image/avif'],
+    accept: ['image/jpeg','image/png','image/webp','image/avif','image/gif'],
     multiple: true,
     onFiles(newFiles) {
       newFiles.forEach(f => {
@@ -132,8 +133,8 @@
 
   function applyRounding(img, radiusPercent) {
     const canvas = document.createElement('canvas');
-    canvas.width = img.naturalWidth;
-    canvas.height = img.naturalHeight;
+    canvas.width = img.naturalWidth || img.width;
+    canvas.height = img.naturalHeight || img.height;
     const ctx = canvas.getContext('2d');
     
     const minSide = Math.min(canvas.width, canvas.height);
@@ -194,20 +195,38 @@
       manager.setProgress(item.id, 20);
 
       try {
-        const src = await FileUtils.readAsDataURL(file);
-        manager.setProgress(item.id, 50);
-        const img = await FileUtils.loadImage(src);
-        
-        const canvas = applyRounding(img, percent);
-        manager.setProgress(item.id, 70);
-        
-        const blob = await FileUtils.canvasToBlob(canvas, 'image/png', 1.0);
+        let blob;
+        let width;
+        let height;
+        let extension;
+
+        if (FileUtils.isGif(file)) {
+          const processed = await GifProcessor.process(file, {
+            quality: 1,
+            onProgress: progress => manager.setProgress(item.id, progress),
+            transformFrame: ({ sourceCanvas }) => applyRounding(sourceCanvas, percent),
+          });
+          blob = processed.blob;
+          width = processed.width;
+          height = processed.height;
+          extension = 'gif';
+        } else {
+          const src = await FileUtils.readAsDataURL(file);
+          manager.setProgress(item.id, 50);
+          const img = await FileUtils.loadImage(src);
+          const canvas = applyRounding(img, percent);
+          manager.setProgress(item.id, 70);
+          blob = await FileUtils.canvasToBlob(canvas, 'image/png', 1.0);
+          width = canvas.width;
+          height = canvas.height;
+          extension = 'png';
+        }
         
         manager.setProgress(item.id, 100);
-        const filename = file.name.replace(/\.[^.]+$/, '') + '_rounded.png';
+        const filename = file.name.replace(/\.[^.]+$/, '') + `_rounded.${extension}`;
         
         manager.setStatus(item.id, 'Готово', 'status-done');
-        manager.setMeta(item.id, `${canvas.width}×${canvas.height} · ${FileUtils.formatSize(blob.size)} · PNG`);
+        manager.setMeta(item.id, `${width}×${height} · ${FileUtils.formatSize(blob.size)} · ${extension.toUpperCase()}`);
         manager.addDownload(item.id, blob, filename);
 
         results.push({ blob, filename });
@@ -215,6 +234,7 @@
       } catch (err) {
         errors++;
         manager.setStatus(item.id, 'Ошибка', 'status-error');
+        manager.setMeta(item.id, err.message || 'Не удалось обработать GIF');
         console.error(err);
       }
     }

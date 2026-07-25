@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Фотоэффекты – AKD Image</title>
-  <meta name="description" content="Настраивайте яркость, контраст, насыщенность, размытие и другие эффекты для изображений прямо в браузере.">
+  <meta name="description" content="Настраивайте яркость, контраст, насыщенность и другие эффекты для JPG, PNG, WebP, AVIF и анимированных GIF прямо в браузере.">
   <link rel="canonical" href="https://akdimage.vercel.app/effects">
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="/css/main.css?v=5">
@@ -23,7 +23,7 @@
       <p class="tool-page__subtitle">Настройте свет, цвет и резкость изображения, наблюдая изменения прямо в рабочей области.</p>
     </div>
     <div class="dropzone" id="dropzone">
-      <input type="file" accept="image/jpeg,image/png,image/webp,image/avif">
+      <input type="file" accept="image/jpeg,image/png,image/webp,image/avif,image/gif">
       <p class="dropzone__title">Перетащите изображение сюда</p>
       <p class="dropzone__hint">или нажмите для выбора файла</p>
       <div class="dropzone__formats">
@@ -31,6 +31,7 @@
         <span class="fmt-badge">PNG</span>
         <span class="fmt-badge">WEBP</span>
         <span class="fmt-badge">AVIF</span>
+        <span class="fmt-badge">GIF</span>
       </div>
     </div>
     <div class="hidden" id="workspace-panel">
@@ -110,6 +111,7 @@
                 <option value="image/png">PNG</option>
                 <option value="image/webp">WebP</option>
                 <option value="image/avif">AVIF</option>
+                <option value="image/gif">GIF</option>
               </select>
             </div>
 
@@ -125,7 +127,7 @@
   </div>
 </main>
 
-<script src="/js/core.js?v=7"></script>
+<script src="/js/core.js?v=8"></script>
 <script>
 (function () {
   const dropzoneEl  = document.getElementById('dropzone');
@@ -181,7 +183,7 @@
   });
 
   new Dropzone(dropzoneEl, {
-    accept: ['image/jpeg','image/png','image/webp','image/avif'],
+    accept: ['image/jpeg','image/png','image/webp','image/avif','image/gif'],
     multiple: false,
     onFiles(newFiles) {
       if (newFiles[0]) loadImage(newFiles[0]);
@@ -190,6 +192,7 @@
 
   async function loadImage(file) {
     activeFile = file;
+    UIUtils.syncGifOutput(outputFormat, [file]);
     resetFilters();
     UIUtils.setVisible(dropzoneEl, false);
     UIUtils.setVisible(workspaceEl, true);
@@ -237,6 +240,7 @@
   changeImgBtn.addEventListener('click', () => {
     activeImage = null;
     activeFile = null;
+    UIUtils.syncGifOutput(outputFormat, []);
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     UIUtils.setVisible(dropzoneEl, true);
     UIUtils.setVisible(workspaceEl, false);
@@ -248,8 +252,8 @@
     saveBtn.innerHTML = '<span class="spinner"></span> Сохранение...';
 
     try {
-      const mime = outputFormat.value;
-      const ext = mime.split('/')[1].replace('jpeg','jpg');
+      const mime = FileUtils.resolveOutputMime(activeFile, outputFormat.value);
+      const ext = FileUtils.extensionForMime(mime);
       const { blob } = await ImageProcessor.process(activeFile, {
         type: 'effects',
         filters: {
@@ -269,7 +273,7 @@
       Toast.success('Изображение сохранено.');
     } catch (err) {
       console.error(err);
-      Toast.error('Не удалось сохранить изображение.');
+      Toast.error(err.message || 'Не удалось сохранить изображение.');
     }
 
     saveBtn.disabled = false;

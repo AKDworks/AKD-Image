@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Пометки на изображении – AKD Image</title>
-  <meta name="description" content="Добавляйте и перемещайте текст, стрелки, круги, овалы, рамки и свободные пометки на JPG, PNG, WebP и AVIF прямо в браузере.">
+  <meta name="description" content="Добавляйте и перемещайте текст, стрелки, фигуры и свободные пометки на JPG, PNG, WebP, AVIF и анимированных GIF прямо в браузере.">
   <link rel="canonical" href="https://akdimage.vercel.app/annotate">
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="/css/main.css?v=6">
@@ -22,7 +22,7 @@
     </div>
 
     <div class="dropzone" id="dropzone">
-      <input type="file" accept="image/jpeg,image/png,image/webp,image/avif">
+      <input type="file" accept="image/jpeg,image/png,image/webp,image/avif,image/gif">
       <p class="dropzone__title">Перетащите изображение сюда</p>
       <p class="dropzone__hint">или нажмите для выбора файла</p>
       <div class="dropzone__formats">
@@ -30,6 +30,7 @@
         <span class="fmt-badge">PNG</span>
         <span class="fmt-badge">WEBP</span>
         <span class="fmt-badge">AVIF</span>
+        <span class="fmt-badge">GIF</span>
       </div>
     </div>
 
@@ -105,10 +106,11 @@
               <option value="image/png">PNG</option>
               <option value="image/webp">WebP</option>
               <option value="image/avif">AVIF</option>
+              <option value="image/gif">GIF</option>
             </select>
           </div>
           <div class="form-group">
-            <label for="quality">Качество (JPG / WebP / AVIF)</label>
+            <label for="quality">Качество / количество цветов GIF</label>
             <div class="range-row">
               <input type="range" id="quality" min="10" max="100" value="92">
               <span id="quality-val">92%</span>
@@ -141,7 +143,7 @@
   </div>
 </main>
 
-<script src="/js/core.js?v=7"></script>
+<script src="/js/core.js?v=8"></script>
 <script>
 (function () {
   const dropzoneEl = document.getElementById('dropzone');
@@ -198,7 +200,7 @@
   });
 
   new Dropzone(dropzoneEl, {
-    accept: ['image/jpeg', 'image/png', 'image/webp', 'image/avif'],
+    accept: ['image/jpeg', 'image/png', 'image/webp', 'image/avif', 'image/gif'],
     multiple: false,
     onFiles(files) {
       if (files[0]) loadImageFile(files[0]);
@@ -228,6 +230,7 @@
     closeTextEditor(false);
     activeFile = null;
     sourceImg = null;
+    UIUtils.syncGifOutput(outputFmt, []);
     actions = [];
     history = [];
     draftAction = null;
@@ -369,6 +372,7 @@
 
       activeFile = file;
       sourceImg = img;
+      UIUtils.syncGifOutput(outputFmt, [file]);
       actions = [];
       history = [];
       draftAction = null;
@@ -388,7 +392,7 @@
       UIUtils.setVisible(actionBarEl, true);
     } catch (err) {
       console.error(err);
-      Toast.error('Не удалось загрузить изображение.');
+      Toast.error(err.message || 'Не удалось загрузить изображение.');
     }
   }
 
@@ -736,19 +740,12 @@
   }
 
   function outputMime() {
-    if (outputFmt.value !== 'same') return outputFmt.value;
-    return FileUtils.SUPPORTED_IMAGE_TYPES.includes(activeFile?.type) ? activeFile.type : 'image/png';
+    return FileUtils.resolveOutputMime(activeFile, outputFmt.value) || 'image/png';
   }
 
   function outputName() {
-    const extByMime = {
-      'image/jpeg': 'jpg',
-      'image/png': 'png',
-      'image/webp': 'webp',
-      'image/avif': 'avif'
-    };
     const base = activeFile ? activeFile.name.replace(/\.[^.]+$/, '') : 'image';
-    return FileUtils.safeFilename(`${base}_marked.${extByMime[outputMime()] || 'png'}`);
+    return FileUtils.safeFilename(`${base}_marked.${FileUtils.extensionForMime(outputMime())}`);
   }
 
   function clearResult() {
@@ -763,11 +760,36 @@
   saveBtn.addEventListener('click', async () => {
     if (!sourceImg) return;
 
+    saveBtn.disabled = true;
+    saveBtn.innerHTML = '<span class="spinner"></span> Подготовка...';
+    const originalSource = sourceImg;
+
     try {
-      render(null, false);
       const mime = outputMime();
-      const outputCanvas = FileUtils.canvasForMime(canvas, mime);
-      resultBlob = await FileUtils.canvasToBlob(outputCanvas, mime, Number(qualityInput.value) / 100);
+      const quality = Number(qualityInput.value) / 100;
+
+      if (FileUtils.isGif(activeFile)) {
+        const processed = await GifProcessor.process(activeFile, {
+          quality,
+          transformFrame: ({ sourceCanvas }) => {
+            sourceImg = sourceCanvas;
+            render(null, false);
+            const frameCanvas = document.createElement('canvas');
+            frameCanvas.width = canvas.width;
+            frameCanvas.height = canvas.height;
+            frameCanvas.getContext('2d').drawImage(canvas, 0, 0);
+            return frameCanvas;
+          },
+        });
+        resultBlob = processed.blob;
+      } else {
+        render(null, false);
+        const outputCanvas = FileUtils.canvasForMime(canvas, mime);
+        resultBlob = mime === 'image/gif'
+          ? await GifProcessor.encodeCanvas(outputCanvas, { quality })
+          : await FileUtils.canvasToBlob(outputCanvas, mime, quality);
+      }
+      sourceImg = originalSource;
       render();
 
       if (resultUrl) URL.revokeObjectURL(resultUrl);
@@ -779,11 +801,17 @@
         <div class="stat-card stat-green"><div class="stat-card__label">Файл</div><div class="stat-card__value">${FileUtils.formatSize(resultBlob.size)}</div></div>
       `;
       resultArea.classList.add('visible');
+      UIUtils.setVisible(copyBtn, mime !== 'image/gif');
       Toast.success('Результат готов.');
     } catch (err) {
       console.error(err);
-      Toast.error('Не удалось подготовить результат.');
+      sourceImg = originalSource;
+      render();
+      Toast.error(err.message || 'Не удалось подготовить результат.');
     }
+
+    saveBtn.disabled = false;
+    saveBtn.innerHTML = 'Подготовить результат';
   });
 
   downloadBtn.addEventListener('click', () => {

@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Водяной знак – AKD Image</title>
-  <meta name="description" content="Добавляйте текстовый водяной знак или логотип на JPG, PNG, WebP и AVIF прямо в браузере с локальной обработкой файлов.">
+  <meta name="description" content="Добавляйте текстовый водяной знак или логотип на JPG, PNG, WebP, AVIF и анимированные GIF с локальной обработкой файлов.">
   <link rel="canonical" href="https://akdimage.vercel.app/watermark">
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="/css/main.css?v=5">
@@ -23,7 +23,7 @@
       <p class="tool-page__subtitle">Защитите изображения текстом или логотипом и примените одинаковые настройки ко всему набору файлов.</p>
     </div>
     <div class="dropzone" id="dropzone">
-      <input type="file" accept="image/jpeg,image/png,image/webp,image/avif" multiple>
+      <input type="file" accept="image/jpeg,image/png,image/webp,image/avif,image/gif" multiple>
       <p class="dropzone__title">Перетащите изображения сюда</p>
       <p class="dropzone__hint">или нажмите для выбора файлов</p>
       <div class="dropzone__formats">
@@ -31,6 +31,7 @@
         <span class="fmt-badge">PNG</span>
         <span class="fmt-badge">WEBP</span>
         <span class="fmt-badge">AVIF</span>
+        <span class="fmt-badge">GIF</span>
       </div>
     </div>
     <div class="tool-panel hidden" id="settings-panel">
@@ -162,10 +163,11 @@
               <option value="image/png">PNG</option>
               <option value="image/webp">WebP</option>
               <option value="image/avif">AVIF</option>
+              <option value="image/gif">GIF</option>
             </select>
           </div>
           <div class="form-group">
-            <label>Качество</label>
+            <label>Качество / количество цветов GIF</label>
             <div class="range-row">
               <input type="range" id="quality" min="10" max="100" value="88">
               <span id="quality-val">88%</span>
@@ -193,7 +195,7 @@
   </div>
 </main>
 
-<script src="/js/core.js?v=7"></script>
+<script src="/js/core.js?v=8"></script>
 <script>
 (function () {
   const dropzoneEl  = document.getElementById('dropzone');
@@ -393,7 +395,7 @@
   });
 
   new Dropzone(dropzoneEl, {
-    accept: ['image/jpeg','image/png','image/webp','image/avif'],
+    accept: ['image/jpeg','image/png','image/webp','image/avif','image/gif'],
     multiple: true,
     onFiles(newFiles) {
       newFiles.forEach(f => files.push({ file: f, item: manager.add(f) }));
@@ -405,6 +407,7 @@
     const has = UIUtils.updateBatchLayout({ dropzoneEl, fileListEl, settingsEl, actionBarEl, countEl }, files.length);
     UIUtils.resetBatchResult({ resultArea, resultStats, downloadAllBtn: dlAllBtn });
     UIUtils.resetPreview({ previewBtn, previewCanvas }, has);
+    UIUtils.syncGifOutput(outputFmt, files);
     results = [];
   }
 
@@ -412,8 +415,8 @@
 
   async function applyWatermark(img) {
     const canvas = document.createElement('canvas');
-    canvas.width  = img.naturalWidth;
-    canvas.height = img.naturalHeight;
+    canvas.width  = img.naturalWidth || img.width;
+    canvas.height = img.naturalHeight || img.height;
     const ctx = canvas.getContext('2d');
     ctx.drawImage(img, 0, 0);
 
@@ -518,15 +521,28 @@
       manager.setProgress(item.id, 20);
 
       try {
-        const dataURL = await FileUtils.readAsDataURL(file);
-        const img     = await FileUtils.loadImage(dataURL);
-        manager.setProgress(item.id, 50);
-        const canvas  = await applyWatermark(img);
-        const mime    = outputFmt.value === 'same' ? file.type : outputFmt.value;
+        const mime    = FileUtils.resolveOutputMime(file, outputFmt.value);
         const quality = parseInt(qualityInput.value) / 100;
-        const outputCanvas = FileUtils.canvasForMime(canvas, mime);
-        const blob    = await FileUtils.canvasToBlob(outputCanvas, mime, quality);
-        const ext     = mime.split('/')[1].replace('jpeg','jpg');
+        let blob;
+
+        if (FileUtils.isGif(file)) {
+          const processed = await GifProcessor.process(file, {
+            quality,
+            onProgress: progress => manager.setProgress(item.id, progress),
+            transformFrame: ({ sourceCanvas }) => applyWatermark(sourceCanvas),
+          });
+          blob = processed.blob;
+        } else {
+          const dataURL = await FileUtils.readAsDataURL(file);
+          const img = await FileUtils.loadImage(dataURL);
+          manager.setProgress(item.id, 50);
+          const canvas = await applyWatermark(img);
+          const outputCanvas = FileUtils.canvasForMime(canvas, mime);
+          blob = mime === 'image/gif'
+            ? await GifProcessor.encodeCanvas(outputCanvas, { quality })
+            : await FileUtils.canvasToBlob(outputCanvas, mime, quality);
+        }
+        const ext     = FileUtils.extensionForMime(mime);
         const filename = file.name.replace(/\.[^.]+$/, '') + '_wm.' + ext;
         manager.setProgress(item.id, 100);
         manager.setStatus(item.id, 'Готово', 'status-done');
@@ -536,6 +552,7 @@
       } catch (err) {
         errors++;
         manager.setStatus(item.id, 'Ошибка', 'status-error');
+        manager.setMeta(item.id, err.message || 'Не удалось обработать GIF');
         console.error(err);
       }
     }

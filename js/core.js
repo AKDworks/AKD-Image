@@ -63,6 +63,16 @@ const UIUtils = {
     return hasFiles;
   },
 
+  syncGifOutput(select, files) {
+    if (!select) return;
+    const hasGif = files.some(entry => FileUtils.isGif(entry.file || entry));
+    if (hasGif) {
+      select.value = select.querySelector('option[value="same"]') ? 'same' : 'image/gif';
+    }
+    select.disabled = hasGif;
+    select.title = hasGif ? 'Анимированный GIF сохраняется только как GIF' : '';
+  },
+
   resetBatchResult(parts) {
     if (parts.resultArea) parts.resultArea.classList.remove('visible');
     if (parts.resultStats) parts.resultStats.innerHTML = '';
@@ -94,12 +104,13 @@ const UIUtils = {
 /* Files */
 const FileUtils = {
   MAX_FILE_SIZE: 50 * 1024 * 1024,
+  MAX_GIF_FILE_SIZE: 25 * 1024 * 1024,
   MAX_BATCH_FILES: 50,
   MAX_BATCH_SIZE: 250 * 1024 * 1024,
   MAX_ZIP_SIZE: 500 * 1024 * 1024,
   MAX_IMAGE_PIXELS: 40 * 1000 * 1000,
   MAX_IMAGE_SIDE: 16384,
-  SUPPORTED_IMAGE_TYPES: ['image/jpeg', 'image/png', 'image/webp', 'image/avif'],
+  SUPPORTED_IMAGE_TYPES: ['image/jpeg', 'image/png', 'image/webp', 'image/avif', 'image/gif'],
 
   formatSize(bytes) {
     if (bytes < 1024)       return bytes + ' B';
@@ -135,14 +146,47 @@ const FileUtils = {
     return name.split('.').pop().toLowerCase();
   },
 
+  getFileMime(file) {
+    if (file?.type) return file.type.toLowerCase();
+    const extension = this.getExt(file?.name || '');
+    return {
+      jpg: 'image/jpeg',
+      jpeg: 'image/jpeg',
+      png: 'image/png',
+      webp: 'image/webp',
+      avif: 'image/avif',
+      gif: 'image/gif',
+    }[extension] || '';
+  },
+
+  resolveOutputMime(file, selectedMime) {
+    if (this.isGif(file)) return 'image/gif';
+    return selectedMime === 'same' ? this.getFileMime(file) : selectedMime;
+  },
+
+  extensionForMime(mime) {
+    return {
+      'image/jpeg': 'jpg',
+      'image/png': 'png',
+      'image/webp': 'webp',
+      'image/avif': 'avif',
+      'image/gif': 'gif',
+    }[mime] || 'png';
+  },
+
+  isGif(file) {
+    return this.getFileMime(file) === 'image/gif';
+  },
+
   isSupportedImage(file) {
-    return this.SUPPORTED_IMAGE_TYPES.includes(file.type);
+    return this.SUPPORTED_IMAGE_TYPES.includes(this.getFileMime(file));
   },
 
   validateFile(file) {
     if (!(file instanceof Blob)) throw new Error('Некорректный файл');
-    if (file.size > this.MAX_FILE_SIZE) {
-      throw new Error(`Файл превышает лимит ${this.formatSize(this.MAX_FILE_SIZE)}`);
+    const limit = this.isGif(file) ? this.MAX_GIF_FILE_SIZE : this.MAX_FILE_SIZE;
+    if (file.size > limit) {
+      throw new Error(`Файл превышает лимит ${this.formatSize(limit)}`);
     }
     return file;
   },
@@ -166,6 +210,10 @@ const FileUtils = {
   },
 
   detectImageMime(bytes) {
+    if (bytes.length >= 6) {
+      const signature = String.fromCharCode(...bytes.slice(0, 6));
+      if (signature === 'GIF87a' || signature === 'GIF89a') return 'image/gif';
+    }
     if (bytes.length >= 8 &&
         bytes[0] === 0x89 && bytes[1] === 0x50 && bytes[2] === 0x4E && bytes[3] === 0x47 &&
         bytes[4] === 0x0D && bytes[5] === 0x0A && bytes[6] === 0x1A && bytes[7] === 0x0A) {
@@ -340,6 +388,271 @@ const FileUtils = {
 };
 
 
+/* Animated GIF processing */
+const GifProcessor = (() => {
+  const WORKER_URL = '/js/vendor/modern-gif/worker.js?v=2.1.0';
+  const limits = Object.freeze({
+    maxFrames: 200,
+    maxDuration: 60 * 1000,
+    minFrameDelay: 30,
+    maxSide: 1920,
+    maxPixelsPerFrame: 1920 * 1080,
+    maxTotalPixels: 24 * 1000 * 1000,
+    maxOutputSize: 50 * 1024 * 1024,
+  });
+  const inspectionCache = new WeakMap();
+  let libraryPromise = null;
+
+  function loadLibrary() {
+    if (window.modernGif) return Promise.resolve(window.modernGif);
+    if (libraryPromise) return libraryPromise;
+
+    libraryPromise = new Promise((resolve, reject) => {
+      const script = document.createElement('script');
+      script.src = '/js/vendor/modern-gif/index.js?v=2.1.0';
+      script.onload = () => resolve(window.modernGif);
+      script.onerror = () => {
+        libraryPromise = null;
+        reject(new Error('Не удалось загрузить модуль обработки GIF'));
+      };
+      document.head.appendChild(script);
+    });
+
+    return libraryPromise;
+  }
+
+  function normalizeQuality(quality) {
+    return Math.min(1, Math.max(0.1, Number(quality) || 0.82));
+  }
+
+  function qualityToColors(quality) {
+    return Math.min(255, Math.max(32, Math.round(16 + normalizeQuality(quality) * 239)));
+  }
+
+  function workerUrl() {
+    return typeof Worker === 'undefined' ? undefined : WORKER_URL;
+  }
+
+  function validateMetadata(gif) {
+    const frameCount = gif.frames.length;
+    const duration = gif.frames.reduce((total, frame) => total + frame.delay, 0);
+
+    if (!frameCount) throw new Error('GIF не содержит кадров');
+    if (frameCount > limits.maxFrames) {
+      throw new Error(`GIF содержит больше ${limits.maxFrames} кадров`);
+    }
+    if (duration > limits.maxDuration) {
+      throw new Error('Длительность GIF не должна превышать 60 секунд');
+    }
+    if (gif.frames.some(frame => frame.delay < limits.minFrameDelay)) {
+      throw new Error('Задержка кадра GIF не должна быть меньше 30 мс');
+    }
+    validateOutputSize(gif.width, gif.height, frameCount);
+
+    return { frameCount, duration };
+  }
+
+  function validateOutputSize(width, height, frameCount) {
+    if (!width || !height) throw new Error('GIF не содержит корректных размеров');
+    if (width > limits.maxSide || height > limits.maxSide) {
+      throw new Error(`Сторона GIF не должна превышать ${limits.maxSide} px`);
+    }
+    if (width * height > limits.maxPixelsPerFrame) {
+      throw new Error('Один кадр GIF не должен превышать 2,1 мегапикселя');
+    }
+    if (width * height * frameCount > limits.maxTotalPixels) {
+      throw new Error('GIF слишком большой для безопасной обработки в браузере');
+    }
+  }
+
+  async function inspect(file) {
+    FileUtils.validateFile(file);
+    if (!FileUtils.isGif(file)) throw new Error('Файл не является GIF');
+
+    const cached = inspectionCache.get(file);
+    if (cached) return cached;
+
+    const [library, buffer] = await Promise.all([
+      loadLibrary(),
+      FileUtils.readAsArrayBuffer(file),
+    ]);
+    const header = new Uint8Array(buffer, 0, Math.min(buffer.byteLength, 16));
+    if (FileUtils.detectImageMime(header) !== 'image/gif') {
+      throw new Error('Содержимое файла не соответствует формату GIF');
+    }
+
+    let gif;
+    try {
+      gif = library.decode(buffer);
+    } catch (error) {
+      console.error(error);
+      throw new Error('Не удалось прочитать структуру GIF');
+    }
+
+    const stats = validateMetadata(gif);
+    const result = {
+      width: gif.width,
+      height: gif.height,
+      frameCount: stats.frameCount,
+      duration: stats.duration,
+      looped: gif.looped === true,
+      loopCount: gif.loopCount || 0,
+    };
+    inspectionCache.set(file, result);
+    return result;
+  }
+
+  async function decode(file) {
+    FileUtils.validateFile(file);
+    const [library, buffer] = await Promise.all([
+      loadLibrary(),
+      FileUtils.readAsArrayBuffer(file),
+    ]);
+    const gif = library.decode(buffer);
+    const stats = validateMetadata(gif);
+    const decodeBuffer = buffer.slice(0);
+    let frames = await library.decodeFrames(decodeBuffer, {
+      gif,
+      workerUrl: workerUrl(),
+    });
+    if (!Array.isArray(frames)) {
+      frames = library.decodeFrames(buffer, { gif });
+    }
+    return { library, gif, frames, ...stats };
+  }
+
+  function frameCanvas(frame) {
+    const canvas = document.createElement('canvas');
+    canvas.width = frame.width;
+    canvas.height = frame.height;
+    const context = canvas.getContext('2d', { willReadFrequently: true });
+    context.putImageData(new ImageData(frame.data, frame.width, frame.height), 0, 0);
+    return canvas;
+  }
+
+  async function encodeFrames(library, config, frames, transformFrame, onProgress) {
+    const quality = normalizeQuality(config.quality);
+    const encoder = new library.Encoder({
+      width: config.width,
+      height: config.height,
+      workerUrl: workerUrl(),
+      maxColors: qualityToColors(quality),
+      dither: quality < 0.98 ? 'floyd-steinberg' : undefined,
+      ditherTransparency: 'floyd-steinberg',
+      looped: config.looped,
+      loopCount: config.loopCount,
+    });
+
+    for (let index = 0; index < frames.length; index++) {
+      const frame = frames[index];
+      const sourceCanvas = frameCanvas(frame);
+      frame.data = null;
+      const outputCanvas = await transformFrame({
+        sourceCanvas,
+        frame,
+        index,
+        width: config.width,
+        height: config.height,
+      });
+      const canvas = outputCanvas || sourceCanvas;
+      if (canvas.width !== config.width || canvas.height !== config.height) {
+        throw new Error('Все кадры GIF должны иметь одинаковый размер');
+      }
+      const context = canvas.getContext('2d', { willReadFrequently: true });
+      const data = context.getImageData(0, 0, canvas.width, canvas.height).data;
+      await encoder.encode({
+        data,
+        width: canvas.width,
+        height: canvas.height,
+        delay: frame.delay,
+      });
+      onProgress(35 + Math.round(((index + 1) / frames.length) * 50));
+      sourceCanvas.width = 1;
+      sourceCanvas.height = 1;
+      if (canvas !== sourceCanvas) {
+        canvas.width = 1;
+        canvas.height = 1;
+      }
+    }
+
+    const blob = await encoder.flush('blob');
+    if (blob.size > limits.maxOutputSize) {
+      throw new Error(`Результат GIF превышает ${FileUtils.formatSize(limits.maxOutputSize)}`);
+    }
+    return blob;
+  }
+
+  async function process(file, options = {}) {
+    const onProgress = typeof options.onProgress === 'function'
+      ? options.onProgress
+      : () => {};
+    onProgress(5);
+    const decoded = await decode(file);
+    onProgress(30);
+
+    const outputSize = typeof options.getOutputSize === 'function'
+      ? options.getOutputSize(decoded.gif)
+      : { width: decoded.gif.width, height: decoded.gif.height };
+    const width = Math.max(1, Math.round(outputSize.width));
+    const height = Math.max(1, Math.round(outputSize.height));
+    validateOutputSize(width, height, decoded.frameCount);
+
+    const transformFrame = typeof options.transformFrame === 'function'
+      ? options.transformFrame
+      : ({ sourceCanvas }) => sourceCanvas;
+    const blob = await encodeFrames(decoded.library, {
+      width,
+      height,
+      quality: options.quality,
+      looped: decoded.gif.looped === true,
+      loopCount: decoded.gif.loopCount || 0,
+    }, decoded.frames, transformFrame, onProgress);
+    onProgress(100);
+
+    return {
+      blob,
+      width,
+      height,
+      originalWidth: decoded.gif.width,
+      originalHeight: decoded.gif.height,
+      frameCount: decoded.frameCount,
+      duration: decoded.duration,
+    };
+  }
+
+  async function encodeCanvas(canvas, options = {}) {
+    validateOutputSize(canvas.width, canvas.height, 1);
+    const library = await loadLibrary();
+    const context = canvas.getContext('2d', { willReadFrequently: true });
+    const quality = normalizeQuality(options.quality);
+    const encoder = new library.Encoder({
+      width: canvas.width,
+      height: canvas.height,
+      workerUrl: workerUrl(),
+      maxColors: qualityToColors(quality),
+      dither: quality < 0.98 ? 'floyd-steinberg' : undefined,
+      ditherTransparency: 'floyd-steinberg',
+      looped: false,
+    });
+    await encoder.encode({
+      data: context.getImageData(0, 0, canvas.width, canvas.height).data,
+      width: canvas.width,
+      height: canvas.height,
+      delay: 100,
+    });
+    return encoder.flush('blob');
+  }
+
+  return {
+    limits,
+    inspect,
+    process,
+    encodeCanvas,
+    qualityToColors,
+  };
+})();
+
+
 /* Background image processing */
 const ImageProcessor = (() => {
   const pending = new Map();
@@ -431,9 +744,19 @@ const ImageProcessor = (() => {
     };
   }
 
+  function imageWidth(image) {
+    return image.naturalWidth || image.width;
+  }
+
+  function imageHeight(image) {
+    return image.naturalHeight || image.height;
+  }
+
   function getOutputSize(image, task) {
+    const width = imageWidth(image);
+    const height = imageHeight(image);
     if (task.type === 'resize') {
-      return getResizeSize(image.naturalWidth, image.naturalHeight, task);
+      return getResizeSize(width, height, task);
     }
     if (task.type === 'crop') {
       return {
@@ -442,9 +765,9 @@ const ImageProcessor = (() => {
       };
     }
     if (task.type === 'rotate' && Math.abs(Number(task.rotation)) % 180 === 90) {
-      return { width: image.naturalHeight, height: image.naturalWidth };
+      return { width: height, height: width };
     }
-    return { width: image.naturalWidth, height: image.naturalHeight };
+    return { width, height };
   }
 
   function drawOnMainThread(image, canvas, context, task) {
@@ -454,10 +777,12 @@ const ImageProcessor = (() => {
     }
 
     if (task.type === 'rotate') {
+      const width = imageWidth(image);
+      const height = imageHeight(image);
       context.translate(canvas.width / 2, canvas.height / 2);
       context.rotate((Number(task.rotation) || 0) * Math.PI / 180);
       context.scale(task.flipH ? -1 : 1, task.flipV ? -1 : 1);
-      context.drawImage(image, -image.naturalWidth / 2, -image.naturalHeight / 2);
+      context.drawImage(image, -width / 2, -height / 2);
       return;
     }
 
@@ -543,15 +868,17 @@ const ImageProcessor = (() => {
     onProgress(55);
     drawOnMainThread(image, canvas, context, task);
     onProgress(80);
-    const blob = await FileUtils.canvasToBlob(canvas, task.mimeType, task.quality);
+    const blob = task.mimeType === 'image/gif'
+      ? await GifProcessor.encodeCanvas(canvas, { quality: task.quality })
+      : await FileUtils.canvasToBlob(canvas, task.mimeType, task.quality);
     onProgress(100);
 
     return {
       blob,
       width: canvas.width,
       height: canvas.height,
-      originalWidth: image.naturalWidth,
-      originalHeight: image.naturalHeight,
+      originalWidth: imageWidth(image),
+      originalHeight: imageHeight(image),
     };
   }
 
@@ -560,6 +887,29 @@ const ImageProcessor = (() => {
     const onProgress = typeof options.onProgress === 'function'
       ? options.onProgress
       : () => {};
+
+    if (FileUtils.isGif(file)) {
+      if (task.mimeType !== 'image/gif') {
+        throw new Error('Анимированный GIF можно сохранить только в формате GIF');
+      }
+      return GifProcessor.process(file, {
+        quality: task.quality,
+        onProgress,
+        getOutputSize: gif => getOutputSize(gif, task),
+        transformFrame: ({ sourceCanvas }) => {
+          const size = getOutputSize(sourceCanvas, task);
+          const canvas = document.createElement('canvas');
+          canvas.width = size.width;
+          canvas.height = size.height;
+          drawOnMainThread(sourceCanvas, canvas, canvas.getContext('2d'), task);
+          return canvas;
+        },
+      });
+    }
+
+    if (task.mimeType === 'image/gif') {
+      return runOnMainThread(file, task, onProgress);
+    }
 
     if (canUseWorker()) {
       try {
@@ -621,7 +971,7 @@ class Dropzone {
     });
   }
 
-  _handle(files) {
+  async _handle(files) {
     let list = Array.from(files);
     if (!this.opts.multiple) list = list.slice(0, 1);
 
@@ -638,17 +988,38 @@ class Dropzone {
 
     const valid = this.opts.accept.length
       ? list.filter(f => this.opts.accept.some(t => {
-          if (t.endsWith('/*')) return f.type.startsWith(t.slice(0,-1));
-          return f.type === t;
+          const mime = FileUtils.getFileMime(f);
+          if (t.endsWith('/*')) return mime.startsWith(t.slice(0,-1));
+          return mime === t;
         }))
       : list;
-    const accepted = valid.filter(file => file.size <= FileUtils.MAX_FILE_SIZE);
+    const acceptedBySize = valid.filter(file => {
+      const limit = FileUtils.isGif(file)
+        ? FileUtils.MAX_GIF_FILE_SIZE
+        : FileUtils.MAX_FILE_SIZE;
+      return file.size <= limit;
+    });
 
     if (valid.length < list.length) {
       Toast.error('Некоторые файлы имеют неподдерживаемый формат.');
     }
-    if (accepted.length < valid.length) {
-      Toast.error(`Некоторые файлы превышают лимит ${FileUtils.formatSize(FileUtils.MAX_FILE_SIZE)}.`);
+    if (acceptedBySize.length < valid.length) {
+      Toast.error('Некоторые файлы превышают допустимый размер.');
+    }
+
+    const accepted = [];
+    for (const file of acceptedBySize) {
+      if (!FileUtils.isGif(file)) {
+        accepted.push(file);
+        continue;
+      }
+      try {
+        await GifProcessor.inspect(file);
+        accepted.push(file);
+      } catch (error) {
+        console.error(error);
+        Toast.error(error.message || 'Не удалось проверить GIF.');
+      }
     }
     if (accepted.length) this.opts.onFiles(accepted);
   }
@@ -762,6 +1133,15 @@ class FileListManager {
     const item = { id, file, el: row };
     this.items.push(item);
     if (this.selectedId === null) this.select(id, false);
+    if (FileUtils.isGif(file)) {
+      GifProcessor.inspect(file).then(info => {
+        const duration = (info.duration / 1000).toFixed(info.duration % 1000 ? 1 : 0);
+        this.setMeta(
+          id,
+          `${FileUtils.formatCount(info.frameCount, ['кадр', 'кадра', 'кадров'])} · ${duration} с · ${FileUtils.formatSize(file.size)}`
+        );
+      }).catch(() => {});
+    }
     return item;
   }
 

@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Изменить размер изображения – AKD Image</title>
-  <meta name="description" content="Изменяйте размер JPG, PNG, WebP и AVIF по пикселям, процентам или длинной стороне без загрузки файлов на сервер.">
+  <meta name="description" content="Изменяйте размер JPG, PNG, WebP, AVIF и анимированных GIF по пикселям, процентам или длинной стороне без загрузки файлов на сервер.">
   <link rel="canonical" href="https://akdimage.vercel.app/resize">
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="/css/main.css?v=5">
@@ -23,7 +23,7 @@
       <p class="tool-page__subtitle">Масштабируйте изображения по точным размерам, процентам или длинной стороне без лишних действий.</p>
     </div>
     <div class="dropzone" id="dropzone">
-      <input type="file" accept="image/jpeg,image/png,image/webp,image/avif" multiple>
+      <input type="file" accept="image/jpeg,image/png,image/webp,image/avif,image/gif" multiple>
       <p class="dropzone__title">Перетащите изображения сюда</p>
       <p class="dropzone__hint">или нажмите для выбора файлов</p>
       <div class="dropzone__formats">
@@ -31,6 +31,7 @@
         <span class="fmt-badge">PNG</span>
         <span class="fmt-badge">WEBP</span>
         <span class="fmt-badge">AVIF</span>
+        <span class="fmt-badge">GIF</span>
       </div>
     </div>
     <div class="tool-panel hidden" id="settings-panel">
@@ -97,10 +98,11 @@
               <option value="image/png">PNG</option>
               <option value="image/webp">WebP</option>
               <option value="image/avif">AVIF</option>
+              <option value="image/gif">GIF</option>
             </select>
           </div>
           <div class="form-group">
-            <label>Качество (JPG / WebP / AVIF)</label>
+            <label>Качество / количество цветов GIF</label>
             <div class="range-row">
               <input type="range" id="quality" min="10" max="100" value="88">
               <span id="quality-val">88%</span>
@@ -141,7 +143,7 @@
   </div>
 </main>
 
-<script src="/js/core.js?v=7"></script>
+<script src="/js/core.js?v=8"></script>
 <script>
 (function () {
   const dropzoneEl  = document.getElementById('dropzone');
@@ -207,7 +209,7 @@
   });
 
   new Dropzone(dropzoneEl, {
-    accept: ['image/jpeg','image/png','image/webp','image/avif'],
+    accept: ['image/jpeg','image/png','image/webp','image/avif','image/gif'],
     multiple: true,
     onFiles(newFiles) {
       const hadFiles = files.length > 0;
@@ -241,6 +243,7 @@
     const has = UIUtils.updateBatchLayout({ dropzoneEl, fileListEl, settingsEl, actionBarEl, countEl }, files.length);
     UIUtils.resetBatchResult({ resultArea, resultStats, downloadAllBtn: dlAllBtn });
     UIUtils.resetPreview({ previewBtn, previewCanvas }, has);
+    UIUtils.syncGifOutput(outputFmt, files);
     results = [];
   }
 
@@ -307,7 +310,7 @@
       manager.setProgress(item.id, 20);
 
       try {
-        const outMime = mime || file.type;
+        const outMime = FileUtils.resolveOutputMime(file, mime || 'same');
         const processed = await ImageProcessor.process(file, {
           type: 'resize',
           mode,
@@ -330,7 +333,7 @@
         } = processed;
         lastW = origW;
         lastH = origH;
-        const ext  = outMime.split('/')[1].replace('jpeg','jpg');
+        const ext  = FileUtils.extensionForMime(outMime);
         const filename = file.name.replace(/\.[^.]+$/, '') + `_${targetW}x${targetH}_akd.` + ext;
 
         manager.setProgress(item.id, 100);
@@ -342,6 +345,7 @@
       } catch (err) {
         errors++;
         manager.setStatus(item.id, 'Ошибка', 'status-error');
+        manager.setMeta(item.id, err.message || 'Не удалось обработать GIF');
         console.error(err);
       }
     }

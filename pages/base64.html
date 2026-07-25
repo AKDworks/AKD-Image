@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Изображение в Base64 – AKD Image</title>
-  <meta name="description" content="Преобразуйте изображение в Base64 или восстановите изображение из Base64 локально в браузере.">
+  <meta name="description" content="Преобразуйте JPG, PNG, WebP, AVIF или анимированный GIF в Base64 и восстановите исходный файл локально в браузере.">
   <link rel="canonical" href="https://akdimage.vercel.app/base64">
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="/css/main.css?v=5">
@@ -31,7 +31,7 @@
 
     <section id="encode-panel">
       <div class="dropzone" id="dropzone">
-        <input type="file" accept="image/jpeg,image/png,image/webp,image/avif">
+        <input type="file" accept="image/jpeg,image/png,image/webp,image/avif,image/gif">
         <p class="dropzone__title">Перетащите изображение сюда</p>
         <p class="dropzone__hint">или нажмите для выбора файла</p>
         <div class="dropzone__formats">
@@ -39,6 +39,7 @@
           <span class="fmt-badge">PNG</span>
           <span class="fmt-badge">WEBP</span>
           <span class="fmt-badge">AVIF</span>
+          <span class="fmt-badge">GIF</span>
         </div>
       </div>
 
@@ -100,6 +101,7 @@
                 <option value="image/jpeg">JPG</option>
                 <option value="image/webp">WebP</option>
                 <option value="image/avif">AVIF</option>
+                <option value="image/gif">GIF</option>
               </select>
             </div>
           </div>
@@ -124,7 +126,7 @@
   </div>
 </main>
 
-<script src="/js/core.js?v=7"></script>
+<script src="/js/core.js?v=8"></script>
 <script>
 (function () {
   const tabs = document.querySelectorAll('.base64-tab');
@@ -164,7 +166,7 @@
   });
 
   new Dropzone(dropzoneEl, {
-    accept: ['image/jpeg', 'image/png', 'image/webp', 'image/avif'],
+    accept: ['image/jpeg', 'image/png', 'image/webp', 'image/avif', 'image/gif'],
     multiple: false,
     async onFiles(files) {
       const file = files[0];
@@ -175,7 +177,7 @@
         sourceFile = file;
         sourcePreview.src = sourceDataUrl;
         sourceName.textContent = file.name;
-        sourceMeta.textContent = `${file.type || 'Изображение'} · ${FileUtils.formatSize(file.size)}`;
+        sourceMeta.textContent = `${FileUtils.getFileMime(file) || 'Изображение'} · ${FileUtils.formatSize(file.size)}`;
         UIUtils.setVisible(dropzoneEl, false);
         UIUtils.setVisible(encodeResult, true);
         updateOutput();
@@ -240,7 +242,7 @@
       .replace(/_/g, '/');
 
     if (!FileUtils.SUPPORTED_IMAGE_TYPES.includes(mime)) {
-      throw new Error('Поддерживаются только JPG, PNG, WebP и AVIF');
+      throw new Error('Поддерживаются только JPG, PNG, WebP, AVIF и GIF');
     }
     if (!base64 || !/^[A-Za-z0-9+/]*={0,2}$/.test(base64) || base64.length % 4 === 1) {
       throw new Error('Некорректная строка Base64');
@@ -266,7 +268,8 @@
       'image/jpeg': 'jpg',
       'image/png': 'png',
       'image/webp': 'webp',
-      'image/avif': 'avif'
+      'image/avif': 'avif',
+      'image/gif': 'gif'
     };
     return extensions[mime] || 'img';
   }
