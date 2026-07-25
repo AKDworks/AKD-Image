@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Повернуть и отразить – AKD Image</title>
-  <meta name="description" content="Поворачивайте и отражайте JPG, PNG, WebP и AVIF в браузере. Выберите угол, примените отражение и скачайте результат.">
+  <meta name="description" content="Поворачивайте и отражайте JPG, PNG, WebP, AVIF и анимированные GIF в браузере. Выберите угол, примените отражение и скачайте результат.">
   <link rel="canonical" href="https://akdimage.vercel.app/rotate">
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="/css/main.css?v=5">
@@ -23,7 +23,7 @@
       <p class="tool-page__subtitle">Исправляйте ориентацию и зеркально отражайте сразу несколько изображений.</p>
     </div>
     <div class="dropzone" id="dropzone">
-      <input type="file" accept="image/jpeg,image/png,image/webp,image/avif" multiple>
+      <input type="file" accept="image/jpeg,image/png,image/webp,image/avif,image/gif" multiple>
       <p class="dropzone__title">Перетащите изображения сюда</p>
       <p class="dropzone__hint">или нажмите для выбора файлов</p>
       <div class="dropzone__formats">
@@ -31,6 +31,7 @@
         <span class="fmt-badge">PNG</span>
         <span class="fmt-badge">WEBP</span>
         <span class="fmt-badge">AVIF</span>
+        <span class="fmt-badge">GIF</span>
       </div>
     </div>
     <div class="tool-panel hidden" id="settings-panel">
@@ -66,7 +67,7 @@
   </div>
 </main>
 
-<script src="/js/core.js?v=7"></script>
+<script src="/js/core.js?v=9"></script>
 <script>
 (function () {
   const dropzoneEl  = document.getElementById('dropzone');
@@ -106,6 +107,7 @@
     const desc = statusParts.join(', ') || 'нет изменений';
     updateActionButtons();
     Toast.info('Выбрано: ' + desc);
+    previewScheduler.schedule();
   }
 
   function updateActionButtons() {
@@ -123,12 +125,8 @@
     files = files.filter(f => f.item.id !== e.detail.id);
     updateUI();
   });
-  fileListEl.addEventListener('file-selected', () => {
-    if (!previewCanvas.classList.contains('hidden')) previewBtn.click();
-  });
-
   new Dropzone(dropzoneEl, {
-    accept: ['image/jpeg','image/png','image/webp','image/avif'],
+    accept: ['image/jpeg','image/png','image/webp','image/avif','image/gif'],
     multiple: true,
     onFiles(newFiles) {
       newFiles.forEach(f => files.push({ file: f, item: manager.add(f) }));
@@ -141,34 +139,32 @@
     UIUtils.resetBatchResult({ resultArea, resultStats, downloadAllBtn: dlAllBtn });
     UIUtils.resetPreview({ previewBtn, previewCanvas }, has);
     results = [];
+    if (has) previewScheduler.refresh();
   }
 
-  previewBtn.addEventListener('click', async () => {
+  const previewScheduler = UIUtils.createPreviewScheduler(async isCurrent => {
     if (!files.length) return;
-    await UIUtils.runPreview(previewCanvas, async () => {
-      const file = manager.getSelectedItem().file;
-      const src = await FileUtils.readAsDataURL(file);
-      const img = await FileUtils.loadImage(src);
+    const file = manager.getSelectedItem().file;
+    const src = await FileUtils.readAsDataURL(file);
+    const img = await FileUtils.loadImage(src);
+    if (!isCurrent()) return;
 
-      const ctx = previewCanvas.getContext('2d');
+    const ctx = previewCanvas.getContext('2d');
+    const isSwapped = rotation === 90 || rotation === 270;
+    const w = isSwapped ? img.naturalHeight : img.naturalWidth;
+    const h = isSwapped ? img.naturalWidth : img.naturalHeight;
 
-      const isSwapped = rotation === 90 || rotation === 270;
-      const w = isSwapped ? img.naturalHeight : img.naturalWidth;
-      const h = isSwapped ? img.naturalWidth : img.naturalHeight;
-
-      previewCanvas.width = w;
-      previewCanvas.height = h;
-
-      ctx.translate(w / 2, h / 2);
-      ctx.rotate((rotation * Math.PI) / 180);
-      const scaleX = flipH ? -1 : 1;
-      const scaleY = flipV ? -1 : 1;
-      ctx.scale(scaleX, scaleY);
-      ctx.drawImage(img, -img.naturalWidth / 2, -img.naturalHeight / 2);
-
-      previewCanvas.classList.remove('hidden');
-    });
+    previewCanvas.width = w;
+    previewCanvas.height = h;
+    ctx.translate(w / 2, h / 2);
+    ctx.rotate((rotation * Math.PI) / 180);
+    ctx.scale(flipH ? -1 : 1, flipV ? -1 : 1);
+    ctx.drawImage(img, -img.naturalWidth / 2, -img.naturalHeight / 2);
+    previewCanvas.classList.remove('hidden');
   });
+
+  previewBtn.addEventListener('click', previewScheduler.refresh);
+  fileListEl.addEventListener('file-selected', previewScheduler.refresh);
 
   clearBtn.addEventListener('click', () => {
     files = []; manager.clear(); updateUI();
@@ -195,7 +191,7 @@
           rotation,
           flipH,
           flipV,
-          mimeType: file.type,
+          mimeType: FileUtils.getFileMime(file),
           quality: 0.95,
         }, {
           onProgress: progress => manager.setProgress(item.id, progress),
@@ -211,6 +207,7 @@
       } catch (err) {
         errors++;
         manager.setStatus(item.id, 'Ошибка', 'status-error');
+        manager.setMeta(item.id, err.message || 'Не удалось обработать GIF');
         console.error(err);
       }
     }

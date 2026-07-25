@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Сжать изображение – AKD Image</title>
-  <meta name="description" content="Сжимайте JPG, PNG, WebP и AVIF прямо в браузере. Изображения обрабатываются локально и не загружаются на сервер.">
+  <meta name="description" content="Сжимайте JPG, PNG, WebP, AVIF и анимированные GIF прямо в браузере. Изображения обрабатываются локально и не загружаются на сервер.">
   <link rel="canonical" href="https://akdimage.vercel.app/compress">
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="/css/main.css?v=5">
@@ -23,7 +23,7 @@
       <p class="tool-page__subtitle">Уменьшайте вес одного или нескольких изображений, выбирая подходящее качество и формат результата.</p>
     </div>
     <div class="dropzone" id="dropzone">
-      <input type="file" accept="image/jpeg,image/png,image/webp,image/avif" multiple>
+      <input type="file" accept="image/jpeg,image/png,image/webp,image/avif,image/gif" multiple>
       <p class="dropzone__title">Перетащите изображения сюда</p>
       <p class="dropzone__hint">или нажмите для выбора файлов</p>
       <div class="dropzone__formats">
@@ -31,6 +31,7 @@
         <span class="fmt-badge">PNG</span>
         <span class="fmt-badge">WEBP</span>
         <span class="fmt-badge">AVIF</span>
+        <span class="fmt-badge">GIF</span>
       </div>
     </div>
     <div class="tool-panel hidden" id="settings-panel">
@@ -41,7 +42,7 @@
       <div class="tool-panel__body">
         <div class="form-row">
           <div class="form-group">
-            <label>Качество (JPG / WebP / AVIF)</label>
+            <label>Качество / количество цветов GIF</label>
             <div class="range-row">
               <input type="range" id="quality" min="10" max="100" value="82">
               <span id="quality-val">82%</span>
@@ -50,17 +51,20 @@
           <div class="form-group">
             <label>Формат вывода</label>
             <select id="output-format">
+              <option value="auto" selected>Автоматически (WebP)</option>
               <option value="same">Оставить оригинал</option>
               <option value="image/jpeg">JPG</option>
               <option value="image/png">PNG</option>
               <option value="image/webp">WebP</option>
               <option value="image/avif">AVIF</option>
+              <option value="image/gif">GIF</option>
             </select>
+            <p class="text-muted text-sm mt-8" id="format-hint">Для статичных изображений будет выбран WebP: обычно он заметно уменьшает размер файла.</p>
           </div>
         </div>
 
-        <button class="btn btn-secondary mt-16 hidden" id="preview-btn">Предпросмотр выбранного изображения</button>
         <canvas class="preview-canvas hidden" id="preview-canvas"></canvas>
+        <p class="text-muted text-sm mt-8 hidden" id="preview-meta"></p>
 
       </div>
     </div>
@@ -82,7 +86,7 @@
   </div>
 </main>
 
-<script src="/js/core.js?v=7"></script>
+<script src="/js/core.js?v=9"></script>
 <script>
 (function () {
   const dropzoneEl   = document.getElementById('dropzone');
@@ -95,11 +99,12 @@
   const resultArea   = document.getElementById('result-area');
   const resultStats  = document.getElementById('result-stats');
   const dlAllBtn     = document.getElementById('download-all-btn');
-  const previewBtn   = document.getElementById('preview-btn');
   const previewCanvas = document.getElementById('preview-canvas');
+  const previewMeta  = document.getElementById('preview-meta');
   const qualityInput = document.getElementById('quality');
   const qualityVal   = document.getElementById('quality-val');
   const outputFmt    = document.getElementById('output-format');
+  const formatHint   = document.getElementById('format-hint');
 
   const manager = new FileListManager(fileListEl);
   let files = [];
@@ -109,16 +114,18 @@
     files = files.filter(f => f.item.id !== e.detail.id);
     updateUI();
   });
-  fileListEl.addEventListener('file-selected', () => {
-    if (!previewCanvas.classList.contains('hidden')) previewBtn.click();
-  });
-
   qualityInput.addEventListener('input', () => {
     qualityVal.textContent = qualityInput.value + '%';
+    previewScheduler.schedule();
+  });
+
+  outputFmt.addEventListener('change', () => {
+    updateFormatHint();
+    previewScheduler.schedule();
   });
 
   new Dropzone(dropzoneEl, {
-    accept: ['image/jpeg','image/png','image/webp','image/avif'],
+    accept: ['image/jpeg','image/png','image/webp','image/avif','image/gif'],
     multiple: true,
     onFiles(newFiles) {
       newFiles.forEach(f => {
@@ -131,21 +138,84 @@
   function updateUI() {
     const hasFiles = UIUtils.updateBatchLayout({ dropzoneEl, fileListEl, settingsEl, actionBarEl, countEl }, files.length);
     UIUtils.resetBatchResult({ resultArea, resultStats, downloadAllBtn: dlAllBtn });
-    UIUtils.resetPreview({ previewBtn, previewCanvas }, hasFiles);
+    previewScheduler.cancel();
+    previewCanvas.classList.add('hidden');
+    previewMeta.classList.add('hidden');
+    previewMeta.textContent = '';
+    UIUtils.syncGifOutput(outputFmt, files);
+    updateFormatHint();
     results = [];
+    if (hasFiles) previewScheduler.refresh();
   }
 
-  previewBtn.addEventListener('click', async () => {
-    if (!files.length) return;
-    await UIUtils.runPreview(previewCanvas, async () => {
-      const file = manager.getSelectedItem().file;
-      const src = await FileUtils.readAsDataURL(file);
-      const img = await FileUtils.loadImage(src);
-      previewCanvas.width = img.naturalWidth;
-      previewCanvas.height = img.naturalHeight;
-      previewCanvas.getContext('2d').drawImage(img, 0, 0);
-      previewCanvas.classList.remove('hidden');
+  fileListEl.addEventListener('file-selected', () => previewScheduler.refresh());
+
+  function getCompressionMime(file) {
+    if (FileUtils.isGif(file)) return 'image/gif';
+    if (outputFmt.value === 'auto') return 'image/webp';
+    return FileUtils.resolveOutputMime(file, outputFmt.value);
+  }
+
+  function updateFormatHint() {
+    if (outputFmt.disabled) {
+      formatHint.textContent = 'Анимация сохраняется в GIF, чтобы не потерять кадры.';
+      return;
+    }
+    if (outputFmt.value === 'auto') {
+      formatHint.textContent = 'Для статичных изображений будет выбран WebP: обычно он заметно уменьшает размер файла.';
+      return;
+    }
+    if (outputFmt.value === 'same' && files.some(({ file }) => FileUtils.getFileMime(file) === 'image/png')) {
+      formatHint.textContent = 'PNG сохраняется без потерь: ползунок качества на него не влияет, а новый файл может получиться больше исходного.';
+      return;
+    }
+    if (outputFmt.value === 'image/png') {
+      formatHint.textContent = 'PNG сохраняется без потерь: для уменьшения размера обычно лучше выбрать WebP или AVIF.';
+      return;
+    }
+    formatHint.textContent = 'Предпросмотр и итоговый файл будут созданы с текущими настройками.';
+  }
+
+  const previewScheduler = UIUtils.createPreviewScheduler(async isCurrent => {
+    const selected = manager.getSelectedItem();
+    if (!selected) return;
+
+    const file = selected.file;
+    const mime = getCompressionMime(file);
+    const quality = parseInt(qualityInput.value, 10) / 100;
+    previewMeta.textContent = 'Обновляю предпросмотр...';
+    previewMeta.classList.remove('hidden');
+
+    const processed = await ImageProcessor.process(file, {
+      type: 'transcode',
+      mimeType: mime,
+      quality,
     });
+    if (!isCurrent()) return;
+
+    const useOriginal = (outputFmt.value === 'auto' || FileUtils.isGif(file))
+      && processed.blob.size >= file.size;
+    const blob = useOriginal ? file : processed.blob;
+
+    const previewUrl = URL.createObjectURL(blob);
+    try {
+      const image = await FileUtils.loadImage(previewUrl);
+      if (!isCurrent()) return;
+
+      previewCanvas.width = image.naturalWidth;
+      previewCanvas.height = image.naturalHeight;
+      const context = previewCanvas.getContext('2d');
+      context.clearRect(0, 0, previewCanvas.width, previewCanvas.height);
+      context.drawImage(image, 0, 0);
+      previewCanvas.classList.remove('hidden');
+
+      const change = useOriginal ? '0%' : FileUtils.formatPct(file.size, blob.size);
+      const frameHint = FileUtils.isGif(file) ? ' · показан первый кадр' : '';
+      const fallbackHint = useOriginal ? ' · оставлен оригинал: новая версия тяжелее' : '';
+      previewMeta.textContent = `Предпросмотр: ${FileUtils.formatSize(file.size)} → ${FileUtils.formatSize(blob.size)} (${change})${frameHint}${fallbackHint}`;
+    } finally {
+      URL.revokeObjectURL(previewUrl);
+    }
   });
 
   function plural(n, a, b, c) {
@@ -165,7 +235,7 @@
   compressBtn.addEventListener('click', async () => {
     if (!files.length) return;
     compressBtn.disabled = true;
-    UIUtils.setBatchLocked(manager, [clearBtn, dlAllBtn, previewBtn], true);
+    UIUtils.setBatchLocked(manager, [clearBtn, dlAllBtn], true);
     compressBtn.innerHTML = '<span class="spinner"></span> Сжимаю...';
     results = [];
     let errors = 0;
@@ -177,9 +247,9 @@
       manager.setProgress(item.id, 10);
 
       try {
-        const mime  = outputFmt.value === 'same' ? file.type : outputFmt.value;
+        let mime  = getCompressionMime(file);
         const q     = parseInt(qualityInput.value) / 100;
-        const { blob } = await ImageProcessor.process(file, {
+        const processed = await ImageProcessor.process(file, {
           type: 'transcode',
           mimeType: mime,
           quality: q,
@@ -187,13 +257,17 @@
           onProgress: progress => manager.setProgress(item.id, progress),
         });
 
-        manager.setProgress(item.id, 100);
-        const ext      = mime.split('/')[1].replace('jpeg','jpg');
-        const filename = file.name.replace(/\.[^.]+$/, '') + '_akd.' + ext;
-        const saving   = file.size - blob.size;
-        const pct      = file.size > 0 ? ((saving / file.size) * 100).toFixed(1) : '0';
+        const useOriginal = (outputFmt.value === 'auto' || FileUtils.isGif(file))
+          && processed.blob.size >= file.size;
+        const blob = useOriginal ? file : processed.blob;
+        if (useOriginal) mime = FileUtils.getFileMime(file);
 
-        manager.setStatus(item.id, `−${pct}%`, 'status-done');
+        manager.setProgress(item.id, 100);
+        const ext      = FileUtils.extensionForMime(mime);
+        const filename = file.name.replace(/\.[^.]+$/, '') + '_akd.' + ext;
+        const pct      = useOriginal ? '0%' : FileUtils.formatPct(file.size, blob.size);
+
+        manager.setStatus(item.id, useOriginal ? 'Без изменений' : pct, 'status-done');
         manager.setMeta(item.id,
           FileUtils.formatSize(file.size) + '  ' + FileUtils.formatSize(blob.size));
         manager.addDownload(item.id, blob, filename);
@@ -205,17 +279,17 @@
       } catch (err) {
         errors++;
         manager.setStatus(item.id, 'Ошибка', 'status-error');
+        manager.setMeta(item.id, err.message || 'Не удалось обработать GIF');
         console.error(err);
       }
     }
 
     if (results.length) {
-      const saved = totalBefore - totalAfter;
-      const pct   = totalBefore > 0 ? ((saved / totalBefore) * 100).toFixed(1) : '0';
+      const pct = FileUtils.formatPct(totalBefore, totalAfter);
       resultStats.innerHTML = `
         <div class="stat-card"><div class="stat-card__label">До</div><div class="stat-card__value">${FileUtils.formatSize(totalBefore)}</div></div>
         <div class="stat-card"><div class="stat-card__label">После</div><div class="stat-card__value">${FileUtils.formatSize(totalAfter)}</div></div>
-        <div class="stat-card stat-green"><div class="stat-card__label">Сэкономлено</div><div class="stat-card__value">−${pct}%</div></div>
+        <div class="stat-card stat-green"><div class="stat-card__label">Изменение</div><div class="stat-card__value">${pct}</div></div>
       `;
       UIUtils.showBatchResult({ resultArea, downloadAllBtn: dlAllBtn }, results.length);
       Toast.success('Сжатие завершено.');
@@ -225,7 +299,7 @@
     }
 
     compressBtn.disabled = false;
-    UIUtils.setBatchLocked(manager, [clearBtn, dlAllBtn, previewBtn], false);
+    UIUtils.setBatchLocked(manager, [clearBtn, dlAllBtn], false);
     compressBtn.innerHTML = 'Сжать всё';
   });
 

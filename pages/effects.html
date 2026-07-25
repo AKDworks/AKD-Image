@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Фотоэффекты – AKD Image</title>
-  <meta name="description" content="Настраивайте яркость, контраст, насыщенность, размытие и другие эффекты для изображений прямо в браузере.">
+  <meta name="description" content="Настраивайте яркость, контраст, насыщенность и другие эффекты для JPG, PNG, WebP, AVIF и анимированных GIF прямо в браузере.">
   <link rel="canonical" href="https://akdimage.vercel.app/effects">
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="/css/main.css?v=5">
@@ -23,7 +23,7 @@
       <p class="tool-page__subtitle">Настройте свет, цвет и резкость изображения, наблюдая изменения прямо в рабочей области.</p>
     </div>
     <div class="dropzone" id="dropzone">
-      <input type="file" accept="image/jpeg,image/png,image/webp,image/avif">
+      <input type="file" accept="image/jpeg,image/png,image/webp,image/avif,image/gif">
       <p class="dropzone__title">Перетащите изображение сюда</p>
       <p class="dropzone__hint">или нажмите для выбора файла</p>
       <div class="dropzone__formats">
@@ -31,6 +31,7 @@
         <span class="fmt-badge">PNG</span>
         <span class="fmt-badge">WEBP</span>
         <span class="fmt-badge">AVIF</span>
+        <span class="fmt-badge">GIF</span>
       </div>
     </div>
     <div class="hidden" id="workspace-panel">
@@ -101,18 +102,6 @@
               </div>
             </div>
 
-            <hr class="divider">
-
-            <div class="form-group">
-              <label>Формат вывода</label>
-              <select id="output-format">
-                <option value="image/jpeg">JPG</option>
-                <option value="image/png">PNG</option>
-                <option value="image/webp">WebP</option>
-                <option value="image/avif">AVIF</option>
-              </select>
-            </div>
-
             <button class="btn btn-primary btn-block mt-16" id="save-btn">Сохранить изображение</button>
             <button class="btn btn-secondary btn-block mt-8" id="change-img-btn">Выбрать другое</button>
 
@@ -125,7 +114,7 @@
   </div>
 </main>
 
-<script src="/js/core.js?v=7"></script>
+<script src="/js/core.js?v=9"></script>
 <script>
 (function () {
   const dropzoneEl  = document.getElementById('dropzone');
@@ -140,8 +129,6 @@
   const sepiaInput      = document.getElementById('sepia');
   const grayscaleInput  = document.getElementById('grayscale');
   const invertInput     = document.getElementById('invert');
-  const outputFormat    = document.getElementById('output-format');
-
   const saveBtn         = document.getElementById('save-btn');
   const resetBtn        = document.getElementById('reset-btn');
   const changeImgBtn    = document.getElementById('change-img-btn');
@@ -181,7 +168,7 @@
   });
 
   new Dropzone(dropzoneEl, {
-    accept: ['image/jpeg','image/png','image/webp','image/avif'],
+    accept: ['image/jpeg','image/png','image/webp','image/avif','image/gif'],
     multiple: false,
     onFiles(newFiles) {
       if (newFiles[0]) loadImage(newFiles[0]);
@@ -248,8 +235,8 @@
     saveBtn.innerHTML = '<span class="spinner"></span> Сохранение...';
 
     try {
-      const mime = outputFormat.value;
-      const ext = mime.split('/')[1].replace('jpeg','jpg');
+      const mime = FileUtils.getFileMime(activeFile);
+      const ext = FileUtils.extensionForMime(mime);
       const { blob } = await ImageProcessor.process(activeFile, {
         type: 'effects',
         filters: {
@@ -262,14 +249,14 @@
           invert: Number(invertInput.value),
         },
         mimeType: mime,
-        quality: 0.9,
+        quality: 0.95,
       });
       const filename = activeFile.name.replace(/\.[^.]+$/, '') + '_effect.' + ext;
       FileUtils.downloadBlob(blob, filename);
       Toast.success('Изображение сохранено.');
     } catch (err) {
       console.error(err);
-      Toast.error('Не удалось сохранить изображение.');
+      Toast.error(err.message || 'Не удалось сохранить изображение.');
     }
 
     saveBtn.disabled = false;
