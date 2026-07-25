@@ -13,7 +13,7 @@
   <meta property="og:type" content="website">
   <link rel="canonical" href="https://akdimage.vercel.app/">
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="css/main.css?v=5">
+  <link rel="stylesheet" href="css/main.css?v=6">
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
@@ -42,7 +42,46 @@
         <button class="filter-btn" data-filter="geometry">Геометрия</button>
         <button class="filter-btn" data-filter="creativity">Творчество</button>
       </div>
-      <p class="section-title section-title--spaced" id="grid-title">Все инструменты</p>
+      <div class="tools-grid-toolbar">
+        <p class="section-title" id="grid-title">Все инструменты</p>
+        <div class="tool-sort">
+          <button
+            class="tool-sort__trigger"
+            id="tool-sort-trigger"
+            type="button"
+            aria-haspopup="menu"
+            aria-expanded="false"
+            aria-controls="tool-sort-menu"
+            aria-label="Сортировка: По умолчанию"
+          >
+            <svg class="tool-sort__icon" viewBox="0 -960 960 960" aria-hidden="true">
+              <path d="M280-240v-80h160v80H280ZM160-440v-80h400v80H160ZM40-640v-80h640v80H40Zm680 480v-120H600v-80h120v-120h80v120h120v80H800v120h-80Z"/>
+            </svg>
+            <span class="tool-sort__label" id="tool-sort-label">По умолчанию</span>
+            <svg class="tool-sort__chevron" viewBox="0 -960 960 960" aria-hidden="true">
+              <path d="M480-360 280-560h400L480-360Z"/>
+            </svg>
+          </button>
+          <div class="tool-sort__menu" id="tool-sort-menu" role="menu" hidden>
+            <button class="tool-sort__option is-selected" type="button" role="menuitemradio" aria-checked="true" data-sort="default">
+              <span>По умолчанию</span>
+              <span class="tool-sort__check" aria-hidden="true">✓</span>
+            </button>
+            <button class="tool-sort__option" type="button" role="menuitemradio" aria-checked="false" data-sort="popular">
+              <span>Популярные</span>
+              <span class="tool-sort__check" aria-hidden="true">✓</span>
+            </button>
+            <button class="tool-sort__option" type="button" role="menuitemradio" aria-checked="false" data-sort="new">
+              <span>Новые</span>
+              <span class="tool-sort__check" aria-hidden="true">✓</span>
+            </button>
+            <button class="tool-sort__option" type="button" role="menuitemradio" aria-checked="false" data-sort="alphabetical">
+              <span>По алфавиту</span>
+              <span class="tool-sort__check" aria-hidden="true">✓</span>
+            </button>
+          </div>
+        </div>
+      </div>
       <div class="tools-grid" id="tools-grid">
 
         <a href="/compress" class="tool-card" data-category="optimization">
@@ -266,7 +305,94 @@
 <script>
   document.addEventListener('DOMContentLoaded', () => {
     const filters = document.querySelectorAll('.filter-btn');
-    const cards = document.querySelectorAll('.tool-card');
+    const toolsGrid = document.getElementById('tools-grid');
+    const cards = Array.from(document.querySelectorAll('.tool-card'));
+    const sortTrigger = document.getElementById('tool-sort-trigger');
+    const sortMenu = document.getElementById('tool-sort-menu');
+    const sortLabel = document.getElementById('tool-sort-label');
+    const sortOptions = Array.from(document.querySelectorAll('.tool-sort__option'));
+    const defaultOrder = new Map(cards.map((card, index) => [card, index]));
+
+    const popularOrder = [
+      'Сжать изображение',
+      'Изменить размер',
+      'Конвертировать',
+      'Обрезать изображение',
+      'Изображения в PDF',
+      'Водяной знак',
+      'Повернуть / Отразить',
+      'Фотоэффекты',
+      'Размытие области',
+      'Удалить EXIF',
+      'Коллаж',
+      'Пометки на изображении',
+      'Генератор мемов',
+      'Создать favicon',
+      'Генератор палитры',
+      'Изображение в Base64',
+      'Разделить изображение',
+      'Скругление углов',
+      'Пикселизатор'
+    ];
+    const newestOrder = [
+      'Пометки на изображении',
+      'Коллаж',
+      'Изображения в PDF',
+      'Размытие области',
+      'Генератор палитры',
+      'Создать favicon',
+      'Изображение в Base64'
+    ];
+    const popularRank = new Map(popularOrder.map((title, index) => [title, index]));
+    const newestRank = new Map(newestOrder.map((title, index) => [title, index]));
+    const sortNames = {
+      default: 'По умолчанию',
+      popular: 'Популярные',
+      new: 'Новые',
+      alphabetical: 'По алфавиту'
+    };
+
+    const getTitle = card => card.querySelector('.tool-card__title').textContent.trim();
+
+    const closeSortMenu = () => {
+      sortMenu.hidden = true;
+      sortTrigger.setAttribute('aria-expanded', 'false');
+    };
+
+    const applySort = mode => {
+      const sortedCards = [...cards];
+
+      if (mode === 'popular') {
+        sortedCards.sort((a, b) =>
+          (popularRank.get(getTitle(a)) ?? cards.length) -
+          (popularRank.get(getTitle(b)) ?? cards.length)
+        );
+      } else if (mode === 'new') {
+        sortedCards.sort((a, b) => {
+          const aRank = newestRank.has(getTitle(a))
+            ? newestRank.get(getTitle(a))
+            : newestOrder.length + defaultOrder.get(a);
+          const bRank = newestRank.has(getTitle(b))
+            ? newestRank.get(getTitle(b))
+            : newestOrder.length + defaultOrder.get(b);
+          return aRank - bRank;
+        });
+      } else if (mode === 'alphabetical') {
+        sortedCards.sort((a, b) => getTitle(a).localeCompare(getTitle(b), 'ru'));
+      } else {
+        sortedCards.sort((a, b) => defaultOrder.get(a) - defaultOrder.get(b));
+      }
+
+      sortedCards.forEach(card => toolsGrid.appendChild(card));
+      sortLabel.textContent = sortNames[mode];
+      sortTrigger.setAttribute('aria-label', `Сортировка: ${sortNames[mode]}`);
+
+      sortOptions.forEach(option => {
+        const isSelected = option.dataset.sort === mode;
+        option.classList.toggle('is-selected', isSelected);
+        option.setAttribute('aria-checked', String(isSelected));
+      });
+    };
 
     filters.forEach(btn => {
       btn.addEventListener('click', () => {
@@ -283,6 +409,33 @@
           }
         });
       });
+    });
+
+    sortTrigger.addEventListener('click', () => {
+      const willOpen = sortMenu.hidden;
+      sortMenu.hidden = !willOpen;
+      sortTrigger.setAttribute('aria-expanded', String(willOpen));
+    });
+
+    sortOptions.forEach(option => {
+      option.addEventListener('click', () => {
+        applySort(option.dataset.sort);
+        closeSortMenu();
+        sortTrigger.focus();
+      });
+    });
+
+    document.addEventListener('click', event => {
+      if (!event.target.closest('.tool-sort')) {
+        closeSortMenu();
+      }
+    });
+
+    document.addEventListener('keydown', event => {
+      if (event.key === 'Escape' && !sortMenu.hidden) {
+        closeSortMenu();
+        sortTrigger.focus();
+      }
     });
   });
 </script>
