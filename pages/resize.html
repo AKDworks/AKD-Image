@@ -93,13 +93,14 @@
             <div class="toggle-hint">Если исходник меньше заданного размера – оставить как есть</div>
           </div>
           <label class="toggle">
-            <input type="checkbox" id="no-enlarge" checked>
+            <input type="checkbox" id="no-enlarge">
             <span class="toggle-track"></span>
           </label>
         </div>
 
         <button class="btn btn-secondary mt-16 hidden" id="preview-btn">Предпросмотр выбранного изображения</button>
         <canvas class="preview-canvas hidden" id="preview-canvas"></canvas>
+        <p class="text-muted text-sm mt-8 hidden" id="preview-info"></p>
 
       </div>
     </div>
@@ -135,6 +136,7 @@
   const dlAllBtn    = document.getElementById('download-all-btn');
   const previewBtn  = document.getElementById('preview-btn');
   const previewCanvas = document.getElementById('preview-canvas');
+  const previewInfo = document.getElementById('preview-info');
 
   const widthInput    = document.getElementById('width');
   const heightInput   = document.getElementById('height');
@@ -213,6 +215,7 @@
     const has = UIUtils.updateBatchLayout({ dropzoneEl, fileListEl, settingsEl, actionBarEl, countEl }, files.length);
     UIUtils.resetBatchResult({ resultArea, resultStats, downloadAllBtn: dlAllBtn });
     UIUtils.resetPreview({ previewBtn, previewCanvas }, has);
+    previewInfo.classList.add('hidden');
     results = [];
     if (has) previewScheduler.refresh();
   }
@@ -250,6 +253,8 @@
     const ctx = previewCanvas.getContext('2d');
     ctx.drawImage(img, 0, 0, nw, nh);
     previewCanvas.classList.remove('hidden');
+    previewInfo.textContent = `Предпросмотр: ${nw}×${nh} px`;
+    previewInfo.classList.remove('hidden');
   });
 
   previewBtn.addEventListener('click', previewScheduler.refresh);
