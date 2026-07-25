@@ -7,7 +7,7 @@
   <meta name="description" content="Преобразуйте JPG, PNG, WebP, AVIF или анимированный GIF в Base64 и восстановите исходный файл локально в браузере.">
   <link rel="canonical" href="https://akdimage.vercel.app/base64">
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="/css/main.css?v=5">
+  <link rel="stylesheet" href="/css/main.css?v=7">
 </head>
 <body>
 
@@ -126,7 +126,7 @@
   </div>
 </main>
 
-<script src="/js/core.js?v=10"></script>
+<script src="/js/core.js?v=11"></script>
 <script>
 (function () {
   const tabs = document.querySelectorAll('.base64-tab');
@@ -177,7 +177,10 @@
         sourceFile = file;
         sourcePreview.src = sourceDataUrl;
         sourceName.textContent = file.name;
-        sourceMeta.textContent = `${FileUtils.getFileMime(file) || 'Изображение'} · ${FileUtils.formatSize(file.size)}`;
+        sourceMeta.textContent = `${FileUtils.getFormatLabel(file)} · ${FileUtils.formatSize(file.size)}`;
+        FileUtils.getImageDetails(file).then(details => {
+          if (sourceFile === file) sourceMeta.textContent = FileUtils.describeImage(file, details);
+        }).catch(() => {});
         UIUtils.setVisible(dropzoneEl, false);
         UIUtils.setVisible(encodeResult, true);
         updateOutput();

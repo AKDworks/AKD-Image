@@ -7,7 +7,7 @@
   <meta name="description" content="Размывайте выбранную область JPG, PNG, WebP, AVIF или анимированного GIF прямо в браузере. Удобно для скрытия лиц, номеров и личных данных.">
   <link rel="canonical" href="https://akdimage.vercel.app/blur">
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="/css/main.css?v=5">
+  <link rel="stylesheet" href="/css/main.css?v=7">
 </head>
 <body>
 
@@ -112,7 +112,7 @@
   </div>
 </main>
 
-<script src="/js/core.js?v=10"></script>
+<script src="/js/core.js?v=11"></script>
 <script>
 (function () {
   const dropzoneEl   = document.getElementById('dropzone');
@@ -196,6 +196,10 @@
 
       sourceImg.onload = () => requestAnimationFrame(updateUIFromState);
       sourceImg.src = dataURL;
+      UIUtils.showSelectedFileInfo(workspaceEl, file, {
+        width: imgNaturalW,
+        height: imgNaturalH,
+      });
       setEditingVisible(true);
     } catch (err) {
       console.error(err);

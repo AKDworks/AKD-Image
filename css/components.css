@@ -333,6 +333,9 @@
   margin-top: 2px;
 }
 .file-item__status {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
   font-size: .75rem;
   font-weight: 600;
   padding: 3px 8px;
@@ -343,6 +346,34 @@
 .status-done     { background: var(--status-done-bg); color: var(--status-done-text); }
 .status-error    { background: var(--status-error-bg); color: var(--status-error-text); }
 .status-processing { background: var(--status-processing-bg); color: var(--status-processing-text); }
+.status-processing::before {
+  content: '';
+  width: 10px;
+  height: 10px;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  border-radius: 50%;
+  animation: spin .7s linear infinite;
+}
+
+.selected-file-info {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  min-width: 0;
+  padding: 10px 20px;
+  border-bottom: 1px solid var(--border);
+  color: var(--muted);
+  font-size: .8rem;
+}
+.selected-file-info__name {
+  color: var(--text);
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.selected-file-info__meta { white-space: nowrap; }
 
 /* Progress bar */
 .progress-bar {
@@ -508,4 +539,13 @@
   .form-row { flex-direction: column; }
   .result-stats { flex-direction: column; }
   .toast-container { left: 24px; right: 24px; bottom: 24px; }
+  .selected-file-info {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 2px;
+    padding: 10px 14px;
+  }
+  .selected-file-info__name,
+  .selected-file-info__meta { max-width: 100%; }
+  .file-item__status { font-size: .7rem; }
 }

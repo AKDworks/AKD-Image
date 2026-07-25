@@ -7,7 +7,7 @@
   <meta name="description" content="Добавляйте и перемещайте текст, стрелки, фигуры и свободные пометки на JPG, PNG, WebP, AVIF и анимированных GIF прямо в браузере.">
   <link rel="canonical" href="https://akdimage.vercel.app/annotate">
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="/css/main.css?v=6">
+  <link rel="stylesheet" href="/css/main.css?v=7">
 </head>
 <body>
 
@@ -120,7 +120,7 @@
   </div>
 </main>
 
-<script src="/js/core.js?v=10"></script>
+<script src="/js/core.js?v=11"></script>
 <script>
 (function () {
   const dropzoneEl = document.getElementById('dropzone');
@@ -354,6 +354,10 @@
 
       clearResult();
       render();
+      UIUtils.showSelectedFileInfo(workspaceEl, file, {
+        width: img.naturalWidth,
+        height: img.naturalHeight,
+      });
       UIUtils.setVisible(dropzoneEl, false);
       UIUtils.setVisible(workspaceEl, true);
       UIUtils.setVisible(settingsEl, true);

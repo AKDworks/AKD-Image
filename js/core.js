@@ -133,6 +133,48 @@ const UIUtils = {
     if (parts.resultArea) parts.resultArea.classList.add('visible');
     this.setVisible(parts.downloadAllBtn, count > 1);
   },
+
+  async showSelectedFileInfo(container, file, dimensions = {}) {
+    if (!container || !file) return;
+
+    let info = container.querySelector('.selected-file-info');
+    if (!info) {
+      info = document.createElement('div');
+      info.className = 'selected-file-info';
+
+      const head = Array.from(container.children).find(child =>
+        child.classList.contains('tool-panel__head')
+      );
+      if (head) head.insertAdjacentElement('afterend', info);
+      else container.prepend(info);
+    }
+
+    const requestId = String(Date.now()) + Math.random();
+    info.dataset.requestId = requestId;
+    info.replaceChildren();
+
+    const name = document.createElement('span');
+    name.className = 'selected-file-info__name';
+    name.textContent = file.name;
+    name.title = file.name;
+
+    const meta = document.createElement('span');
+    meta.className = 'selected-file-info__meta';
+    meta.textContent = 'Определяем параметры файла...';
+
+    info.append(name, meta);
+
+    try {
+      const details = await FileUtils.getImageDetails(file, dimensions);
+      if (info.dataset.requestId === requestId) {
+        meta.textContent = FileUtils.describeImage(file, details);
+      }
+    } catch (error) {
+      if (info.dataset.requestId === requestId) {
+        meta.textContent = `${FileUtils.getFormatLabel(file)} · ${FileUtils.formatSize(file.size)}`;
+      }
+    }
+  },
 };
 
 
@@ -193,6 +235,30 @@ const FileUtils = {
       avif: 'image/avif',
       gif: 'image/gif',
     }[extension] || '';
+  },
+
+  getFormatLabel(file) {
+    return {
+      'image/jpeg': 'JPG',
+      'image/png': 'PNG',
+      'image/webp': 'WebP',
+      'image/avif': 'AVIF',
+      'image/gif': 'GIF',
+    }[this.getFileMime(file)] || 'Изображение';
+  },
+
+  describeImage(file, details = {}) {
+    const parts = [this.getFormatLabel(file)];
+    if (details.width && details.height) parts.push(`${details.width} × ${details.height}`);
+    if (details.frameCount) {
+      parts.push(this.formatCount(details.frameCount, ['кадр', 'кадра', 'кадров']));
+    }
+    if (Number.isFinite(details.duration) && details.duration > 0) {
+      const seconds = (details.duration / 1000).toFixed(details.duration % 1000 ? 1 : 0);
+      parts.push(`${seconds} с`);
+    }
+    parts.push(this.formatSize(file.size));
+    return parts.join(' · ');
   },
 
   resolveOutputMime(file, selectedMime) {
@@ -349,6 +415,32 @@ const FileUtils = {
         res(blob);
       }, mimeType, quality);
     });
+  },
+
+  async getImageDetails(file, dimensions = {}) {
+    let width = Number(dimensions.width) || 0;
+    let height = Number(dimensions.height) || 0;
+
+    if (!width || !height) {
+      const sourceUrl = URL.createObjectURL(file);
+      try {
+        const image = await this.loadImage(sourceUrl);
+        width = image.naturalWidth;
+        height = image.naturalHeight;
+      } finally {
+        URL.revokeObjectURL(sourceUrl);
+      }
+    }
+
+    const details = { width, height };
+    if (this.isGif(file)) {
+      const gif = await GifProcessor.inspect(file);
+      details.width = gif.width || width;
+      details.height = gif.height || height;
+      details.frameCount = gif.frameCount;
+      details.duration = gif.duration;
+    }
+    return details;
   },
 
   canvasForMime(canvas, mimeType) {
@@ -1131,10 +1223,10 @@ class FileListManager {
       </div>
       <div class="file-item__info">
         <div class="file-item__name"></div>
-        <div class="file-item__meta">${FileUtils.formatSize(file.size)}</div>
+        <div class="file-item__meta">${FileUtils.getFormatLabel(file)} · ${FileUtils.formatSize(file.size)}</div>
         <div class="progress-bar hidden"><div class="progress-fill"></div></div>
       </div>
-      <span class="file-item__status status-pending">Ожидание</span>
+      <span class="file-item__status status-pending">Готов к обработке</span>
       <button class="btn-icon remove-btn" title="Удалить">✕</button>
     `;
 
@@ -1193,15 +1285,12 @@ class FileListManager {
     const item = { id, file, el: row };
     this.items.push(item);
     if (this.selectedId === null) this.select(id, false);
-    if (FileUtils.isGif(file)) {
-      GifProcessor.inspect(file).then(info => {
-        const duration = (info.duration / 1000).toFixed(info.duration % 1000 ? 1 : 0);
-        this.setMeta(
-          id,
-          `${FileUtils.formatCount(info.frameCount, ['кадр', 'кадра', 'кадров'])} · ${duration} с · ${FileUtils.formatSize(file.size)}`
-        );
-      }).catch(() => {});
-    }
+    FileUtils.getImageDetails(file).then(details => {
+      const status = row.querySelector('.file-item__status');
+      if (status?.classList.contains('status-pending')) {
+        this.setMeta(id, FileUtils.describeImage(file, details));
+      }
+    }).catch(() => {});
     return item;
   }
 
@@ -1209,16 +1298,34 @@ class FileListManager {
     const row = this.container.querySelector(`[data-id="${id}"]`);
     if (!row) return;
     const s = row.querySelector('.file-item__status');
-    s.textContent = label;
+    const statusLabel = cls === 'status-error' && label === 'Ошибка' ? 'Не удалось' : label.replace(/\.\.\.$/, '');
+    s.textContent = statusLabel;
     s.className   = 'file-item__status ' + cls;
+    s.dataset.label = statusLabel;
+
+    const bar = row.querySelector('.progress-bar');
+    if (cls !== 'status-processing' && bar) {
+      bar.classList.add('hidden');
+      bar.querySelector('.progress-fill').style.width = '0%';
+    }
   }
 
   setProgress(id, pct) {
     const row = this.container.querySelector(`[data-id="${id}"]`);
     if (!row) return;
+    const safePct = Math.max(0, Math.min(100, Math.round(Number(pct) || 0)));
     const bar = row.querySelector('.progress-bar');
     bar.classList.remove('hidden');
-    bar.querySelector('.progress-fill').style.width = pct + '%';
+    bar.setAttribute('role', 'progressbar');
+    bar.setAttribute('aria-valuemin', '0');
+    bar.setAttribute('aria-valuemax', '100');
+    bar.setAttribute('aria-valuenow', String(safePct));
+    bar.querySelector('.progress-fill').style.width = safePct + '%';
+
+    const status = row.querySelector('.file-item__status');
+    if (status?.classList.contains('status-processing')) {
+      status.textContent = `${status.dataset.label || 'Обработка'} ${safePct}%`;
+    }
   }
 
   setMeta(id, text) {

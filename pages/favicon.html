@@ -7,7 +7,7 @@
   <meta name="description" content="Создайте favicon и набор PNG-иконок для сайта из JPG, PNG, WebP или AVIF прямо в браузере.">
   <link rel="canonical" href="https://akdimage.vercel.app/favicon">
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="/css/main.css?v=5">
+  <link rel="stylesheet" href="/css/main.css?v=7">
 </head>
 <body>
 
@@ -93,7 +93,7 @@
   </div>
 </main>
 
-<script src="/js/core.js?v=10"></script>
+<script src="/js/core.js?v=11"></script>
 <script>
 (function () {
   const filenames = {
@@ -138,7 +138,10 @@
         sourceImage = img;
         sourcePreview.src = src;
         sourceName.textContent = file.name;
-        sourceMeta.textContent = `${img.naturalWidth} × ${img.naturalHeight} · ${FileUtils.formatSize(file.size)}`;
+        sourceMeta.textContent = FileUtils.describeImage(file, {
+          width: img.naturalWidth,
+          height: img.naturalHeight,
+        });
         UIUtils.setVisible(dropzoneEl, false);
         UIUtils.setVisible(settingsPanel, true);
         resetResults();
