@@ -104,6 +104,11 @@
       "source": "/pages/privacy.html",
       "destination": "/privacy",
       "permanent": true
+    },
+    {
+      "source": "/pages/about.html",
+      "destination": "/about",
+      "permanent": true
     }
   ],
   "rewrites": [
@@ -186,6 +191,10 @@
     {
       "source": "/privacy",
       "destination": "/pages/privacy.html"
+    },
+    {
+      "source": "/about",
+      "destination": "/pages/about.html"
     }
   ],
   "headers": [

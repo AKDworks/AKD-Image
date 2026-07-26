@@ -116,6 +116,7 @@ main {
   width: 17px;
   height: 17px;
 }
+.theme-icon--mobile { display: none; }
 
 /* Footer */
 .site-footer {
@@ -184,4 +185,6 @@ main {
   .container { padding-left: 24px; padding-right: 24px; }
   .header-btn { display: none; }
   .theme-option { width: 27px; height: 27px; }
+  .theme-icon--desktop { display: none; }
+  .theme-icon--mobile { display: block; }
 }

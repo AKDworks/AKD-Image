@@ -7,11 +7,11 @@
   <meta name="description" content="Создайте favicon и набор PNG-иконок для сайта из JPG, PNG, WebP или AVIF прямо в браузере.">
   <link rel="canonical" href="https://akdimage.vercel.app/favicon">
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="/css/main.css?v=5">
+  <link rel="stylesheet" href="/css/main.css?v=8">
 </head>
 <body>
 
-<script src="/js/layout.js?v=7"></script>
+<script src="/js/layout.js?v=9"></script>
 
 <main>
   <div class="container container--narrow tool-page">
@@ -22,8 +22,8 @@
 
     <div class="dropzone" id="dropzone">
       <input type="file" accept="image/jpeg,image/png,image/webp,image/avif">
-      <p class="dropzone__title">Перетащите изображение сюда</p>
-      <p class="dropzone__hint">или нажмите для выбора файла</p>
+      <p class="dropzone__title">Добавьте изображения</p>
+      <p class="dropzone__hint">Выберите файлы, вставьте из буфера или перетащите сюда</p>
       <div class="dropzone__formats">
         <span class="fmt-badge">JPG</span>
         <span class="fmt-badge">PNG</span>
@@ -90,10 +90,24 @@
       <div class="favicon-results" id="favicon-results"></div>
       <button class="btn btn-success mt-16" id="download-all-btn" type="button">Скачать всё (ZIP)</button>
     </div>
+
+    <div class="modal-overlay hidden" id="favicon-preview-modal" role="dialog" aria-modal="true" aria-labelledby="favicon-preview-title">
+      <div class="modal favicon-preview-modal">
+        <div class="modal__head">
+          <h3 id="favicon-preview-title">Предпросмотр favicon</h3>
+          <button class="modal__close" id="favicon-preview-close" type="button" aria-label="Закрыть предпросмотр">×</button>
+        </div>
+        <div class="modal__body">
+          <div class="favicon-preview-modal__image">
+            <img id="favicon-preview-image" alt="">
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </main>
 
-<script src="/js/core.js?v=9"></script>
+<script src="/js/core.js?v=11"></script>
 <script>
 (function () {
   const filenames = {
@@ -119,10 +133,35 @@
   const resultStats = document.getElementById('result-stats');
   const resultsEl = document.getElementById('favicon-results');
   const downloadAllBtn = document.getElementById('download-all-btn');
+  const previewModal = document.getElementById('favicon-preview-modal');
+  const previewTitle = document.getElementById('favicon-preview-title');
+  const previewImage = document.getElementById('favicon-preview-image');
+  const previewCloseBtn = document.getElementById('favicon-preview-close');
 
   let sourceFile = null;
   let sourceImage = null;
   let results = [];
+
+  function closePreview() {
+    previewModal.classList.add('hidden');
+    previewImage.removeAttribute('src');
+  }
+
+  function openPreview(entry) {
+    previewTitle.textContent = `Предпросмотр: ${entry.size} × ${entry.size}`;
+    previewImage.src = entry.dataUrl;
+    previewImage.alt = `Иконка ${entry.size} × ${entry.size}`;
+    previewModal.classList.remove('hidden');
+    previewCloseBtn.focus();
+  }
+
+  previewCloseBtn.addEventListener('click', closePreview);
+  previewModal.addEventListener('click', event => {
+    if (event.target === previewModal) closePreview();
+  });
+  document.addEventListener('keydown', event => {
+    if (event.key === 'Escape' && !previewModal.classList.contains('hidden')) closePreview();
+  });
 
   new Dropzone(dropzoneEl, {
     accept: ['image/jpeg', 'image/png', 'image/webp', 'image/avif'],
@@ -138,7 +177,10 @@
         sourceImage = img;
         sourcePreview.src = src;
         sourceName.textContent = file.name;
-        sourceMeta.textContent = `${img.naturalWidth} × ${img.naturalHeight} · ${FileUtils.formatSize(file.size)}`;
+        sourceMeta.textContent = FileUtils.describeImage(file, {
+          width: img.naturalWidth,
+          height: img.naturalHeight,
+        });
         UIUtils.setVisible(dropzoneEl, false);
         UIUtils.setVisible(settingsPanel, true);
         resetResults();
@@ -263,7 +305,17 @@
       downloadBtn.textContent = 'Скачать';
       downloadBtn.addEventListener('click', () => FileUtils.downloadBlob(entry.blob, entry.filename));
 
-      item.append(preview, info, downloadBtn);
+      const previewBtn = document.createElement('button');
+      previewBtn.className = 'btn btn-sm btn-secondary';
+      previewBtn.type = 'button';
+      previewBtn.textContent = 'Предпросмотр';
+      previewBtn.addEventListener('click', () => openPreview(entry));
+
+      const actions = document.createElement('div');
+      actions.className = 'favicon-result__actions';
+      actions.append(previewBtn, downloadBtn);
+
+      item.append(preview, info, actions);
       resultsEl.appendChild(item);
     });
 

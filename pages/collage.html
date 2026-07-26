@@ -7,11 +7,11 @@
   <meta name="description" content="Создайте коллаж из нескольких JPG, PNG, WebP или AVIF прямо в браузере. Файлы обрабатываются локально и не загружаются на сервер.">
   <link rel="canonical" href="https://akdimage.vercel.app/collage">
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="/css/main.css?v=5">
+  <link rel="stylesheet" href="/css/main.css?v=8">
 </head>
 <body>
 
-<script src="/js/layout.js?v=7"></script>
+<script src="/js/layout.js?v=9"></script>
 
 <main>
   <div class="container container--narrow tool-page">
@@ -22,8 +22,8 @@
 
     <div class="dropzone" id="dropzone">
       <input type="file" accept="image/jpeg,image/png,image/webp,image/avif" multiple>
-      <p class="dropzone__title">Перетащите изображения сюда</p>
-      <p class="dropzone__hint">или нажмите для выбора файлов</p>
+      <p class="dropzone__title">Добавьте изображения</p>
+      <p class="dropzone__hint">Выберите файлы, вставьте из буфера или перетащите сюда</p>
       <div class="dropzone__formats">
         <span class="fmt-badge">JPG</span>
         <span class="fmt-badge">PNG</span>
@@ -122,7 +122,7 @@
   </div>
 </main>
 
-<script src="/js/core.js?v=9"></script>
+<script src="/js/core.js?v=11"></script>
 <script>
 (function () {
   const dropzoneEl = document.getElementById('dropzone');
