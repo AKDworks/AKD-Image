@@ -355,6 +355,17 @@
   background: var(--accent);
   color: var(--text-inverse);
 }
+.base64-upload-note {
+  max-width: 760px;
+  margin: 10px auto 0;
+  color: var(--muted);
+  font-size: .8rem;
+  text-align: center;
+}
+.base64-upload-note a {
+  color: var(--accent);
+  font-weight: 600;
+}
 .base64-input-panel {
   margin-top: 0;
 }
@@ -523,6 +534,40 @@
   font-size: .75rem;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+.favicon-result__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: flex-end;
+}
+.favicon-preview-modal {
+  max-width: 560px;
+}
+.favicon-preview-modal__image {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 240px;
+  max-height: 62vh;
+  overflow: auto;
+  padding: 20px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background-color: var(--checker-bg);
+  background-image:
+    linear-gradient(45deg, var(--checker-color) 25%, transparent 25%),
+    linear-gradient(-45deg, var(--checker-color) 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, var(--checker-color) 75%),
+    linear-gradient(-45deg, transparent 75%, var(--checker-color) 75%);
+  background-position: 0 0, 0 12px, 12px -12px, -12px 0;
+  background-size: 24px 24px;
+}
+.favicon-preview-modal__image img {
+  display: block;
+  width: min(100%, 512px);
+  height: auto;
+  image-rendering: pixelated;
 }
 
 /* Palette tool */
@@ -1015,8 +1060,12 @@
     height: 48px;
   }
   .favicon-result .btn {
-    grid-column: 1 / -1;
     width: 100%;
+  }
+  .favicon-result__actions {
+    grid-column: 1 / -1;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
   .palette-actions {
     align-items: stretch;

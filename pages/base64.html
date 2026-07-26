@@ -7,7 +7,7 @@
   <meta name="description" content="Преобразуйте JPG, PNG, WebP, AVIF или анимированный GIF в Base64 и восстановите исходный файл локально в браузере.">
   <link rel="canonical" href="https://akdimage.vercel.app/base64">
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="/css/main.css?v=7">
+  <link rel="stylesheet" href="/css/main.css?v=9">
 </head>
 <body>
 
@@ -33,7 +33,7 @@
       <div class="dropzone" id="dropzone">
         <input type="file" accept="image/jpeg,image/png,image/webp,image/avif,image/gif">
         <p class="dropzone__title">Добавьте изображения</p>
-        <p class="dropzone__hint">Выберите файлы, вставьте из буфера или перетащите сюда</p>
+        <p class="dropzone__hint">Выберите файл до 3 МБ, вставьте из буфера или перетащите сюда</p>
         <div class="dropzone__formats">
           <span class="fmt-badge">JPG</span>
           <span class="fmt-badge">PNG</span>
@@ -42,6 +42,7 @@
           <span class="fmt-badge">GIF</span>
         </div>
       </div>
+      <p class="base64-upload-note">Для более крупных файлов рекомендуется сначала <a href="/compress">сжать изображение</a>.</p>
 
       <div class="tool-panel hidden" id="encode-result">
         <div class="tool-panel__head">
@@ -91,6 +92,7 @@
           <div class="form-group">
             <label for="base64-input">Data URL или чистая строка Base64</label>
             <input class="base64-field" id="base64-input" type="text" spellcheck="false" placeholder="data:image/png;base64,...">
+            <div class="text-muted text-sm mt-8">До 3 МБ исходных данных для плавной работы.</div>
           </div>
 
           <div class="form-row mt-16">
@@ -151,6 +153,12 @@
   let decodedBlob = null;
   let decodedUrl = '';
   let decodedFilename = '';
+  const MAX_BASE64_FILE_SIZE = 3 * 1024 * 1024;
+  const MAX_BASE64_INPUT_LENGTH = Math.ceil(MAX_BASE64_FILE_SIZE * 4 / 3) + 1024;
+
+  function getBase64LimitMessage() {
+    return `Для Base64 доступны данные до ${FileUtils.formatSize(MAX_BASE64_FILE_SIZE)}. Сначала уменьшите изображение.`;
+  }
 
   tabs.forEach(tab => {
     tab.addEventListener('click', () => {
@@ -171,6 +179,10 @@
     async onFiles(files) {
       const file = files[0];
       if (!file) return;
+      if (file.size > MAX_BASE64_FILE_SIZE) {
+        Toast.error(getBase64LimitMessage());
+        return;
+      }
 
       try {
         sourceDataUrl = await FileUtils.readAsDataURL(file);
@@ -236,6 +248,7 @@
   function decodeBase64(value) {
     const trimmed = value.trim();
     if (!trimmed) throw new Error('Пустая строка');
+    if (trimmed.length > MAX_BASE64_INPUT_LENGTH) throw new Error(getBase64LimitMessage());
 
     const dataUrlMatch = trimmed.match(/^data:([^;,]+)(?:;[^,]*)?;base64,([\s\S]+)$/i);
     const mime = dataUrlMatch ? dataUrlMatch[1].toLowerCase() : inputFormat.value;
@@ -278,6 +291,12 @@
   }
 
   outputType.addEventListener('change', updateOutput);
+  input.addEventListener('paste', event => {
+    const pastedText = event.clipboardData?.getData('text') || '';
+    if (pastedText.trim().length <= MAX_BASE64_INPUT_LENGTH) return;
+    event.preventDefault();
+    Toast.error(getBase64LimitMessage());
+  });
   document.getElementById('encode-clear').addEventListener('click', resetEncode);
   document.getElementById('copy-output').addEventListener('click', () => copyText(output.value));
   document.getElementById('download-text').addEventListener('click', () => {
@@ -315,7 +334,7 @@
       UIUtils.setVisible(decodeResult, true);
     } catch (err) {
       console.error(err);
-      Toast.error('Проверьте строку Base64 и выбранный формат.');
+      Toast.error(err.message || 'Проверьте строку Base64 и выбранный формат.');
     }
   });
 
