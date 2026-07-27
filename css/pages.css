@@ -125,6 +125,12 @@
   width: 166px;
   white-space: nowrap;
 }
+.favorites-manage-link__icon {
+  display: none;
+  width: 18px;
+  height: 18px;
+  fill: currentColor;
+}
 .favorites-empty {
   display: grid;
   justify-items: center;
@@ -1130,6 +1136,12 @@
     width: 36px;
     min-width: 36px;
     padding: 7px;
+  }
+  .favorites-manage-link__icon {
+    display: block;
+  }
+  .favorites-manage-link__label {
+    display: none;
   }
   .tool-sort__label,
   .tool-sort__chevron {
