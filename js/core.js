@@ -748,6 +748,112 @@ const GifProcessor = (() => {
     };
   }
 
+  async function trim(file, options = {}) {
+    const onProgress = typeof options.onProgress === 'function'
+      ? options.onProgress
+      : () => {};
+    onProgress(5);
+
+    const decoded = await decode(file);
+    onProgress(30);
+
+    const requestedStart = Math.max(0, Number(options.startMs) || 0);
+    const requestedEnd = Math.min(
+      decoded.duration,
+      Math.max(requestedStart + 1, Number(options.endMs) || decoded.duration),
+    );
+
+    let elapsed = 0;
+    let actualStart = 0;
+    let actualEnd = 0;
+    const selectedFrames = decoded.frames.filter(frame => {
+      const frameStart = elapsed;
+      const frameEnd = frameStart + frame.delay;
+      elapsed = frameEnd;
+
+      const isSelected = frameEnd > requestedStart && frameStart < requestedEnd;
+      if (isSelected) {
+        if (!actualEnd) actualStart = frameStart;
+        actualEnd = frameEnd;
+      }
+      return isSelected;
+    });
+
+    if (!selectedFrames.length) {
+      throw new Error('Выберите фрагмент GIF длительностью хотя бы в один кадр');
+    }
+
+    validateOutputSize(decoded.gif.width, decoded.gif.height, selectedFrames.length);
+    const blob = await encodeFrames(decoded.library, {
+      width: decoded.gif.width,
+      height: decoded.gif.height,
+      quality: options.quality,
+      looped: decoded.gif.looped === true,
+      loopCount: decoded.gif.loopCount || 0,
+    }, selectedFrames, ({ sourceCanvas }) => sourceCanvas, onProgress);
+    onProgress(100);
+
+    return {
+      blob,
+      width: decoded.gif.width,
+      height: decoded.gif.height,
+      frameCount: selectedFrames.length,
+      duration: actualEnd - actualStart,
+      start: actualStart,
+      end: actualEnd,
+    };
+  }
+
+  async function createTimelinePreview(file, options = {}) {
+    const maxFrames = Math.min(24, Math.max(1, Number(options.maxFrames) || 16));
+    const maxHeight = Math.min(96, Math.max(32, Number(options.height) || 56));
+    const decoded = await decode(file);
+    const frameStarts = [];
+    let elapsed = 0;
+
+    decoded.frames.forEach(frame => {
+      frameStarts.push(elapsed);
+      elapsed += frame.delay;
+    });
+
+    const sampleCount = Math.min(maxFrames, decoded.frames.length);
+    const indices = Array.from({ length: sampleCount }, (_, index) => (
+      Math.min(decoded.frames.length - 1, Math.round(index * (decoded.frames.length - 1) / Math.max(1, sampleCount - 1)))
+    ));
+
+    const thumbnails = indices.map(index => {
+      const frame = decoded.frames[index];
+      const sourceCanvas = frameCanvas(frame);
+      const scale = Math.min(1, maxHeight / frame.height, 120 / frame.width);
+      const canvas = document.createElement('canvas');
+      canvas.width = Math.max(1, Math.round(frame.width * scale));
+      canvas.height = Math.max(1, Math.round(frame.height * scale));
+      canvas.getContext('2d').drawImage(sourceCanvas, 0, 0, canvas.width, canvas.height);
+      const source = canvas.toDataURL('image/png');
+      sourceCanvas.width = 1;
+      sourceCanvas.height = 1;
+      canvas.width = 1;
+      canvas.height = 1;
+      return { source, start: frameStarts[index] };
+    });
+
+    decoded.frames.forEach((frame, index) => {
+      frame.start = frameStarts[index];
+    });
+
+    return {
+      width: decoded.gif.width,
+      height: decoded.gif.height,
+      duration: decoded.duration,
+      frameCount: decoded.frameCount,
+      thumbnails,
+      frames: decoded.frames,
+      dispose() {
+        decoded.frames.forEach(frame => { frame.data = null; });
+      },
+    };
+  }
+
   async function encodeCanvas(canvas, options = {}) {
     validateOutputSize(canvas.width, canvas.height, 1);
     const library = await loadLibrary();
@@ -775,6 +881,8 @@ const GifProcessor = (() => {
     limits,
     inspect,
     process,
+    trim,
+    createTimelinePreview,
     encodeCanvas,
     qualityToColors,
   };

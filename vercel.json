@@ -101,6 +101,11 @@
       "permanent": true
     },
     {
+      "source": "/pages/gif-trim.html",
+      "destination": "/gif-trim",
+      "permanent": true
+    },
+    {
       "source": "/pages/favorites.html",
       "destination": "/favorites",
       "permanent": true
@@ -192,6 +197,10 @@
     {
       "source": "/annotate",
       "destination": "/pages/annotate.html"
+    },
+    {
+      "source": "/gif-trim",
+      "destination": "/pages/gif-trim.html"
     },
     {
       "source": "/favorites",

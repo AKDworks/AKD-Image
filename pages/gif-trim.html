@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Вырезать GIF – AKD Image</title>
+  <meta name="description" content="Обрезайте анимированные GIF по времени прямо в браузере. Выберите начало и конец фрагмента, затем скачайте новый GIF без загрузки файла на сервер.">
+  <link rel="canonical" href="https://akdimage.vercel.app/gif-trim">
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/css/main.css?v=25">
+</head>
+<body>
+
+<script src="/js/layout.js?v=12"></script>
+
+<main>
+  <div class="container container--narrow tool-page">
+    <div class="tool-page__header">
+      <h1 class="tool-page__title">Вырезать GIF</h1>
+      <p class="tool-page__subtitle">Оставьте нужный фрагмент анимации: выберите начало и конец в секундах, затем скачайте новый GIF.</p>
+    </div>
+
+    <div class="dropzone" id="dropzone">
+      <input type="file" accept="image/gif">
+      <p class="dropzone__title">Добавьте GIF</p>
+      <p class="dropzone__hint">Выберите файл, вставьте из буфера или перетащите сюда</p>
+      <div class="dropzone__formats">
+        <span class="fmt-badge">GIF</span>
+      </div>
+    </div>
+
+    <section class="tool-panel hidden" id="settings-panel">
+      <div class="tool-panel__head">
+        <h3>Фрагмент анимации</h3>
+        <button class="btn btn-sm btn-secondary" id="change-file-btn" type="button">Выбрать другой файл</button>
+      </div>
+      <div class="tool-panel__body">
+        <div class="crop-result-preview">
+          <canvas class="crop-result-preview__img gif-trim-preview" id="source-preview" aria-label="Предпросмотр выбранного фрагмента GIF"></canvas>
+        </div>
+
+        <div class="result-stats mt-16" id="source-stats"></div>
+
+        <div class="form-group mt-16">
+          <label>Выберите фрагмент</label>
+          <div class="gif-timeline" id="gif-timeline">
+            <div class="gif-timeline__frames" id="timeline-frames" aria-hidden="true"></div>
+            <div class="gif-timeline__selection" id="timeline-selection" aria-hidden="true"></div>
+            <input class="gif-timeline__range gif-timeline__range--start" type="range" id="trim-start-range" min="0" max="0" step="0.01" value="0" aria-label="Начало фрагмента">
+            <input class="gif-timeline__range gif-timeline__range--end" type="range" id="trim-end-range" min="0" max="0" step="0.01" value="0" aria-label="Конец фрагмента">
+          </div>
+          <div class="gif-timeline__labels" aria-hidden="true">
+            <span>0,00 с</span>
+            <span id="timeline-duration">0,00 с</span>
+          </div>
+        </div>
+
+        <div class="form-row mt-16">
+          <div class="form-group">
+            <label for="trim-start-input">Начало (с)</label>
+            <input type="number" id="trim-start-input" min="0" step="0.01" value="0">
+          </div>
+          <div class="form-group">
+            <label for="trim-end-input">Конец (с)</label>
+            <input type="number" id="trim-end-input" min="0" step="0.01" value="0">
+          </div>
+        </div>
+
+        <p class="text-muted text-sm mt-16" id="selection-summary"></p>
+        <p class="text-muted text-sm mt-8">Границы автоматически привязываются к ближайшим кадрам, чтобы сохранить анимацию без повреждений.</p>
+      </div>
+    </section>
+
+    <div class="hidden mt-16 flex gap-8 items-center" id="action-bar">
+      <button class="btn btn-primary btn-lg" id="trim-btn" type="button">Вырезать GIF</button>
+    </div>
+
+    <section class="result-area" id="result-area">
+      <hr class="divider">
+      <div class="result-stats" id="result-stats"></div>
+      <div class="crop-result-preview">
+        <img class="crop-result-preview__img" id="result-preview" alt="Обрезанный GIF">
+      </div>
+      <div class="flex gap-8 mt-16 flex-wrap">
+        <button class="btn btn-success" id="download-btn" type="button">Скачать GIF</button>
+      </div>
+    </section>
+  </div>
+</main>
+
+<script src="/js/core.js?v=14"></script>
+<script>
+(() => {
+  const MIN_FRAGMENT_MS = 30;
+  const dropzone = document.getElementById('dropzone');
+  const settingsPanel = document.getElementById('settings-panel');
+  const actionBar = document.getElementById('action-bar');
+  const changeFileBtn = document.getElementById('change-file-btn');
+  const trimBtn = document.getElementById('trim-btn');
+  const sourcePreview = document.getElementById('source-preview');
+  const sourceStats = document.getElementById('source-stats');
+  const startRange = document.getElementById('trim-start-range');
+  const endRange = document.getElementById('trim-end-range');
+  const startInput = document.getElementById('trim-start-input');
+  const endInput = document.getElementById('trim-end-input');
+  const timelineFrames = document.getElementById('timeline-frames');
+  const timelineSelection = document.getElementById('timeline-selection');
+  const timelineDuration = document.getElementById('timeline-duration');
+  const selectionSummary = document.getElementById('selection-summary');
+  const resultArea = document.getElementById('result-area');
+  const resultStats = document.getElementById('result-stats');
+  const resultPreview = document.getElementById('result-preview');
+  const downloadBtn = document.getElementById('download-btn');
+
+  let activeFile = null;
+  let durationMs = 0;
+  let timelinePreview = null;
+  let previewTimer = null;
+  let resultUrl = null;
+  let resultBlob = null;
+
+  function formatSeconds(milliseconds) {
+    return `${(milliseconds / 1000).toFixed(2).replace('.', ',')} с`;
+  }
+
+  function clearResult() {
+    resultBlob = null;
+    resultArea.classList.remove('visible');
+    resultPreview.removeAttribute('src');
+    if (resultUrl) {
+      URL.revokeObjectURL(resultUrl);
+      resultUrl = null;
+    }
+  }
+
+  function readSeconds(input, fallback) {
+    const value = Number(input.value);
+    return Number.isFinite(value) ? value : fallback;
+  }
+
+  function stopPreview() {
+    if (previewTimer) {
+      window.clearTimeout(previewTimer);
+      previewTimer = null;
+    }
+  }
+
+  function selectedPreviewFrames(startMs, endMs) {
+    if (!timelinePreview) return [];
+    return timelinePreview.frames.filter(frame => (
+      frame.start + frame.delay > startMs && frame.start < endMs
+    ));
+  }
+
+  function playSelectedPreview() {
+    stopPreview();
+    const frames = selectedPreviewFrames(
+      readSeconds(startInput, 0) * 1000,
+      readSeconds(endInput, durationMs / 1000) * 1000,
+    );
+    if (!timelinePreview || !frames.length) return;
+
+    const context = sourcePreview.getContext('2d');
+    let frameIndex = 0;
+    const renderNextFrame = () => {
+      const frame = frames[frameIndex];
+      context.putImageData(new ImageData(frame.data, timelinePreview.width, timelinePreview.height), 0, 0);
+      frameIndex = (frameIndex + 1) % frames.length;
+      previewTimer = window.setTimeout(renderNextFrame, Math.max(MIN_FRAGMENT_MS, frame.delay));
+    };
+    renderNextFrame();
+  }
+
+  function updateSelection(changed) {
+    if (!durationMs) return;
+    const maxSeconds = durationMs / 1000;
+    const minDuration = Math.min(MIN_FRAGMENT_MS / 1000, maxSeconds);
+    let start = Math.min(Math.max(0, readSeconds(startInput, 0)), maxSeconds - minDuration);
+    let end = Math.min(Math.max(minDuration, readSeconds(endInput, maxSeconds)), maxSeconds);
+
+    if (end - start < minDuration) {
+      if (changed === 'end') start = Math.max(0, end - minDuration);
+      else end = Math.min(maxSeconds, start + minDuration);
+    }
+
+    startRange.value = String(start);
+    endRange.value = String(end);
+    startInput.value = start.toFixed(2);
+    endInput.value = end.toFixed(2);
+    timelineSelection.style.left = `${(start / maxSeconds) * 100}%`;
+    timelineSelection.style.width = `${((end - start) / maxSeconds) * 100}%`;
+    selectionSummary.textContent = `Будет сохранён фрагмент: ${formatSeconds(start * 1000)} – ${formatSeconds(end * 1000)} (${formatSeconds((end - start) * 1000)}).`;
+    clearResult();
+    playSelectedPreview();
+  }
+
+  function resetTool() {
+    activeFile = null;
+    durationMs = 0;
+    stopPreview();
+    timelinePreview?.dispose();
+    timelinePreview = null;
+    settingsPanel.classList.add('hidden');
+    actionBar.classList.add('hidden');
+    dropzone.classList.remove('hidden');
+    sourcePreview.width = 1;
+    sourcePreview.height = 1;
+    sourceStats.innerHTML = '';
+    timelineFrames.innerHTML = '';
+    timelineSelection.style.left = '0';
+    timelineSelection.style.width = '0';
+    timelineDuration.textContent = '0,00 с';
+    clearResult();
+  }
+
+  async function setFile(file) {
+    stopPreview();
+    timelinePreview?.dispose();
+    timelinePreview = null;
+    activeFile = file;
+    clearResult();
+    timelinePreview = await GifProcessor.createTimelinePreview(file, { maxFrames: 18, height: 64 });
+    durationMs = timelinePreview.duration;
+    sourcePreview.width = timelinePreview.width;
+    sourcePreview.height = timelinePreview.height;
+    sourceStats.innerHTML = `
+      <div class="stat-card"><div class="stat-card__label">Длительность</div><div class="stat-card__value">${formatSeconds(timelinePreview.duration)}</div></div>
+      <div class="stat-card"><div class="stat-card__label">Кадров</div><div class="stat-card__value">${timelinePreview.frameCount}</div></div>
+      <div class="stat-card"><div class="stat-card__label">Размер</div><div class="stat-card__value">${timelinePreview.width}×${timelinePreview.height}</div></div>
+    `;
+    timelineFrames.innerHTML = timelinePreview.thumbnails.map(({ source }) => (
+      `<img src="${source}" alt="">`
+    )).join('');
+    timelineFrames.style.gridTemplateColumns = `repeat(${timelinePreview.thumbnails.length}, minmax(0, 1fr))`;
+    timelineDuration.textContent = formatSeconds(timelinePreview.duration);
+
+    const maxSeconds = timelinePreview.duration / 1000;
+    [startRange, endRange, startInput, endInput].forEach(input => input.max = String(maxSeconds));
+    startInput.value = '0';
+    endInput.value = maxSeconds.toFixed(2);
+    startRange.value = '0';
+    endRange.value = String(maxSeconds);
+    updateSelection('start');
+
+    dropzone.classList.add('hidden');
+    settingsPanel.classList.remove('hidden');
+    actionBar.classList.remove('hidden');
+  }
+
+  new Dropzone(dropzone, {
+    accept: ['image/gif'],
+    multiple: false,
+    async onFiles(files) {
+      try {
+        await setFile(files[0]);
+      } catch (error) {
+        console.error(error);
+        Toast.error(error.message || 'Не удалось открыть GIF.');
+        resetTool();
+      }
+    },
+  });
+
+  startRange.addEventListener('input', () => {
+    startInput.value = startRange.value;
+    updateSelection('start');
+  });
+  endRange.addEventListener('input', () => {
+    endInput.value = endRange.value;
+    updateSelection('end');
+  });
+  startInput.addEventListener('change', () => updateSelection('start'));
+  endInput.addEventListener('change', () => updateSelection('end'));
+  changeFileBtn.addEventListener('click', resetTool);
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) stopPreview();
+    else if (timelinePreview) playSelectedPreview();
+  });
+  window.addEventListener('pagehide', stopPreview);
+
+  trimBtn.addEventListener('click', async () => {
+    if (!activeFile) return;
+    trimBtn.disabled = true;
+    changeFileBtn.disabled = true;
+    trimBtn.innerHTML = '<span class="spinner"></span> Обработка...';
+
+    try {
+      const processed = await GifProcessor.trim(activeFile, {
+        startMs: Math.round(readSeconds(startInput, 0) * 1000),
+        endMs: Math.round(readSeconds(endInput, durationMs / 1000) * 1000),
+        quality: 0.98,
+      });
+      clearResult();
+      resultBlob = processed.blob;
+      resultUrl = URL.createObjectURL(resultBlob);
+      resultPreview.src = resultUrl;
+      resultStats.innerHTML = `
+        <div class="stat-card"><div class="stat-card__label">Фрагмент</div><div class="stat-card__value">${formatSeconds(processed.start)} – ${formatSeconds(processed.end)}</div></div>
+        <div class="stat-card"><div class="stat-card__label">Кадров</div><div class="stat-card__value">${processed.frameCount}</div></div>
+        <div class="stat-card stat-green"><div class="stat-card__label">Размер файла</div><div class="stat-card__value">${FileUtils.formatSize(resultBlob.size)}</div></div>
+      `;
+      resultArea.classList.add('visible');
+      downloadBtn.onclick = () => {
+        const filename = activeFile.name.replace(/\.[^.]+$/, '') + '_trim.gif';
+        FileUtils.downloadBlob(resultBlob, filename);
+      };
+      Toast.success('Фрагмент GIF подготовлен.');
+    } catch (error) {
+      console.error(error);
+      Toast.error(error.message || 'Не удалось обрезать GIF.');
+    } finally {
+      trimBtn.disabled = false;
+      changeFileBtn.disabled = false;
+      trimBtn.textContent = 'Вырезать GIF';
+    }
+  });
+})();
+</script>
+</body>
+</html>
