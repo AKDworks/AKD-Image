@@ -82,10 +82,96 @@
   align-items: center;
   justify-content: space-between;
   gap: 16px;
+  min-height: 36px;
   margin: 32px 0 16px;
 }
 .tools-grid-toolbar .section-title {
   margin-bottom: 0;
+}
+.tools-grid-toolbar__actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.catalog-switcher {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.catalog-switcher__button {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  font: inherit;
+  font-size: .7rem;
+  font-weight: 700;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: color var(--t);
+}
+.catalog-switcher__button + .catalog-switcher__button::before {
+  content: '/';
+  margin: 0 8px;
+  color: var(--border);
+}
+.catalog-switcher__button:hover,
+.catalog-switcher__button.is-active {
+  color: var(--text);
+}
+.favorites-manage-link,
+.tool-sort__trigger {
+  width: 166px;
+  white-space: nowrap;
+}
+.favorites-empty {
+  display: grid;
+  justify-items: center;
+  gap: 16px;
+  padding: 48px 24px;
+  border: 1px dashed var(--border);
+  border-radius: var(--r-lg);
+  background: var(--surface);
+  color: var(--muted);
+  text-align: center;
+}
+.favorites-page-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin: 0 0 16px;
+}
+.favorites-page-toolbar .section-title {
+  margin-bottom: 0;
+}
+.favorites-page-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.favorites-page-actions .btn {
+  justify-content: center;
+  height: 36px;
+}
+.favorite-picker__card {
+  width: 100%;
+  appearance: none;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.favorite-picker__card:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+.favorite-picker__card.is-favorite .tool-card__arrow {
+  color: var(--alert-warn-text);
+}
+.favorites-page-status {
+  margin-top: 16px;
+  text-align: center;
 }
 .tool-sort {
   position: relative;
@@ -1027,6 +1113,18 @@
 @media (max-width: 480px) {
   .tools-grid-toolbar {
     gap: 10px;
+    flex-wrap: wrap;
+  }
+  .favorites-page-toolbar {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .catalog-switcher__button {
+    font-size: .64rem;
+  }
+  .catalog-switcher__button + .catalog-switcher__button::before {
+    margin: 0 5px;
   }
   .tool-sort__trigger {
     width: 36px;

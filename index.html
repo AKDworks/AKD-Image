@@ -13,7 +13,7 @@
   <meta property="og:type" content="website">
   <link rel="canonical" href="https://akdimage.vercel.app/">
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="css/main.css?v=8">
+  <link rel="stylesheet" href="css/main.css?v=20">
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
@@ -26,7 +26,7 @@
 </head>
 <body>
 
-<script src="js/layout.js?v=9"></script>
+<script src="js/layout.js?v=11"></script>
 
 <main>
   <section class="hero">
@@ -43,8 +43,15 @@
         <button class="filter-btn" data-filter="creativity">Творчество</button>
       </div>
       <div class="tools-grid-toolbar">
-        <p class="section-title" id="grid-title">Все инструменты</p>
-        <div class="tool-sort">
+        <div class="catalog-switcher" role="group" aria-label="Каталог инструментов">
+          <button class="catalog-switcher__button is-active" id="all-tools-button" type="button" aria-pressed="true">Все инструменты</button>
+          <button class="catalog-switcher__button" id="favorites-button" type="button" aria-pressed="false">Избранные</button>
+        </div>
+        <div class="tools-grid-toolbar__actions">
+          <a class="tool-sort__trigger favorites-manage-link" id="favorites-manage-link" href="/favorites" hidden>
+            <span>Настроить избранное</span>
+          </a>
+          <div class="tool-sort" id="tool-sort">
           <button
             class="tool-sort__trigger"
             id="tool-sort-trigger"
@@ -80,7 +87,12 @@
               <span class="tool-sort__check" aria-hidden="true">✓</span>
             </button>
           </div>
+          </div>
         </div>
+      </div>
+      <div class="favorites-empty" id="favorites-empty" hidden>
+        <p id="favorites-empty-message">В избранном пока нет инструментов.</p>
+        <a class="btn btn-primary" href="/favorites">Добавить инструменты</a>
       </div>
       <div class="tools-grid" id="tools-grid">
 
@@ -311,7 +323,30 @@
     const sortMenu = document.getElementById('tool-sort-menu');
     const sortLabel = document.getElementById('tool-sort-label');
     const sortOptions = Array.from(document.querySelectorAll('.tool-sort__option'));
+    const toolSort = document.getElementById('tool-sort');
+    const allToolsButton = document.getElementById('all-tools-button');
+    const favoritesButton = document.getElementById('favorites-button');
+    const favoritesManageLink = document.getElementById('favorites-manage-link');
+    const favoritesEmpty = document.getElementById('favorites-empty');
+    const favoritesEmptyMessage = document.getElementById('favorites-empty-message');
     const defaultOrder = new Map(cards.map((card, index) => [card, index]));
+    const favoritesStorageKey = 'akd-image-favorites';
+    const categoryNames = {
+      optimization: 'Оптимизация',
+      geometry: 'Геометрия',
+      creativity: 'Творчество'
+    };
+    let activeCategory = 'all';
+    let activeCatalog = 'all';
+
+    try {
+      if (sessionStorage.getItem('akd-image-open-favorites') === 'true') {
+        activeCatalog = 'favorites';
+        sessionStorage.removeItem('akd-image-open-favorites');
+      }
+    } catch {
+      /* The catalog uses its default view if session storage is unavailable. */
+    }
 
     const popularOrder = [
       'Сжать изображение',
@@ -353,6 +388,47 @@
     };
 
     const getTitle = card => card.querySelector('.tool-card__title').textContent.trim();
+    const getToolId = card => card.getAttribute('href')
+      .replace(/^\/pages\//, '/')
+      .replace(/\.html$/, '');
+
+    const getFavorites = () => {
+      try {
+        const savedFavorites = JSON.parse(localStorage.getItem(favoritesStorageKey));
+        return Array.isArray(savedFavorites) ? new Set(savedFavorites) : new Set();
+      } catch {
+        return new Set();
+      }
+    };
+
+    const updateCatalog = () => {
+      const favorites = getFavorites();
+      let visibleCount = 0;
+
+      cards.forEach(card => {
+        const matchesCategory = activeCategory === 'all' || card.dataset.category === activeCategory;
+        const isFavorite = favorites.has(getToolId(card));
+        const isVisible = matchesCategory && (activeCatalog === 'all' || isFavorite);
+
+        card.style.display = isVisible ? 'flex' : 'none';
+        if (isVisible) visibleCount++;
+      });
+
+      const isFavoritesEmpty = activeCatalog === 'favorites' && visibleCount === 0;
+      favoritesEmpty.hidden = !isFavoritesEmpty;
+      toolsGrid.hidden = isFavoritesEmpty;
+      toolSort.hidden = activeCatalog === 'favorites';
+      favoritesManageLink.hidden = activeCatalog !== 'favorites' || favorites.size === 0;
+
+      favoritesEmptyMessage.textContent = activeCategory === 'all'
+        ? 'В избранном пока нет инструментов.'
+        : `В категории «${categoryNames[activeCategory]}» пока нет избранных инструментов.`;
+
+      allToolsButton.classList.toggle('is-active', activeCatalog === 'all');
+      favoritesButton.classList.toggle('is-active', activeCatalog === 'favorites');
+      allToolsButton.setAttribute('aria-pressed', String(activeCatalog === 'all'));
+      favoritesButton.setAttribute('aria-pressed', String(activeCatalog === 'favorites'));
+    };
 
     const closeSortMenu = () => {
       sortMenu.hidden = true;
@@ -398,17 +474,19 @@
       btn.addEventListener('click', () => {
         filters.forEach(f => f.classList.remove('active'));
         btn.classList.add('active');
-
-        const category = btn.getAttribute('data-filter');
-
-        cards.forEach(card => {
-          if (category === 'all' || card.getAttribute('data-category') === category) {
-            card.style.display = 'flex';
-          } else {
-            card.style.display = 'none';
-          }
-        });
+        activeCategory = btn.getAttribute('data-filter');
+        updateCatalog();
       });
+    });
+
+    allToolsButton.addEventListener('click', () => {
+      activeCatalog = 'all';
+      updateCatalog();
+    });
+
+    favoritesButton.addEventListener('click', () => {
+      activeCatalog = 'favorites';
+      updateCatalog();
     });
 
     sortTrigger.addEventListener('click', () => {
@@ -437,6 +515,8 @@
         sortTrigger.focus();
       }
     });
+
+    updateCatalog();
   });
 </script>
 </body>

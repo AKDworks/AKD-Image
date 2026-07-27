@@ -25,6 +25,7 @@
     '/pdf': '/pages/pdf.html',
     '/collage': '/pages/collage.html',
     '/annotate': '/pages/annotate.html',
+    '/favorites': '/pages/favorites.html',
     '/privacy': '/pages/privacy.html',
     '/about': '/pages/about.html'
   };
@@ -113,7 +114,7 @@
               </svg>
             </button>
           </div>
-          <a href="${homeHref}" class="header-btn">Все инструменты</a>
+          <a href="${homeHref}" class="header-btn">Главная</a>
         </div>
       </div>
     </header>
@@ -182,7 +183,7 @@
     initThemeControl();
 
     if (isLocalStaticHost) {
-      document.querySelectorAll('.tool-card[href^="/"]').forEach(link => {
+      document.querySelectorAll('a[href^="/"]').forEach(link => {
         const href = link.getAttribute('href');
         if (localRoutes[href]) link.setAttribute('href', localRoutes[href]);
       });

@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Настройка избранного – AKD Image</title>
+  <meta name="description" content="Настройте список избранных инструментов AKD Image для быстрого доступа на главной странице.">
+  <meta name="robots" content="noindex, nofollow">
+  <link rel="canonical" href="https://akdimage.vercel.app/favorites">
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/css/main.css?v=20">
+</head>
+<body>
+
+<script src="/js/layout.js?v=11"></script>
+
+<main>
+  <section class="hero hero--compact">
+    <h1>Настройка избранного</h1>
+    <p class="hero__lead">Добавляйте и убирайте инструменты, чтобы быстро открывать их на главной странице. Выбор сохраняется локально в этом браузере и не передаётся на сервер. Изменения применяются после нажатия «Подтвердить».</p>
+  </section>
+
+  <section class="tools-section">
+    <div class="container">
+      <div class="favorites-page-toolbar">
+        <p class="section-title">Все инструменты</p>
+          <div class="favorites-page-actions">
+          <button class="btn btn-secondary btn-sm" id="favorites-back" type="button">Назад</button>
+          <button class="btn btn-primary btn-sm" id="favorites-confirm" type="button">Подтвердить</button>
+        </div>
+      </div>
+      <div class="tools-grid favorite-picker" id="favorite-picker" aria-live="polite"></div>
+      <p class="favorites-page-status text-muted" id="favorites-page-status" hidden></p>
+    </div>
+  </section>
+</main>
+
+<script src="/js/core.js?v=11"></script>
+<script src="/js/favorites.js?v=3"></script>
+</body>
+</html>
