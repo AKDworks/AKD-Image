@@ -101,6 +101,11 @@
       "permanent": true
     },
     {
+      "source": "/pages/favorites.html",
+      "destination": "/favorites",
+      "permanent": true
+    },
+    {
       "source": "/pages/privacy.html",
       "destination": "/privacy",
       "permanent": true
@@ -187,6 +192,10 @@
     {
       "source": "/annotate",
       "destination": "/pages/annotate.html"
+    },
+    {
+      "source": "/favorites",
+      "destination": "/pages/favorites.html"
     },
     {
       "source": "/privacy",
