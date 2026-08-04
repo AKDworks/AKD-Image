@@ -25,6 +25,7 @@
     '/pdf': '/pages/pdf.html',
     '/collage': '/pages/collage.html',
     '/annotate': '/pages/annotate.html',
+    '/gif-trim': '/pages/gif-trim.html',
     '/favorites': '/pages/favorites.html',
     '/privacy': '/pages/privacy.html',
     '/about': '/pages/about.html'
