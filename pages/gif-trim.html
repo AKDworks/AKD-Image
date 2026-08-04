@@ -7,7 +7,7 @@
   <meta name="description" content="Обрезайте анимированные GIF по времени прямо в браузере. Выберите начало и конец фрагмента, затем скачайте новый GIF без загрузки файла на сервер.">
   <link rel="canonical" href="https://akdimage.vercel.app/gif-trim">
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="/css/main.css?v=25">
+  <link rel="stylesheet" href="/css/main.css?v=28">
 </head>
 <body>
 
@@ -32,7 +32,7 @@
     <section class="tool-panel hidden" id="settings-panel">
       <div class="tool-panel__head">
         <h3>Фрагмент анимации</h3>
-        <button class="btn btn-sm btn-secondary" id="change-file-btn" type="button">Выбрать другой файл</button>
+        <button class="btn btn-sm btn-secondary" id="change-file-btn" type="button" data-open-file-picker>Заменить файл</button>
       </div>
       <div class="tool-panel__body">
         <div class="crop-result-preview">
@@ -88,7 +88,7 @@
   </div>
 </main>
 
-<script src="/js/core.js?v=14"></script>
+<script src="/js/core.js?v=15"></script>
 <script>
 (() => {
   const MIN_FRAGMENT_MS = 30;

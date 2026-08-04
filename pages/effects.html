@@ -7,7 +7,7 @@
   <meta name="description" content="Настраивайте яркость, контраст, насыщенность и другие эффекты для JPG, PNG, WebP, AVIF и анимированных GIF прямо в браузере.">
   <link rel="canonical" href="https://akdimage.vercel.app/effects">
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="/css/main.css?v=25">
+  <link rel="stylesheet" href="/css/main.css?v=28">
 </head>
 <body>
 
@@ -103,7 +103,7 @@
             </div>
 
             <button class="btn btn-primary btn-block mt-16" id="save-btn">Сохранить изображение</button>
-            <button class="btn btn-secondary btn-block mt-8" id="change-img-btn">Выбрать другое</button>
+            <button class="btn btn-secondary btn-block mt-8" id="change-img-btn" type="button" data-open-file-picker>Заменить файл</button>
 
           </div>
         </div>
@@ -114,7 +114,7 @@
   </div>
 </main>
 
-<script src="/js/core.js?v=14"></script>
+<script src="/js/core.js?v=15"></script>
 <script>
 (function () {
   const dropzoneEl  = document.getElementById('dropzone');

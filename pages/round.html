@@ -7,7 +7,7 @@
   <meta name="description" content="Скругляйте углы JPG, PNG, WebP, AVIF и анимированных GIF с прозрачными краями прямо в браузере.">
   <link rel="canonical" href="https://akdimage.vercel.app/round">
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="/css/main.css?v=25">
+  <link rel="stylesheet" href="/css/main.css?v=28">
 </head>
 <body>
 
@@ -35,7 +35,10 @@
     <div class="tool-panel hidden" id="settings-panel">
       <div class="tool-panel__head">
         <h3>Настройки</h3>
-        <button class="btn btn-sm btn-secondary" id="clear-btn">Выбрать другой файл</button>
+        <div class="tool-panel__head-actions">
+          <button class="btn btn-sm btn-secondary" type="button" data-open-file-picker>Добавить файлы</button>
+          <button class="btn btn-sm btn-secondary" id="clear-btn" type="button" data-open-file-picker>Заменить файлы</button>
+        </div>
       </div>
       <div class="tool-panel__body">
         
@@ -70,7 +73,7 @@
   </div>
 </main>
 
-<script src="/js/core.js?v=14"></script>
+<script src="/js/core.js?v=15"></script>
 <script>
 (function () {
   const dropzoneEl  = document.getElementById('dropzone');

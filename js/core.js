@@ -45,7 +45,11 @@ const UIUtils = {
   },
 
   setBatchLocked(manager, elements, locked) {
-    this.setDisabled(elements, locked);
+    const pickerButtons = manager
+      ? Array.from((manager.container.closest('main') || document)
+        .querySelectorAll('[data-open-file-picker]'))
+      : [];
+    this.setDisabled([...elements, ...pickerButtons], locked);
     if (manager) manager.setLocked(locked);
   },
 
@@ -1284,6 +1288,18 @@ class Dropzone {
     if (accepted.length) this.opts.onFiles(accepted);
   }
 }
+
+document.addEventListener('click', event => {
+  const trigger = event.target.closest('[data-open-file-picker]');
+  if (!trigger) return;
+
+  const scope = trigger.closest('main') || document;
+  const input = scope.querySelector('.dropzone input[type="file"]');
+  if (!input || input.disabled) return;
+
+  input.value = '';
+  input.click();
+});
 
 /* File list */
 class FileListManager {

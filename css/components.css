@@ -65,11 +65,19 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
+  flex-wrap: wrap;
   gap: 12px;
 }
 .tool-panel__head h3 {
   font-size: .9rem;
   font-weight: 700;
+}
+.tool-panel__head-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-left: auto;
 }
 .tool-panel__body {
   padding: 20px;

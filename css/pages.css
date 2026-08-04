@@ -315,6 +315,11 @@
   width: 16px;
   height: 16px;
   color: var(--muted);
+  transform-origin: center;
+  transition: transform var(--t), color var(--t);
+}
+.tool-sort__trigger[aria-expanded="true"] .tool-sort__chevron {
+  transform: rotate(180deg);
 }
 .tool-sort__menu {
   position: absolute;

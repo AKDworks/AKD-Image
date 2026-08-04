@@ -7,7 +7,7 @@
   <meta name="description" content="Преобразуйте JPG, PNG, WebP, AVIF или анимированный GIF в Base64 и восстановите исходный файл локально в браузере.">
   <link rel="canonical" href="https://akdimage.vercel.app/base64">
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="/css/main.css?v=25">
+  <link rel="stylesheet" href="/css/main.css?v=28">
 </head>
 <body>
 
@@ -47,7 +47,7 @@
       <div class="tool-panel hidden" id="encode-result">
         <div class="tool-panel__head">
           <h3>Результат</h3>
-          <button class="btn btn-sm btn-secondary" id="encode-clear" type="button">Выбрать другой файл</button>
+          <button class="btn btn-sm btn-secondary" id="encode-clear" type="button" data-open-file-picker>Заменить файл</button>
         </div>
         <div class="tool-panel__body">
           <div class="base64-file">
@@ -128,7 +128,7 @@
   </div>
 </main>
 
-<script src="/js/core.js?v=14"></script>
+<script src="/js/core.js?v=15"></script>
 <script>
 (function () {
   const tabs = document.querySelectorAll('.base64-tab');
