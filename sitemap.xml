@@ -1,72 +1,72 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
-    <loc>https://akdimage.vercel.app/</loc>
+    <loc>https://image.akdworks.com/</loc>
   </url>
   <url>
-    <loc>https://akdimage.vercel.app/compress</loc>
+    <loc>https://image.akdworks.com/compress</loc>
   </url>
   <url>
-    <loc>https://akdimage.vercel.app/resize</loc>
+    <loc>https://image.akdworks.com/resize</loc>
   </url>
   <url>
-    <loc>https://akdimage.vercel.app/watermark</loc>
+    <loc>https://image.akdworks.com/watermark</loc>
   </url>
   <url>
-    <loc>https://akdimage.vercel.app/crop</loc>
+    <loc>https://image.akdworks.com/crop</loc>
   </url>
   <url>
-    <loc>https://akdimage.vercel.app/convert</loc>
+    <loc>https://image.akdworks.com/convert</loc>
   </url>
   <url>
-    <loc>https://akdimage.vercel.app/rotate</loc>
+    <loc>https://image.akdworks.com/rotate</loc>
   </url>
   <url>
-    <loc>https://akdimage.vercel.app/effects</loc>
+    <loc>https://image.akdworks.com/effects</loc>
   </url>
   <url>
-    <loc>https://akdimage.vercel.app/blur</loc>
+    <loc>https://image.akdworks.com/blur</loc>
   </url>
   <url>
-    <loc>https://akdimage.vercel.app/meme</loc>
+    <loc>https://image.akdworks.com/meme</loc>
   </url>
   <url>
-    <loc>https://akdimage.vercel.app/split</loc>
+    <loc>https://image.akdworks.com/split</loc>
   </url>
   <url>
-    <loc>https://akdimage.vercel.app/round</loc>
+    <loc>https://image.akdworks.com/round</loc>
   </url>
   <url>
-    <loc>https://akdimage.vercel.app/pixelate</loc>
+    <loc>https://image.akdworks.com/pixelate</loc>
   </url>
   <url>
-    <loc>https://akdimage.vercel.app/exif</loc>
+    <loc>https://image.akdworks.com/exif</loc>
   </url>
   <url>
-    <loc>https://akdimage.vercel.app/base64</loc>
+    <loc>https://image.akdworks.com/base64</loc>
   </url>
   <url>
-    <loc>https://akdimage.vercel.app/favicon</loc>
+    <loc>https://image.akdworks.com/favicon</loc>
   </url>
   <url>
-    <loc>https://akdimage.vercel.app/palette</loc>
+    <loc>https://image.akdworks.com/palette</loc>
   </url>
   <url>
-    <loc>https://akdimage.vercel.app/pdf</loc>
+    <loc>https://image.akdworks.com/pdf</loc>
   </url>
   <url>
-    <loc>https://akdimage.vercel.app/collage</loc>
+    <loc>https://image.akdworks.com/collage</loc>
   </url>
   <url>
-    <loc>https://akdimage.vercel.app/annotate</loc>
+    <loc>https://image.akdworks.com/annotate</loc>
   </url>
   <url>
-    <loc>https://akdimage.vercel.app/gif-trim</loc>
+    <loc>https://image.akdworks.com/gif-trim</loc>
   </url>
   <url>
-    <loc>https://akdimage.vercel.app/privacy</loc>
+    <loc>https://image.akdworks.com/privacy</loc>
   </url>
   <url>
-    <loc>https://akdimage.vercel.app/about</loc>
+    <loc>https://image.akdworks.com/about</loc>
   </url>
 </urlset>
