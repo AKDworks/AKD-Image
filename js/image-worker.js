@@ -68,7 +68,7 @@ function prepareCanvas(width, height, mimeType) {
   const context = canvas.getContext('2d');
   if (!context) throw new Error('Canvas недоступен');
 
-  if (mimeType === 'image/jpeg') {
+  if (['image/jpeg', 'image/heic', 'image/heif', 'image/bmp'].includes(mimeType)) {
     context.fillStyle = '#ffffff';
     context.fillRect(0, 0, width, height);
   }

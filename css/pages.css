@@ -1048,7 +1048,7 @@
   line-height: 1.2;
   resize: none;
   outline: none;
-  box-shadow: 0 0 0 3px var(--focus-ring-strong);
+  box-shadow: none;
   transform: translateY(-2px);
 }
 .annotate-tools {

@@ -41,14 +41,19 @@
   flex-wrap: wrap;
 }
 .fmt-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 24px;
   font-size: .7rem;
   font-weight: 700;
+  line-height: 1;
   background: var(--bg);
   border: 1px solid var(--border);
-  padding: 2px 8px;
+  padding: 1px 8px 0;
   border-radius: 4px;
   color: var(--muted);
-  letter-spacing: .04em;
+  letter-spacing: 0;
 }
 
 /* Tool panel */
@@ -125,7 +130,7 @@
 .form-group select:focus,
 .form-group textarea:focus {
   border-color: var(--accent);
-  box-shadow: 0 0 0 3px var(--focus-ring);
+  box-shadow: none;
 }
 .form-group input[type="range"] {
   accent-color: var(--accent);
