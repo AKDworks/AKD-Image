@@ -18,7 +18,7 @@
     <link rel="preload" href="/fonts/Inter-600.woff2" as="font" type="font/woff2" crossorigin>
     <link rel="preload" href="/fonts/Inter-700.woff2" as="font" type="font/woff2" crossorigin>
     <link rel="preload" href="/fonts/Inter-800.woff2" as="font" type="font/woff2" crossorigin>
-    <link rel="stylesheet" href="css/main.css?v=30">
+    <link rel="stylesheet" href="css/main.css?v=31">
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
@@ -31,7 +31,7 @@
 </head>
 <body>
 
-<script src="js/layout.js?v=12"></script>
+<script src="js/layout.js?v=13"></script>
 
 <main>
   <section class="hero">
@@ -348,6 +348,7 @@
     const favoritesEmptyMessage = document.getElementById('favorites-empty-message');
     const defaultOrder = new Map(cards.map((card, index) => [card, index]));
     const favoritesStorageKey = 'akd-image-favorites';
+    const navigationStateKey = 'akd-image-home-navigation';
     const categoryNames = {
       optimization: 'Оптимизация',
       geometry: 'Геометрия',
@@ -355,6 +356,37 @@
     };
     let activeCategory = 'all';
     let activeCatalog = 'all';
+    let activeSort = 'default';
+    let navigationState = null;
+
+    try {
+      const savedNavigationState = JSON.parse(sessionStorage.getItem(navigationStateKey));
+
+      if (savedNavigationState?.pending) {
+        navigationState = savedNavigationState;
+        activeCategory = ['all', 'optimization', 'geometry', 'creativity'].includes(savedNavigationState.category)
+          ? savedNavigationState.category
+          : 'all';
+        activeCatalog = ['all', 'favorites'].includes(savedNavigationState.catalog)
+          ? savedNavigationState.catalog
+          : 'all';
+        activeSort = ['default', 'popular', 'new', 'alphabetical'].includes(savedNavigationState.sort)
+          ? savedNavigationState.sort
+          : 'default';
+      }
+    } catch {
+      navigationState = null;
+    }
+
+    window.addEventListener('pageshow', event => {
+      if (!event.persisted) return;
+
+      try {
+        sessionStorage.removeItem(navigationStateKey);
+      } catch {
+        /* The browser can still restore its own history position. */
+      }
+    });
 
     try {
       if (sessionStorage.getItem('akd-image-open-favorites') === 'true') {
@@ -456,6 +488,7 @@
 
     const applySort = mode => {
       const sortedCards = [...cards];
+      activeSort = mode;
 
       if (mode === 'popular') {
         sortedCards.sort((a, b) =>
@@ -488,6 +521,31 @@
         option.setAttribute('aria-checked', String(isSelected));
       });
     };
+
+    cards.forEach(card => {
+      card.addEventListener('click', event => {
+        const opensInCurrentTab = event.button === 0 &&
+          !event.ctrlKey &&
+          !event.metaKey &&
+          !event.shiftKey &&
+          !event.altKey &&
+          card.target !== '_blank';
+
+        if (!opensInCurrentTab || event.defaultPrevented) return;
+
+        try {
+          sessionStorage.setItem(navigationStateKey, JSON.stringify({
+            pending: true,
+            scrollY: window.scrollY,
+            category: activeCategory,
+            catalog: activeCatalog,
+            sort: activeSort
+          }));
+        } catch {
+          /* Navigation still works if session storage is unavailable. */
+        }
+      });
+    });
 
     filters.forEach(btn => {
       btn.addEventListener('click', () => {
@@ -535,7 +593,34 @@
       }
     });
 
+    if (navigationState) {
+      filters.forEach(filter => {
+        filter.classList.toggle('active', filter.dataset.filter === activeCategory);
+      });
+      applySort(activeSort);
+    }
+
     updateCatalog();
+
+    if (navigationState && Number.isFinite(Number(navigationState.scrollY))) {
+      const restoreScroll = () => {
+        const root = document.documentElement;
+        const previousScrollBehavior = root.style.scrollBehavior;
+        root.style.scrollBehavior = 'auto';
+        window.scrollTo(0, Math.max(0, Number(navigationState.scrollY)));
+        root.style.scrollBehavior = previousScrollBehavior;
+      };
+
+      restoreScroll();
+      requestAnimationFrame(restoreScroll);
+      document.fonts?.ready.then(restoreScroll).catch(() => {});
+
+      try {
+        sessionStorage.removeItem(navigationStateKey);
+      } catch {
+        /* The restored page remains usable if session storage is unavailable. */
+      }
+    }
   });
 </script>
 </body>

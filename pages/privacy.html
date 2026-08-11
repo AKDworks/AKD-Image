@@ -12,11 +12,11 @@
   <link rel="preload" href="/fonts/Inter-600.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="preload" href="/fonts/Inter-700.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="preload" href="/fonts/Inter-800.woff2" as="font" type="font/woff2" crossorigin>
-  <link rel="stylesheet" href="/css/main.css?v=30">
+  <link rel="stylesheet" href="/css/main.css?v=33">
 </head>
 <body>
 
-<script src="/js/layout.js?v=12"></script>
+<script src="/js/layout.js?v=13"></script>
 
 <main>
   <section class="hero hero--compact">
@@ -37,7 +37,7 @@
       <p>В проекте нет backend-части, базы данных или облачного хранилища для пользовательских файлов. После закрытия вкладки выбранные изображения исчезают из оперативной памяти браузера. Я не получаю ваши файлы и не могу передать их третьим лицам.</p>
 
       <h3>3. Локальные зависимости</h3>
-      <p>Шрифт Inter, а также библиотеки JSZip, jsPDF, modern-gif, AVIF-энкодер, libheif, libde265 и Kvazaar подключаются из файлов проекта, а не с внешних CDN. HEIC и HEIF читаются и создаются локальным WebAssembly-модулем. Это позволяет формировать ZIP, PDF, GIF, AVIF и HEIC без отправки изображения на сторонний библиотечный сервер. Лицензии сторонних компонентов находятся в папке js/vendor исходного кода.</p>
+      <p>Шрифт Inter, а также библиотеки JSZip, jsPDF, modern-gif, AVIF-энкодер, libheif, libde265 и Kvazaar подключаются из файлов проекта, а не с внешних CDN. HEIC и HEIF читаются и создаются локальным WebAssembly-модулем. Это позволяет формировать ZIP, PDF, GIF, AVIF и HEIC без отправки изображения на сторонний библиотечный сервер. Сведения об авторах и условиях распространения собраны на странице <a href="/licenses">«Лицензии и компоненты»</a>.</p>
 
       <h3>4. Буфер обмена</h3>
       <p>Изображение из буфера обмена считывается только когда вы сами вставляете его через Ctrl+V или соответствующее действие в браузере. В отдельных инструментах можно по нажатию скопировать готовый результат в буфер обмена. AKD Image не считывает содержимое буфера автоматически и не отправляет его на сервер.</p>

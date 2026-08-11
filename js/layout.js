@@ -128,6 +128,7 @@
         <ul class="footer-links">
           <li><a href="${routeHref('/about', '/pages/about.html')}">О проекте</a></li>
           <li><a href="${routeHref('/privacy', '/pages/privacy.html')}">Конфиденциальность</a></li>
+          <li><a href="${routeHref('/licenses', '/pages/licenses.html')}">Лицензии</a></li>
         </ul>
       </div>
       <div class="container footer-bottom">
