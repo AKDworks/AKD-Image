@@ -4,10 +4,10 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Пометки на изображении – AKD Image</title>
-  <meta name="description" content="Добавляйте и перемещайте текст, стрелки, фигуры и свободные пометки на JPG, PNG, WebP, AVIF и анимированных GIF прямо в браузере.">
+  <meta name="description" content="Добавляйте пометки на JPG, PNG, WebP, AVIF, HEIC/HEIF, SVG, BMP и анимированные GIF прямо в браузере.">
   <link rel="canonical" href="https://image.akdworks.com/annotate">
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="/css/main.css?v=28">
+  <link rel="stylesheet" href="/css/main.css?v=29">
 </head>
 <body>
 
@@ -22,7 +22,7 @@
     </div>
 
     <div class="dropzone" id="dropzone">
-      <input type="file" accept="image/jpeg,image/png,image/webp,image/avif,image/gif">
+      <input type="file" accept="image/jpeg,image/png,image/webp,image/avif,image/heic,image/heif,image/svg+xml,image/bmp,image/gif">
       <p class="dropzone__title">Добавьте изображения</p>
       <p class="dropzone__hint">Выберите файлы, вставьте из буфера или перетащите сюда</p>
       <div class="dropzone__formats">
@@ -30,6 +30,9 @@
         <span class="fmt-badge">PNG</span>
         <span class="fmt-badge">WEBP</span>
         <span class="fmt-badge">AVIF</span>
+        <span class="fmt-badge">HEIC</span>
+        <span class="fmt-badge">SVG</span>
+        <span class="fmt-badge">BMP</span>
         <span class="fmt-badge">GIF</span>
       </div>
     </div>
@@ -120,7 +123,7 @@
   </div>
 </main>
 
-<script src="/js/core.js?v=15"></script>
+<script src="/js/core.js?v=16"></script>
 <script>
 (function () {
   const dropzoneEl = document.getElementById('dropzone');
@@ -161,7 +164,6 @@
   let movingChanged = false;
   let activeTextPoint = null;
   let resultBlob = null;
-  let resultUrl = null;
 
   strokeWidth.addEventListener('input', () => {
     strokeWidthVal.textContent = `${strokeWidth.value} px`;
@@ -170,7 +172,7 @@
     fontSizeVal.textContent = `${fontSize.value} px`;
   });
   new Dropzone(dropzoneEl, {
-    accept: ['image/jpeg', 'image/png', 'image/webp', 'image/avif', 'image/gif'],
+    accept: ['image/jpeg', 'image/png', 'image/webp', 'image/avif', 'image/heic', 'image/heif', 'image/svg+xml', 'image/bmp', 'image/gif'],
     multiple: false,
     onFiles(files) {
       if (files[0]) loadImageFile(files[0]);
@@ -712,7 +714,7 @@
   }
 
   function outputMime() {
-    return FileUtils.getFileMime(activeFile) || 'image/png';
+    return FileUtils.resolveOutputMime(activeFile, 'same') || 'image/png';
   }
 
   function outputName() {
@@ -725,8 +727,6 @@
     resultStats.innerHTML = '';
     resultImg.removeAttribute('src');
     resultBlob = null;
-    if (resultUrl) URL.revokeObjectURL(resultUrl);
-    resultUrl = null;
   }
 
   saveBtn.addEventListener('click', async () => {
@@ -764,9 +764,7 @@
       sourceImg = originalSource;
       render();
 
-      if (resultUrl) URL.revokeObjectURL(resultUrl);
-      resultUrl = URL.createObjectURL(resultBlob);
-      resultImg.src = resultUrl;
+      resultImg.src = await FileUtils.readAsDataURL(resultBlob);
       resultStats.innerHTML = `
         <div class="stat-card"><div class="stat-card__label">Размер</div><div class="stat-card__value">${canvas.width} × ${canvas.height}</div></div>
         <div class="stat-card"><div class="stat-card__label">Пометок</div><div class="stat-card__value">${actions.length}</div></div>

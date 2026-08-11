@@ -4,10 +4,10 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Размытие области – AKD Image</title>
-  <meta name="description" content="Размывайте выбранную область JPG, PNG, WebP, AVIF или анимированного GIF прямо в браузере. Удобно для скрытия лиц, номеров и личных данных.">
+  <meta name="description" content="Размывайте область JPG, PNG, WebP, AVIF, HEIC/HEIF, SVG, BMP или GIF для скрытия лиц и личных данных.">
   <link rel="canonical" href="https://image.akdworks.com/blur">
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="/css/main.css?v=28">
+  <link rel="stylesheet" href="/css/main.css?v=29">
 </head>
 <body>
 
@@ -22,7 +22,7 @@
     </div>
 
     <div class="dropzone" id="dropzone">
-      <input type="file" accept="image/jpeg,image/png,image/webp,image/avif,image/gif">
+      <input type="file" accept="image/jpeg,image/png,image/webp,image/avif,image/heic,image/heif,image/svg+xml,image/bmp,image/gif">
       <p class="dropzone__title">Добавьте изображения</p>
       <p class="dropzone__hint">Выберите файлы, вставьте из буфера или перетащите сюда</p>
       <div class="dropzone__formats">
@@ -30,6 +30,9 @@
         <span class="fmt-badge">PNG</span>
         <span class="fmt-badge">WEBP</span>
         <span class="fmt-badge">AVIF</span>
+        <span class="fmt-badge">HEIC</span>
+        <span class="fmt-badge">SVG</span>
+        <span class="fmt-badge">BMP</span>
         <span class="fmt-badge">GIF</span>
       </div>
     </div>
@@ -112,7 +115,7 @@
   </div>
 </main>
 
-<script src="/js/core.js?v=15"></script>
+<script src="/js/core.js?v=16"></script>
 <script>
 (function () {
   const dropzoneEl   = document.getElementById('dropzone');
@@ -144,13 +147,12 @@
   let renderW = 0;
   let renderH = 0;
   let resultBlob = null;
-  let resultUrl = null;
 
   blurRadius.addEventListener('input', () => {
     blurRadiusVal.textContent = `${blurRadius.value}px`;
   });
   new Dropzone(dropzoneEl, {
-    accept: ['image/jpeg','image/png','image/webp','image/avif','image/gif'],
+    accept: ['image/jpeg','image/png','image/webp','image/avif','image/heic','image/heif','image/svg+xml','image/bmp','image/gif'],
     multiple: false,
     onFiles(newFiles) {
       if (newFiles[0]) loadImageFile(newFiles[0]);
@@ -167,10 +169,6 @@
 
   changeImgBtn.addEventListener('click', () => {
     activeFile = null;
-    if (resultUrl) {
-      URL.revokeObjectURL(resultUrl);
-      resultUrl = null;
-    }
     resultImg.removeAttribute('src');
     setEditingVisible(false);
   });
@@ -329,7 +327,7 @@
     applyBlurBtn.innerHTML = '<span class="spinner"></span> Размываю...';
 
     try {
-      const mime = FileUtils.getFileMime(activeFile);
+      const mime = FileUtils.resolveOutputMime(activeFile, 'same');
       const quality = 0.95;
       const processed = await ImageProcessor.process(activeFile, {
         type: 'blurArea',
@@ -345,9 +343,7 @@
       });
       resultBlob = processed.blob;
 
-      if (resultUrl) URL.revokeObjectURL(resultUrl);
-      resultUrl = URL.createObjectURL(resultBlob);
-      resultImg.src = resultUrl;
+      resultImg.src = await FileUtils.readAsDataURL(resultBlob);
 
       const ext = FileUtils.extensionForMime(mime);
       const filename = activeFile.name.replace(/\.[^.]+$/, '') + '_blur.' + ext;

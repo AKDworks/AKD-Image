@@ -4,10 +4,10 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Изображение в Base64 – AKD Image</title>
-  <meta name="description" content="Преобразуйте JPG, PNG, WebP, AVIF или анимированный GIF в Base64 и восстановите исходный файл локально в браузере.">
+  <meta name="description" content="Преобразуйте JPG, PNG, WebP, AVIF, HEIC/HEIF, SVG, BMP или GIF в Base64 и восстановите файл локально в браузере.">
   <link rel="canonical" href="https://image.akdworks.com/base64">
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="/css/main.css?v=28">
+  <link rel="stylesheet" href="/css/main.css?v=29">
 </head>
 <body>
 
@@ -31,7 +31,7 @@
 
     <section id="encode-panel">
       <div class="dropzone" id="dropzone">
-        <input type="file" accept="image/jpeg,image/png,image/webp,image/avif,image/gif">
+        <input type="file" accept="image/jpeg,image/png,image/webp,image/avif,image/heic,image/heif,image/svg+xml,image/bmp,image/gif">
         <p class="dropzone__title">Добавьте изображения</p>
         <p class="dropzone__hint">Выберите файл до 3 МБ, вставьте из буфера или перетащите сюда</p>
         <div class="dropzone__formats">
@@ -39,6 +39,9 @@
           <span class="fmt-badge">PNG</span>
           <span class="fmt-badge">WEBP</span>
           <span class="fmt-badge">AVIF</span>
+          <span class="fmt-badge">HEIC</span>
+          <span class="fmt-badge">SVG</span>
+          <span class="fmt-badge">BMP</span>
           <span class="fmt-badge">GIF</span>
         </div>
       </div>
@@ -103,6 +106,9 @@
                 <option value="image/jpeg">JPG</option>
                 <option value="image/webp">WebP</option>
                 <option value="image/avif">AVIF</option>
+                <option value="image/heic">HEIC / HEIF</option>
+                <option value="image/svg+xml">SVG</option>
+                <option value="image/bmp">BMP</option>
                 <option value="image/gif">GIF</option>
               </select>
             </div>
@@ -128,7 +134,7 @@
   </div>
 </main>
 
-<script src="/js/core.js?v=15"></script>
+<script src="/js/core.js?v=16"></script>
 <script>
 (function () {
   const tabs = document.querySelectorAll('.base64-tab');
@@ -151,7 +157,6 @@
   let sourceDataUrl = '';
   let sourceFile = null;
   let decodedBlob = null;
-  let decodedUrl = '';
   let decodedFilename = '';
   const MAX_BASE64_FILE_SIZE = 3 * 1024 * 1024;
   const MAX_BASE64_INPUT_LENGTH = Math.ceil(MAX_BASE64_FILE_SIZE * 4 / 3) + 1024;
@@ -174,7 +179,7 @@
   });
 
   new Dropzone(dropzoneEl, {
-    accept: ['image/jpeg', 'image/png', 'image/webp', 'image/avif', 'image/gif'],
+    accept: ['image/jpeg', 'image/png', 'image/webp', 'image/avif', 'image/heic', 'image/heif', 'image/svg+xml', 'image/bmp', 'image/gif'],
     multiple: false,
     async onFiles(files) {
       const file = files[0];
@@ -185,9 +190,9 @@
       }
 
       try {
-        sourceDataUrl = await FileUtils.readAsDataURL(file);
+        sourceDataUrl = await FileUtils.readAsOriginalDataURL(file);
         sourceFile = file;
-        sourcePreview.src = sourceDataUrl;
+        sourcePreview.src = await FileUtils.readAsDataURL(file);
         sourceName.textContent = file.name;
         sourceMeta.textContent = `${FileUtils.getFormatLabel(file)} · ${FileUtils.formatSize(file.size)}`;
         FileUtils.getImageDetails(file).then(details => {
@@ -236,9 +241,7 @@
   }
 
   function clearDecodedResult() {
-    if (decodedUrl) URL.revokeObjectURL(decodedUrl);
     decodedBlob = null;
-    decodedUrl = '';
     decodedFilename = '';
     decodedPreview.removeAttribute('src');
     decodedMeta.textContent = '';
@@ -258,14 +261,14 @@
       .replace(/_/g, '/');
 
     if (!FileUtils.SUPPORTED_IMAGE_TYPES.includes(mime)) {
-      throw new Error('Поддерживаются только JPG, PNG, WebP, AVIF и GIF');
+      throw new Error('Поддерживаются только JPG, PNG, WebP, AVIF, HEIC/HEIF, SVG, BMP и GIF');
     }
     if (!base64 || !/^[A-Za-z0-9+/]*={0,2}$/.test(base64) || base64.length % 4 === 1) {
       throw new Error('Некорректная строка Base64');
     }
     const decodedSize = Math.floor(base64.length * 3 / 4);
-    if (decodedSize > FileUtils.MAX_FILE_SIZE) {
-      throw new Error(`Изображение превышает лимит ${FileUtils.formatSize(FileUtils.MAX_FILE_SIZE)}`);
+    if (decodedSize > MAX_BASE64_FILE_SIZE) {
+      throw new Error(getBase64LimitMessage());
     }
     base64 = base64.replace(/=+$/, '');
     base64 += '='.repeat((4 - base64.length % 4) % 4);
@@ -273,7 +276,10 @@
     const binary = atob(base64);
     const bytes = new Uint8Array(binary.length);
     for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
-    if (FileUtils.detectImageMime(bytes) !== mime) {
+    const detectedMime = FileUtils.detectImageMime(bytes);
+    const isHeicFamily = ['image/heic', 'image/heif'].includes(mime) &&
+      ['image/heic', 'image/heif'].includes(detectedMime);
+    if (detectedMime !== mime && !isHeicFamily) {
       throw new Error('Формат данных не совпадает с выбранным типом изображения');
     }
     return { blob: new Blob([bytes], { type: mime }), mime };
@@ -285,6 +291,10 @@
       'image/png': 'png',
       'image/webp': 'webp',
       'image/avif': 'avif',
+      'image/heic': 'heic',
+      'image/heif': 'heif',
+      'image/svg+xml': 'svg',
+      'image/bmp': 'bmp',
       'image/gif': 'gif'
     };
     return extensions[mime] || 'img';
@@ -310,14 +320,13 @@
     clearDecodedResult();
   });
 
-  document.getElementById('decode-btn').addEventListener('click', () => {
+  document.getElementById('decode-btn').addEventListener('click', async () => {
     clearDecodedResult();
     try {
       const decoded = decodeBase64(input.value);
       decodedBlob = decoded.blob;
       decodedFilename = `akd-image.${extensionForMime(decoded.mime)}`;
-      decodedUrl = URL.createObjectURL(decodedBlob);
-      decodedPreview.src = decodedUrl;
+      decodedPreview.src = await FileUtils.readAsDataURL(decodedBlob);
       decodedPreview.onload = () => {
         try {
           FileUtils.validateImageSize(decodedPreview.naturalWidth, decodedPreview.naturalHeight);

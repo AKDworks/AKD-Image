@@ -4,10 +4,10 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Сжать изображение – AKD Image</title>
-  <meta name="description" content="Сжимайте JPG, PNG, WebP, AVIF и анимированные GIF прямо в браузере. Изображения обрабатываются локально и не загружаются на сервер.">
+  <meta name="description" content="Сжимайте JPG, PNG, WebP, AVIF, HEIC/HEIF, SVG, BMP и анимированные GIF прямо в браузере без загрузки на сервер.">
   <link rel="canonical" href="https://image.akdworks.com/compress">
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="/css/main.css?v=28">
+  <link rel="stylesheet" href="/css/main.css?v=29">
 </head>
 <body>
 
@@ -23,7 +23,7 @@
       <p class="tool-page__subtitle">Уменьшайте вес одного или нескольких изображений, выбирая подходящее качество и формат результата.</p>
     </div>
     <div class="dropzone" id="dropzone">
-      <input type="file" accept="image/jpeg,image/png,image/webp,image/avif,image/gif" multiple>
+      <input type="file" accept="image/jpeg,image/png,image/webp,image/avif,image/heic,image/heif,image/svg+xml,image/bmp,image/gif" multiple>
       <p class="dropzone__title">Добавьте изображения</p>
       <p class="dropzone__hint">Выберите файлы, вставьте из буфера или перетащите сюда</p>
       <div class="dropzone__formats">
@@ -31,6 +31,9 @@
         <span class="fmt-badge">PNG</span>
         <span class="fmt-badge">WEBP</span>
         <span class="fmt-badge">AVIF</span>
+        <span class="fmt-badge">HEIC</span>
+        <span class="fmt-badge">SVG</span>
+        <span class="fmt-badge">BMP</span>
         <span class="fmt-badge">GIF</span>
       </div>
     </div>
@@ -60,6 +63,8 @@
               <option value="image/png">PNG</option>
               <option value="image/webp">WebP</option>
               <option value="image/avif">AVIF</option>
+              <option value="image/heic">HEIC</option>
+              <option value="image/bmp">BMP</option>
               <option value="image/gif">GIF</option>
             </select>
             <p class="text-muted text-sm mt-8" id="format-hint">Для статичных изображений будет выбран WebP: обычно он заметно уменьшает размер файла.</p>
@@ -89,7 +94,7 @@
   </div>
 </main>
 
-<script src="/js/core.js?v=15"></script>
+<script src="/js/core.js?v=16"></script>
 <script>
 (function () {
   const dropzoneEl   = document.getElementById('dropzone');
@@ -128,7 +133,7 @@
   });
 
   new Dropzone(dropzoneEl, {
-    accept: ['image/jpeg','image/png','image/webp','image/avif','image/gif'],
+    accept: ['image/jpeg','image/png','image/webp','image/avif','image/heic','image/heif','image/svg+xml','image/bmp','image/gif'],
     multiple: true,
     onFiles(newFiles) {
       newFiles.forEach(f => {
@@ -176,6 +181,15 @@
       formatHint.textContent = 'PNG сохраняется без потерь: для уменьшения размера обычно лучше выбрать WebP или AVIF.';
       return;
     }
+    if (outputFmt.value === 'image/bmp' ||
+        (outputFmt.value === 'same' && files.some(({ file }) => FileUtils.getFileMime(file) === 'image/bmp'))) {
+      formatHint.textContent = 'BMP сохраняется без сжатия: ползунок качества на него не влияет, а файл обычно получается крупнее.';
+      return;
+    }
+    if (outputFmt.value === 'same' && files.some(({ file }) => FileUtils.isSvg(file))) {
+      formatHint.textContent = 'SVG при обработке растрируется и сохраняется как PNG. Для меньшего файла выберите WebP или AVIF.';
+      return;
+    }
     formatHint.textContent = 'Предпросмотр и итоговый файл будут созданы с текущими настройками.';
   }
 
@@ -200,25 +214,20 @@
       && processed.blob.size >= file.size;
     const blob = useOriginal ? file : processed.blob;
 
-    const previewUrl = URL.createObjectURL(blob);
-    try {
-      const image = await FileUtils.loadImage(previewUrl);
-      if (!isCurrent()) return;
+    const image = await FileUtils.loadImage(await FileUtils.readAsDataURL(blob));
+    if (!isCurrent()) return;
 
-      previewCanvas.width = image.naturalWidth;
-      previewCanvas.height = image.naturalHeight;
-      const context = previewCanvas.getContext('2d');
-      context.clearRect(0, 0, previewCanvas.width, previewCanvas.height);
-      context.drawImage(image, 0, 0);
-      previewCanvas.classList.remove('hidden');
+    previewCanvas.width = image.naturalWidth;
+    previewCanvas.height = image.naturalHeight;
+    const context = previewCanvas.getContext('2d');
+    context.clearRect(0, 0, previewCanvas.width, previewCanvas.height);
+    context.drawImage(image, 0, 0);
+    previewCanvas.classList.remove('hidden');
 
-      const change = useOriginal ? '0%' : FileUtils.formatPct(file.size, blob.size);
-      const frameHint = FileUtils.isGif(file) ? ' · показан первый кадр' : '';
-      const fallbackHint = useOriginal ? ' · оставлен оригинал: новая версия тяжелее' : '';
-      previewMeta.textContent = `Предпросмотр: ${FileUtils.formatSize(file.size)} → ${FileUtils.formatSize(blob.size)} (${change})${frameHint}${fallbackHint}`;
-    } finally {
-      URL.revokeObjectURL(previewUrl);
-    }
+    const change = useOriginal ? '0%' : FileUtils.formatPct(file.size, blob.size);
+    const frameHint = FileUtils.isGif(file) ? ' · показан первый кадр' : '';
+    const fallbackHint = useOriginal ? ' · оставлен оригинал: новая версия тяжелее' : '';
+    previewMeta.textContent = `Предпросмотр: ${FileUtils.formatSize(file.size)} → ${FileUtils.formatSize(blob.size)} (${change})${frameHint}${fallbackHint}`;
   });
 
   function plural(n, a, b, c) {

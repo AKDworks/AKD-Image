@@ -4,10 +4,10 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Повернуть и отразить – AKD Image</title>
-  <meta name="description" content="Поворачивайте и отражайте JPG, PNG, WebP, AVIF и анимированные GIF в браузере. Выберите угол, примените отражение и скачайте результат.">
+  <meta name="description" content="Поворачивайте и отражайте JPG, PNG, WebP, AVIF, HEIC/HEIF, SVG, BMP и анимированные GIF прямо в браузере.">
   <link rel="canonical" href="https://image.akdworks.com/rotate">
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="/css/main.css?v=28">
+  <link rel="stylesheet" href="/css/main.css?v=29">
 </head>
 <body>
 
@@ -23,7 +23,7 @@
       <p class="tool-page__subtitle">Исправляйте ориентацию и зеркально отражайте сразу несколько изображений.</p>
     </div>
     <div class="dropzone" id="dropzone">
-      <input type="file" accept="image/jpeg,image/png,image/webp,image/avif,image/gif" multiple>
+      <input type="file" accept="image/jpeg,image/png,image/webp,image/avif,image/heic,image/heif,image/svg+xml,image/bmp,image/gif" multiple>
       <p class="dropzone__title">Добавьте изображения</p>
       <p class="dropzone__hint">Выберите файлы, вставьте из буфера или перетащите сюда</p>
       <div class="dropzone__formats">
@@ -31,6 +31,9 @@
         <span class="fmt-badge">PNG</span>
         <span class="fmt-badge">WEBP</span>
         <span class="fmt-badge">AVIF</span>
+        <span class="fmt-badge">HEIC</span>
+        <span class="fmt-badge">SVG</span>
+        <span class="fmt-badge">BMP</span>
         <span class="fmt-badge">GIF</span>
       </div>
     </div>
@@ -70,7 +73,7 @@
   </div>
 </main>
 
-<script src="/js/core.js?v=15"></script>
+<script src="/js/core.js?v=16"></script>
 <script>
 (function () {
   const dropzoneEl  = document.getElementById('dropzone');
@@ -129,7 +132,7 @@
     updateUI();
   });
   new Dropzone(dropzoneEl, {
-    accept: ['image/jpeg','image/png','image/webp','image/avif','image/gif'],
+    accept: ['image/jpeg','image/png','image/webp','image/avif','image/heic','image/heif','image/svg+xml','image/bmp','image/gif'],
     multiple: true,
     onFiles(newFiles) {
       newFiles.forEach(f => files.push({ file: f, item: manager.add(f) }));
@@ -189,18 +192,19 @@
       manager.setProgress(item.id, 20);
 
       try {
+        const mime = FileUtils.resolveOutputMime(file, 'same');
         const processed = await ImageProcessor.process(file, {
           type: 'rotate',
           rotation,
           flipH,
           flipV,
-          mimeType: FileUtils.getFileMime(file),
+          mimeType: mime,
           quality: 0.95,
         }, {
           onProgress: progress => manager.setProgress(item.id, progress),
         });
         const { blob, width: w, height: h } = processed;
-        const newFilename = file.name.replace(/\.[^.]+$/, '') + '_rotated.' + FileUtils.getExt(file.name);
+        const newFilename = file.name.replace(/\.[^.]+$/, '') + '_rotated.' + FileUtils.extensionForMime(mime);
         
         manager.setProgress(item.id, 100);
         manager.setStatus(item.id, 'Готово', 'status-done');

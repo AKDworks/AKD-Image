@@ -186,12 +186,16 @@ const UIUtils = {
 const FileUtils = {
   MAX_FILE_SIZE: 50 * 1024 * 1024,
   MAX_GIF_FILE_SIZE: 25 * 1024 * 1024,
+  MAX_HEIC_FILE_SIZE: 20 * 1024 * 1024,
   MAX_BATCH_FILES: 50,
   MAX_BATCH_SIZE: 250 * 1024 * 1024,
   MAX_ZIP_SIZE: 500 * 1024 * 1024,
   MAX_IMAGE_PIXELS: 40 * 1000 * 1000,
   MAX_IMAGE_SIDE: 16384,
-  SUPPORTED_IMAGE_TYPES: ['image/jpeg', 'image/png', 'image/webp', 'image/avif', 'image/gif'],
+  SUPPORTED_IMAGE_TYPES: [
+    'image/jpeg', 'image/png', 'image/webp', 'image/avif', 'image/gif',
+    'image/heic', 'image/heif', 'image/svg+xml', 'image/bmp',
+  ],
 
   formatSize(bytes) {
     if (bytes < 1024)       return bytes + ' B';
@@ -229,7 +233,12 @@ const FileUtils = {
   },
 
   getFileMime(file) {
-    if (file?.type) return file.type.toLowerCase();
+    const rawMime = String(file?.type || '').toLowerCase();
+    const declaredMime = {
+      'image/x-bmp': 'image/bmp',
+      'image/x-ms-bmp': 'image/bmp',
+    }[rawMime] || rawMime;
+    if (this.SUPPORTED_IMAGE_TYPES.includes(declaredMime)) return declaredMime;
     const extension = this.getExt(file?.name || '');
     return {
       jpg: 'image/jpeg',
@@ -238,6 +247,10 @@ const FileUtils = {
       webp: 'image/webp',
       avif: 'image/avif',
       gif: 'image/gif',
+      heic: 'image/heic',
+      heif: 'image/heif',
+      svg: 'image/svg+xml',
+      bmp: 'image/bmp',
     }[extension] || '';
   },
 
@@ -248,6 +261,10 @@ const FileUtils = {
       'image/webp': 'WebP',
       'image/avif': 'AVIF',
       'image/gif': 'GIF',
+      'image/heic': 'HEIC',
+      'image/heif': 'HEIF',
+      'image/svg+xml': 'SVG',
+      'image/bmp': 'BMP',
     }[this.getFileMime(file)] || 'Изображение';
   },
 
@@ -267,7 +284,11 @@ const FileUtils = {
 
   resolveOutputMime(file, selectedMime) {
     if (this.isGif(file)) return 'image/gif';
-    return selectedMime === 'same' ? this.getFileMime(file) : selectedMime;
+    if (selectedMime !== 'same') return selectedMime;
+    const sourceMime = this.getFileMime(file);
+    if (sourceMime === 'image/svg+xml') return 'image/png';
+    if (sourceMime === 'image/heif') return 'image/heic';
+    return sourceMime;
   },
 
   extensionForMime(mime) {
@@ -277,11 +298,22 @@ const FileUtils = {
       'image/webp': 'webp',
       'image/avif': 'avif',
       'image/gif': 'gif',
+      'image/heic': 'heic',
+      'image/heif': 'heif',
+      'image/bmp': 'bmp',
     }[mime] || 'png';
   },
 
   isGif(file) {
     return this.getFileMime(file) === 'image/gif';
+  },
+
+  isHeic(file) {
+    return ['image/heic', 'image/heif'].includes(this.getFileMime(file));
+  },
+
+  isSvg(file) {
+    return this.getFileMime(file) === 'image/svg+xml';
   },
 
   isSupportedImage(file) {
@@ -290,7 +322,9 @@ const FileUtils = {
 
   validateFile(file) {
     if (!(file instanceof Blob)) throw new Error('Некорректный файл');
-    const limit = this.isGif(file) ? this.MAX_GIF_FILE_SIZE : this.MAX_FILE_SIZE;
+    const limit = this.isGif(file)
+      ? this.MAX_GIF_FILE_SIZE
+      : this.isHeic(file) ? this.MAX_HEIC_FILE_SIZE : this.MAX_FILE_SIZE;
     if (file.size > limit) {
       throw new Error(`Файл превышает лимит ${this.formatSize(limit)}`);
     }
@@ -328,6 +362,9 @@ const FileUtils = {
     if (bytes.length >= 3 && bytes[0] === 0xFF && bytes[1] === 0xD8 && bytes[2] === 0xFF) {
       return 'image/jpeg';
     }
+    if (bytes.length >= 2 && bytes[0] === 0x42 && bytes[1] === 0x4D) {
+      return 'image/bmp';
+    }
     if (bytes.length >= 12 &&
         String.fromCharCode(...bytes.slice(0, 4)) === 'RIFF' &&
         String.fromCharCode(...bytes.slice(8, 12)) === 'WEBP') {
@@ -339,15 +376,23 @@ const FileUtils = {
         bytes.length,
         (bytes[0] * 0x1000000) + (bytes[1] << 16) + (bytes[2] << 8) + bytes[3]
       );
+      const brands = [];
       for (let offset = 8; offset + 4 <= boxSize; offset += 4) {
-        const brand = String.fromCharCode(...bytes.slice(offset, offset + 4));
-        if (brand === 'avif' || brand === 'avis') return 'image/avif';
+        brands.push(String.fromCharCode(...bytes.slice(offset, offset + 4)));
       }
+      if (brands.some(brand => brand === 'avif' || brand === 'avis')) return 'image/avif';
+      if (brands.some(brand => [
+        'heic', 'heix', 'hevc', 'hevx', 'heim', 'heis', 'hevm', 'hevs', 'mif1', 'msf1',
+      ].includes(brand))) return 'image/heic';
+    }
+    if (bytes.length) {
+      const start = new TextDecoder().decode(bytes.slice(0, 1024)).replace(/^\uFEFF/, '').trimStart();
+      if (/^(?:<\?xml[^>]*>\s*)?<svg(?:\s|>)/i.test(start)) return 'image/svg+xml';
     }
     return '';
   },
 
-  readAsDataURL(file) {
+  readAsOriginalDataURL(file) {
     this.validateFile(file);
     return new Promise((res, rej) => {
       const r = new FileReader();
@@ -355,6 +400,19 @@ const FileUtils = {
       r.onerror = () => rej(new Error('Не удалось прочитать файл'));
       r.readAsDataURL(file);
     });
+  },
+
+  async prepareRasterInput(file) {
+    this.validateFile(file);
+    const mime = this.getFileMime(file);
+    if (!this.isHeic(file) && mime !== 'image/svg+xml') return file;
+    const formats = await import('/js/image-formats.js?v=1');
+    return formats.prepareInput(file, mime);
+  },
+
+  async readAsDataURL(file) {
+    const prepared = await this.prepareRasterInput(file);
+    return this.readAsOriginalDataURL(prepared);
   },
 
   readAsArrayBuffer(file) {
@@ -406,6 +464,17 @@ const FileUtils = {
       }
     }
 
+    if (['image/heic', 'image/heif', 'image/bmp'].includes(mimeType)) {
+      try {
+        const formats = await import('/js/image-formats.js?v=1');
+        return await formats.encodeCanvas(canvas, mimeType, quality);
+      } catch (err) {
+        console.error(err);
+        const label = mimeType === 'image/bmp' ? 'BMP' : 'HEIC';
+        throw new Error(`Не удалось сохранить ${label}. Попробуйте уменьшить изображение или выбрать другой формат.`);
+      }
+    }
+
     return new Promise((res, rej) => {
       canvas.toBlob(blob => {
         if (!blob) {
@@ -426,14 +495,10 @@ const FileUtils = {
     let height = Number(dimensions.height) || 0;
 
     if (!width || !height) {
-      const sourceUrl = URL.createObjectURL(file);
-      try {
-        const image = await this.loadImage(sourceUrl);
-        width = image.naturalWidth;
-        height = image.naturalHeight;
-      } finally {
-        URL.revokeObjectURL(sourceUrl);
-      }
+      const source = await this.readAsDataURL(file);
+      const image = await this.loadImage(source);
+      width = image.naturalWidth;
+      height = image.naturalHeight;
     }
 
     const details = { width, height };
@@ -448,7 +513,7 @@ const FileUtils = {
   },
 
   canvasForMime(canvas, mimeType) {
-    if (mimeType !== 'image/jpeg') return canvas;
+    if (!['image/jpeg', 'image/heic', 'image/heif', 'image/bmp'].includes(mimeType)) return canvas;
 
     const out = document.createElement('canvas');
     out.width = canvas.width;
@@ -922,7 +987,7 @@ const ImageProcessor = (() => {
   function getWorker() {
     if (worker) return worker;
 
-    worker = new Worker('/js/image-worker.js?v=1', { type: 'module' });
+    worker = new Worker('/js/image-worker.js?v=2', { type: 'module' });
     worker.addEventListener('message', event => {
       const task = pending.get(event.data.id);
       if (!task) return;
@@ -1100,7 +1165,7 @@ const ImageProcessor = (() => {
     canvas.height = size.height;
     const context = canvas.getContext('2d');
 
-    if (task.mimeType === 'image/jpeg') {
+    if (['image/jpeg', 'image/heic', 'image/heif', 'image/bmp'].includes(task.mimeType)) {
       context.fillStyle = '#ffffff';
       context.fillRect(0, 0, canvas.width, canvas.height);
     }
@@ -1151,15 +1216,21 @@ const ImageProcessor = (() => {
       return runOnMainThread(file, task, onProgress);
     }
 
+    const sourceFile = await FileUtils.prepareRasterInput(file);
+
+    if (['image/heic', 'image/heif', 'image/bmp'].includes(task.mimeType)) {
+      return runOnMainThread(sourceFile, task, onProgress);
+    }
+
     if (canUseWorker()) {
       try {
-        return await runInWorker(file, task, onProgress);
+        return await runInWorker(sourceFile, task, onProgress);
       } catch (error) {
         console.warn('Фоновая обработка недоступна, используется обычный Canvas.', error);
       }
     }
 
-    return runOnMainThread(file, task, onProgress);
+    return runOnMainThread(sourceFile, task, onProgress);
   }
 
   return {
@@ -1260,7 +1331,7 @@ class Dropzone {
     const acceptedBySize = valid.filter(file => {
       const limit = FileUtils.isGif(file)
         ? FileUtils.MAX_GIF_FILE_SIZE
-        : FileUtils.MAX_FILE_SIZE;
+        : FileUtils.isHeic(file) ? FileUtils.MAX_HEIC_FILE_SIZE : FileUtils.MAX_FILE_SIZE;
       return file.size <= limit;
     });
 
@@ -1394,7 +1465,7 @@ class FileListManager {
       }
     });
 
-    if (file.type.startsWith('image/') && file.type !== 'image/svg+xml') {
+    if (FileUtils.isSupportedImage(file)) {
       FileUtils.readAsDataURL(file).then(src => {
         const thumb = row.querySelector('.file-item__thumb');
         if (!thumb) return;

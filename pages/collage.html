@@ -4,10 +4,10 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Коллаж – AKD Image</title>
-  <meta name="description" content="Создайте коллаж из нескольких JPG, PNG, WebP или AVIF прямо в браузере. Файлы обрабатываются локально и не загружаются на сервер.">
+  <meta name="description" content="Создайте коллаж из JPG, PNG, WebP, AVIF, HEIC/HEIF, SVG или BMP прямо в браузере без загрузки файлов на сервер.">
   <link rel="canonical" href="https://image.akdworks.com/collage">
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="/css/main.css?v=28">
+  <link rel="stylesheet" href="/css/main.css?v=29">
 </head>
 <body>
 
@@ -21,7 +21,7 @@
     </div>
 
     <div class="dropzone" id="dropzone">
-      <input type="file" accept="image/jpeg,image/png,image/webp,image/avif" multiple>
+      <input type="file" accept="image/jpeg,image/png,image/webp,image/avif,image/heic,image/heif,image/svg+xml,image/bmp" multiple>
       <p class="dropzone__title">Добавьте изображения</p>
       <p class="dropzone__hint">Выберите файлы, вставьте из буфера или перетащите сюда</p>
       <div class="dropzone__formats">
@@ -29,6 +29,9 @@
         <span class="fmt-badge">PNG</span>
         <span class="fmt-badge">WEBP</span>
         <span class="fmt-badge">AVIF</span>
+        <span class="fmt-badge">HEIC</span>
+        <span class="fmt-badge">SVG</span>
+        <span class="fmt-badge">BMP</span>
       </div>
     </div>
 
@@ -96,6 +99,8 @@
               <option value="image/png">PNG</option>
               <option value="image/webp">WebP</option>
               <option value="image/avif">AVIF</option>
+              <option value="image/heic">HEIC</option>
+              <option value="image/bmp">BMP</option>
             </select>
           </div>
           <div class="form-group">
@@ -125,7 +130,7 @@
   </div>
 </main>
 
-<script src="/js/core.js?v=15"></script>
+<script src="/js/core.js?v=16"></script>
 <script>
 (function () {
   const dropzoneEl = document.getElementById('dropzone');
@@ -155,7 +160,6 @@
   const manager = new FileListManager(fileListEl);
   let files = [];
   let resultBlob = null;
-  let previewUrl = '';
 
   function setRangeLabel(input, label, unit) {
     label.textContent = input.value + unit;
@@ -170,7 +174,7 @@
   columnsGroup.classList.add('hidden');
 
   new Dropzone(dropzoneEl, {
-    accept: ['image/jpeg', 'image/png', 'image/webp', 'image/avif'],
+    accept: ['image/jpeg', 'image/png', 'image/webp', 'image/avif', 'image/heic', 'image/heif', 'image/svg+xml', 'image/bmp'],
     multiple: true,
     onFiles(newFiles) {
       newFiles.forEach(file => {
@@ -201,8 +205,6 @@
     resultArea.classList.remove('visible');
     resultStats.innerHTML = '';
     previewEl.style.display = 'none';
-    if (previewUrl) URL.revokeObjectURL(previewUrl);
-    previewUrl = '';
     resultBlob = null;
   }
 
@@ -315,8 +317,7 @@
     try {
       const result = await createCollage();
       resultBlob = result.blob;
-      previewUrl = URL.createObjectURL(resultBlob);
-      previewEl.src = previewUrl;
+      previewEl.src = await FileUtils.readAsDataURL(resultBlob);
       previewEl.style.display = 'block';
       resultStats.innerHTML = `
         <div class="stat-card"><div class="stat-card__label">Размер</div><div class="stat-card__value">${result.width} × ${result.height}</div></div>
