@@ -24,7 +24,7 @@
     "@context": "https://schema.org",
     "@type": "WebSite",
     "name": "AKD Image",
-    "alternateName": ["AKDImage", "АКД Имидж", "АКД Имейдж", "image.akdworks.com"],
+    "alternateName": ["AKDImage", "АКД Имидж", "АКД Имейдж"],
     "url": "https://image.akdworks.com/"
   }
   </script>
@@ -59,6 +59,19 @@
             </svg>
             <span class="favorites-manage-link__label">Настроить избранное</span>
           </a>
+          <button
+            class="tool-sort__trigger tool-search__trigger"
+            id="tool-search-trigger"
+            type="button"
+            aria-expanded="false"
+            aria-controls="tool-search-panel"
+            aria-label="Открыть поиск инструментов"
+            title="Поиск инструментов"
+          >
+            <svg class="tool-sort__icon" viewBox="0 -960 960 960" aria-hidden="true">
+              <path d="M784-120 532-372q-30 24-69 38t-83 14q-109 0-184.5-75.5T120-580q0-109 75.5-184.5T380-840q109 0 184.5 75.5T640-580q0 44-14 83t-38 69l252 252-56 56ZM380-400q75 0 127.5-52.5T560-580q0-75-52.5-127.5T380-760q-75 0-127.5 52.5T200-580q0 75 52.5 127.5T380-400Z"/>
+            </svg>
+          </button>
           <div class="tool-sort" id="tool-sort">
           <button
             class="tool-sort__trigger"
@@ -98,9 +111,33 @@
           </div>
         </div>
       </div>
+      <div class="tool-search-panel" id="tool-search-panel" hidden>
+        <div class="tool-search-field">
+          <svg class="tool-search-field__icon" viewBox="0 -960 960 960" aria-hidden="true">
+            <path d="M784-120 532-372q-30 24-69 38t-83 14q-109 0-184.5-75.5T120-580q0-109 75.5-184.5T380-840q109 0 184.5 75.5T640-580q0 44-14 83t-38 69l252 252-56 56ZM380-400q75 0 127.5-52.5T560-580q0-75-52.5-127.5T380-760q-75 0-127.5 52.5T200-580q0 75 52.5 127.5T380-400Z"/>
+          </svg>
+          <input
+            class="tool-search-field__input"
+            id="tool-search-input"
+            type="search"
+            placeholder="Найти инструмент"
+            aria-label="Поиск по названию и описанию инструмента"
+            autocomplete="off"
+            spellcheck="false"
+          >
+          <button class="tool-search-field__clear" id="tool-search-clear" type="button" aria-label="Закрыть поиск" title="Закрыть поиск">
+            <svg viewBox="0 -960 960 960" aria-hidden="true">
+              <path d="m256-200-56-56 224-224-224-224 56-56 224 224 224-224 56 56-224 224 224 224-56 56-224-224-224 224Z"/>
+            </svg>
+          </button>
+        </div>
+      </div>
       <div class="favorites-empty" id="favorites-empty" hidden>
         <p id="favorites-empty-message">В избранном пока нет инструментов.</p>
         <a class="btn btn-primary" href="/favorites">Добавить инструменты</a>
+      </div>
+      <div class="favorites-empty" id="search-empty" hidden>
+        <p id="search-empty-message">Инструменты не найдены.</p>
       </div>
       <div class="tools-grid" id="tools-grid">
 
@@ -341,6 +378,12 @@
     const sortLabel = document.getElementById('tool-sort-label');
     const sortOptions = Array.from(document.querySelectorAll('.tool-sort__option'));
     const toolSort = document.getElementById('tool-sort');
+    const searchTrigger = document.getElementById('tool-search-trigger');
+    const searchPanel = document.getElementById('tool-search-panel');
+    const searchInput = document.getElementById('tool-search-input');
+    const searchClear = document.getElementById('tool-search-clear');
+    const searchEmpty = document.getElementById('search-empty');
+    const searchEmptyMessage = document.getElementById('search-empty-message');
     const allToolsButton = document.getElementById('all-tools-button');
     const favoritesButton = document.getElementById('favorites-button');
     const favoritesManageLink = document.getElementById('favorites-manage-link');
@@ -357,6 +400,7 @@
     let activeCategory = 'all';
     let activeCatalog = 'all';
     let activeSort = 'default';
+    let searchQuery = '';
     let navigationState = null;
 
     try {
@@ -373,6 +417,9 @@
         activeSort = ['default', 'popular', 'new', 'alphabetical'].includes(savedNavigationState.sort)
           ? savedNavigationState.sort
           : 'default';
+        searchQuery = typeof savedNavigationState.search === 'string'
+          ? savedNavigationState.search
+          : '';
       }
     } catch {
       navigationState = null;
@@ -439,6 +486,11 @@
     };
 
     const getTitle = card => card.querySelector('.tool-card__title').textContent.trim();
+    const normalizeSearchValue = value => value.trim().toLocaleLowerCase('ru').replaceAll('ё', 'е');
+    const getSearchText = card => normalizeSearchValue([
+      getTitle(card),
+      card.querySelector('.tool-card__desc')?.textContent || ''
+    ].join(' '));
     const getToolId = card => card.getAttribute('href')
       .replace(/^\/pages\//, '/')
       .replace(/\.html$/, '');
@@ -459,17 +511,24 @@
       cards.forEach(card => {
         const matchesCategory = activeCategory === 'all' || card.dataset.category === activeCategory;
         const isFavorite = favorites.has(getToolId(card));
-        const isVisible = matchesCategory && (activeCatalog === 'all' || isFavorite);
+        const matchesSearch = !searchQuery || getSearchText(card).includes(normalizeSearchValue(searchQuery));
+        const isVisible = matchesCategory && matchesSearch && (activeCatalog === 'all' || isFavorite);
 
         card.style.display = isVisible ? 'flex' : 'none';
         if (isVisible) visibleCount++;
       });
 
-      const isFavoritesEmpty = activeCatalog === 'favorites' && visibleCount === 0;
+      const isSearchEmpty = Boolean(searchQuery) && visibleCount === 0;
+      const isFavoritesEmpty = !isSearchEmpty && activeCatalog === 'favorites' && visibleCount === 0;
       favoritesEmpty.hidden = !isFavoritesEmpty;
-      toolsGrid.hidden = isFavoritesEmpty;
+      searchEmpty.hidden = !isSearchEmpty;
+      toolsGrid.hidden = isFavoritesEmpty || isSearchEmpty;
       toolSort.hidden = activeCatalog === 'favorites';
       favoritesManageLink.hidden = activeCatalog !== 'favorites' || favorites.size === 0;
+
+      if (isSearchEmpty) {
+        searchEmptyMessage.textContent = `По запросу «${searchQuery.trim()}» инструменты не найдены.`;
+      }
 
       favoritesEmptyMessage.textContent = activeCategory === 'all'
         ? 'В избранном пока нет инструментов.'
@@ -522,6 +581,24 @@
       });
     };
 
+    const setSearchOpen = (isOpen, shouldFocus = false) => {
+      searchPanel.hidden = !isOpen;
+      searchTrigger.setAttribute('aria-expanded', String(isOpen));
+      searchTrigger.setAttribute('aria-label', isOpen ? 'Закрыть поиск инструментов' : 'Открыть поиск инструментов');
+
+      if (isOpen && shouldFocus) {
+        requestAnimationFrame(() => searchInput.focus());
+      }
+    };
+
+    const closeSearch = () => {
+      searchQuery = '';
+      searchInput.value = '';
+      setSearchOpen(false);
+      updateCatalog();
+      searchTrigger.focus();
+    };
+
     cards.forEach(card => {
       card.addEventListener('click', event => {
         const opensInCurrentTab = event.button === 0 &&
@@ -539,7 +616,8 @@
             scrollY: window.scrollY,
             category: activeCategory,
             catalog: activeCatalog,
-            sort: activeSort
+            sort: activeSort,
+            search: searchQuery
           }));
         } catch {
           /* Navigation still works if session storage is unavailable. */
@@ -566,6 +644,24 @@
       updateCatalog();
     });
 
+    searchTrigger.addEventListener('click', () => {
+      const willOpen = searchPanel.hidden;
+
+      if (willOpen) {
+        closeSortMenu();
+        setSearchOpen(true, true);
+      } else {
+        closeSearch();
+      }
+    });
+
+    searchInput.addEventListener('input', () => {
+      searchQuery = searchInput.value;
+      updateCatalog();
+    });
+
+    searchClear.addEventListener('click', closeSearch);
+
     sortTrigger.addEventListener('click', () => {
       const willOpen = sortMenu.hidden;
       sortMenu.hidden = !willOpen;
@@ -587,9 +683,13 @@
     });
 
     document.addEventListener('keydown', event => {
-      if (event.key === 'Escape' && !sortMenu.hidden) {
+      if (event.key !== 'Escape') return;
+
+      if (!sortMenu.hidden) {
         closeSortMenu();
         sortTrigger.focus();
+      } else if (!searchPanel.hidden) {
+        closeSearch();
       }
     });
 
@@ -598,6 +698,8 @@
         filter.classList.toggle('active', filter.dataset.filter === activeCategory);
       });
       applySort(activeSort);
+      searchInput.value = searchQuery;
+      setSearchOpen(Boolean(searchQuery));
     }
 
     updateCatalog();
