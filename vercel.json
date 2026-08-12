@@ -119,6 +119,11 @@
       "source": "/pages/about.html",
       "destination": "/about",
       "permanent": true
+    },
+    {
+      "source": "/pages/licenses.html",
+      "destination": "/licenses",
+      "permanent": true
     }
   ],
   "rewrites": [
@@ -213,6 +218,10 @@
     {
       "source": "/about",
       "destination": "/pages/about.html"
+    },
+    {
+      "source": "/licenses",
+      "destination": "/pages/licenses.html"
     }
   ],
   "headers": [
