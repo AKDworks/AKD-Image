@@ -1170,6 +1170,7 @@
   box-shadow: none;
   transform: translateY(-2px);
 }
+
 .annotate-tools {
   display: flex;
   flex-wrap: wrap;
@@ -1189,6 +1190,185 @@
 }
 .annotate-canvas.is-move-mode:active {
   cursor: grabbing;
+}
+
+/* Video and GIF converter */
+.video-gif-tabs {
+  margin-bottom: 24px;
+}
+
+.video-gif-preview {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 240px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--surface);
+}
+
+.video-gif-preview video,
+.video-gif-preview img {
+  display: block;
+  width: 100%;
+  max-height: 520px;
+  object-fit: contain;
+  background: #0b0d11;
+}
+
+.video-gif-notice {
+  display: grid;
+  gap: 4px;
+  padding: 14px 16px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  color: var(--muted);
+  background: var(--bg);
+}
+
+.video-gif-notice strong {
+  color: var(--text);
+}
+
+.video-gif-status {
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--surface);
+}
+
+.video-gif-status__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 10px;
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.video-gif-progress {
+  height: 8px;
+  overflow: hidden;
+  border-radius: 4px;
+  background: var(--bg);
+}
+
+.video-gif-progress__bar {
+  width: 0;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--accent);
+  transition: width 180ms ease;
+}
+
+/* GIF frame extractor */
+.gif-frames-source {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 240px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--workspace-bg);
+}
+
+.gif-frames-source img {
+  display: block;
+  max-width: 100%;
+  max-height: 520px;
+  object-fit: contain;
+}
+
+.gif-frames-results__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.gif-frames-results__head h2 {
+  margin-bottom: 4px;
+  font-size: 1.1rem;
+}
+
+.gif-frames-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(156px, 1fr));
+  gap: 12px;
+}
+
+.gif-frame-card {
+  display: grid;
+  grid-template-rows: 132px auto 36px;
+  gap: 10px;
+  min-width: 0;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--surface);
+}
+
+.gif-frame-card img {
+  width: 100%;
+  height: 132px;
+  border-radius: var(--r-sm);
+  object-fit: contain;
+  background: var(--workspace-bg);
+}
+
+.gif-frame-card__info {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+
+.gif-frame-card__info strong {
+  font-size: .82rem;
+}
+
+.gif-frame-card__info span {
+  overflow: hidden;
+  color: var(--muted);
+  font-size: .72rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.gif-frame-card .btn {
+  width: 100%;
+}
+
+@media (max-width: 640px) {
+  .video-gif-preview {
+    min-height: 180px;
+  }
+
+  .video-gif-preview video,
+  .video-gif-preview img {
+    max-height: 380px;
+  }
+
+  .gif-frames-source {
+    min-height: 180px;
+  }
+
+  .gif-frames-results__head {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .gif-frames-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 420px) {
+  .gif-frames-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 /* Crop tool */

@@ -873,6 +873,77 @@ const GifProcessor = (() => {
     };
   }
 
+  async function extractFrames(file, options = {}) {
+    const onProgress = typeof options.onProgress === 'function'
+      ? options.onProgress
+      : () => {};
+    const mimeType = options.mimeType === 'image/jpeg' ? 'image/jpeg' : 'image/png';
+    const quality = normalizeQuality(options.quality);
+    onProgress(5);
+
+    const decoded = await decode(file);
+    onProgress(25);
+
+    const frames = [];
+    let elapsed = 0;
+    let totalSize = 0;
+
+    try {
+      for (let index = 0; index < decoded.frames.length; index++) {
+        const frame = decoded.frames[index];
+        const sourceCanvas = frameCanvas(frame);
+        frame.data = null;
+        let outputCanvas = sourceCanvas;
+
+        if (mimeType === 'image/jpeg') {
+          outputCanvas = document.createElement('canvas');
+          outputCanvas.width = sourceCanvas.width;
+          outputCanvas.height = sourceCanvas.height;
+          const context = outputCanvas.getContext('2d');
+          context.fillStyle = '#fff';
+          context.fillRect(0, 0, outputCanvas.width, outputCanvas.height);
+          context.drawImage(sourceCanvas, 0, 0);
+        }
+
+        const blob = await FileUtils.canvasToBlob(outputCanvas, mimeType, quality);
+        totalSize += blob.size;
+        if (totalSize > FileUtils.MAX_ZIP_SIZE) {
+          throw new Error(`Общий размер кадров превышает лимит ${FileUtils.formatSize(FileUtils.MAX_ZIP_SIZE)}`);
+        }
+
+        frames.push({
+          blob,
+          index,
+          start: elapsed,
+          delay: frame.delay,
+          width: outputCanvas.width,
+          height: outputCanvas.height,
+        });
+        elapsed += frame.delay;
+
+        sourceCanvas.width = 1;
+        sourceCanvas.height = 1;
+        if (outputCanvas !== sourceCanvas) {
+          outputCanvas.width = 1;
+          outputCanvas.height = 1;
+        }
+        onProgress(25 + Math.round(((index + 1) / decoded.frames.length) * 75));
+      }
+    } finally {
+      decoded.frames.forEach(frame => { frame.data = null; });
+    }
+
+    return {
+      frames,
+      width: decoded.gif.width,
+      height: decoded.gif.height,
+      frameCount: decoded.frameCount,
+      duration: decoded.duration,
+      totalSize,
+      mimeType,
+    };
+  }
+
   async function createTimelinePreview(file, options = {}) {
     const maxFrames = Math.min(24, Math.max(1, Number(options.maxFrames) || 16));
     const maxHeight = Math.min(96, Math.max(32, Number(options.height) || 56));
@@ -951,6 +1022,7 @@ const GifProcessor = (() => {
     inspect,
     process,
     trim,
+    extractFrames,
     createTimelinePreview,
     encodeCanvas,
     qualityToColors,

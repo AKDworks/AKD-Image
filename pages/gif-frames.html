@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GIF в кадры – AKD Image</title>
+  <meta name="description" content="Извлекайте все кадры GIF в PNG или JPG прямо в браузере. Просматривайте и скачивайте кадры отдельно либо одним ZIP-архивом.">
+  <link rel="canonical" href="https://image.akdworks.com/gif-frames">
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="preload" href="/fonts/Inter-400.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="/fonts/Inter-500.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="/fonts/Inter-600.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="/fonts/Inter-700.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="/fonts/Inter-800.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="/css/main.css?v=35">
+</head>
+<body>
+
+<script src="/js/layout.js?v=15"></script>
+
+<main>
+  <div class="container container--narrow tool-page">
+    <div class="tool-page__header">
+      <h1 class="tool-page__title">GIF в кадры</h1>
+      <p class="tool-page__subtitle">Извлеките все кадры анимации в PNG или JPG, просмотрите их и скачайте отдельно либо одним ZIP-архивом.</p>
+    </div>
+
+    <div class="dropzone" id="dropzone" tabindex="0" role="button" aria-label="Выбрать GIF">
+      <input type="file" accept="image/gif,.gif">
+      <p class="dropzone__title">Добавьте GIF</p>
+      <p class="dropzone__hint">Выберите файл, вставьте из буфера или перетащите сюда</p>
+      <div class="dropzone__formats">
+        <span class="fmt-badge">GIF</span>
+      </div>
+    </div>
+
+    <section class="tool-panel hidden" id="settings-panel">
+      <div class="tool-panel__head">
+        <h3>Параметры извлечения</h3>
+        <button class="btn btn-sm btn-secondary" id="replace-file-btn" type="button">Заменить файл</button>
+      </div>
+      <div class="tool-panel__body">
+        <div class="gif-frames-source">
+          <img id="source-preview" alt="Предпросмотр исходного GIF">
+        </div>
+
+        <div class="result-stats mt-16" id="source-stats"></div>
+
+        <div class="form-row mt-16">
+          <div class="form-group">
+            <label for="output-format">Формат кадров</label>
+            <select id="output-format">
+              <option value="png" selected>PNG – прозрачный фон</option>
+              <option value="jpg">JPG – меньший размер</option>
+            </select>
+          </div>
+          <div class="form-group hidden" id="quality-group">
+            <label for="jpg-quality">Качество JPG <span id="quality-value">90%</span></label>
+            <input type="range" id="jpg-quality" min="40" max="100" step="1" value="90">
+          </div>
+        </div>
+
+        <p class="text-muted text-sm mt-16">PNG сохраняет прозрачность. При выборе JPG прозрачные области получат белый фон.</p>
+      </div>
+    </section>
+
+    <div class="hidden mt-16" id="action-bar">
+      <button class="btn btn-primary btn-lg" id="extract-btn" type="button">Извлечь кадры</button>
+    </div>
+
+    <section class="video-gif-status hidden mt-16" id="status-panel" aria-live="polite">
+      <div class="video-gif-status__row">
+        <span id="status-text">Подготовка кадров...</span>
+        <span id="status-percent">0%</span>
+      </div>
+      <div class="video-gif-progress" aria-hidden="true">
+        <div class="video-gif-progress__bar" id="progress-bar"></div>
+      </div>
+    </section>
+
+    <section class="result-area gif-frames-results" id="result-area">
+      <hr class="divider">
+      <div class="gif-frames-results__head">
+        <div>
+          <h2>Извлечённые кадры</h2>
+          <p class="text-muted text-sm" id="result-summary"></p>
+        </div>
+        <button class="btn btn-success" id="download-all-btn" type="button">Скачать всё (ZIP)</button>
+      </div>
+      <div class="gif-frames-grid mt-16" id="frames-grid"></div>
+    </section>
+  </div>
+</main>
+
+<script src="/js/core.js?v=17"></script>
+<script src="/js/gif-frames.js?v=1"></script>
+</body>
+</html>
