@@ -106,6 +106,16 @@
       "permanent": true
     },
     {
+      "source": "/pages/video-gif.html",
+      "destination": "/video-gif",
+      "permanent": true
+    },
+    {
+      "source": "/pages/gif-frames.html",
+      "destination": "/gif-frames",
+      "permanent": true
+    },
+    {
       "source": "/pages/favorites.html",
       "destination": "/favorites",
       "permanent": true
@@ -208,6 +218,14 @@
       "destination": "/pages/gif-trim.html"
     },
     {
+      "source": "/video-gif",
+      "destination": "/pages/video-gif.html"
+    },
+    {
+      "source": "/gif-frames",
+      "destination": "/pages/gif-frames.html"
+    },
+    {
       "source": "/favorites",
       "destination": "/pages/favorites.html"
     },
@@ -235,11 +253,20 @@
       ]
     },
     {
+      "source": "/js/vendor/ffmpeg/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ]
+    },
+    {
       "source": "/(.*)",
       "headers": [
         {
           "key": "Content-Security-Policy",
-          "value": "default-src 'self'; script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval'; script-src-attr 'none'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self'; connect-src 'self'; media-src 'none'; object-src 'none'; frame-src 'none'; worker-src 'self'; manifest-src 'self'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; upgrade-insecure-requests"
+          "value": "default-src 'self'; script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval'; script-src-attr 'none'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self'; connect-src 'self'; media-src 'self' blob:; object-src 'none'; frame-src 'none'; worker-src 'self' blob:; manifest-src 'self'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; upgrade-insecure-requests"
         },
         {
           "key": "X-Content-Type-Options",

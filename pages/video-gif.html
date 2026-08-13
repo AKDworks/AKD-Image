@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Видео в GIF и GIF в видео – AKD Image</title>
+  <meta name="description" content="Конвертируйте MP4 и WebM в GIF либо преобразуйте GIF в MP4 или WebM локально в браузере без загрузки файлов на сервер.">
+  <link rel="canonical" href="https://image.akdworks.com/video-gif">
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="preload" href="/fonts/Inter-400.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="/fonts/Inter-500.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="/fonts/Inter-600.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="/fonts/Inter-700.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="/fonts/Inter-800.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="/css/main.css?v=34">
+</head>
+<body>
+
+<script src="/js/layout.js?v=14"></script>
+
+<main>
+  <div class="container container--narrow tool-page">
+    <div class="tool-page__header">
+      <h1 class="tool-page__title">Видео ↔ GIF</h1>
+      <p class="tool-page__subtitle">Создайте GIF из фрагмента видео или преобразуйте GIF в MP4 либо WebM прямо в браузере.</p>
+    </div>
+
+    <div class="base64-tabs video-gif-tabs" role="tablist" aria-label="Направление конвертации">
+      <button class="base64-tab active" id="video-to-gif-tab" type="button" role="tab" aria-selected="true">Видео → GIF</button>
+      <button class="base64-tab" id="gif-to-video-tab" type="button" role="tab" aria-selected="false">GIF → Видео</button>
+    </div>
+
+    <div class="dropzone" id="media-dropzone" tabindex="0" role="button" aria-label="Выбрать файл">
+      <input type="file" id="media-input" accept="video/mp4,video/webm,.mp4,.webm">
+      <p class="dropzone__title" id="dropzone-title">Добавьте видео</p>
+      <p class="dropzone__hint">Выберите файл или перетащите его сюда</p>
+      <div class="dropzone__formats" id="dropzone-formats">
+        <span class="fmt-badge">MP4</span>
+        <span class="fmt-badge">WEBM</span>
+      </div>
+    </div>
+
+    <section class="tool-panel hidden" id="settings-panel">
+      <div class="tool-panel__head">
+        <h3>Параметры конвертации</h3>
+        <button class="btn btn-sm btn-secondary" id="replace-file-btn" type="button">Заменить файл</button>
+      </div>
+      <div class="tool-panel__body">
+        <div class="video-gif-preview">
+          <video id="video-preview" controls playsinline></video>
+          <img class="hidden" id="gif-preview" alt="Предпросмотр GIF">
+        </div>
+
+        <div class="result-stats mt-16" id="source-stats"></div>
+
+        <div id="video-settings">
+          <div class="form-row mt-16">
+            <div class="form-group">
+              <label for="fragment-start">Начало (с)</label>
+              <input type="number" id="fragment-start" min="0" step="0.1" value="0">
+            </div>
+            <div class="form-group">
+              <label for="fragment-end">Конец (с)</label>
+              <input type="number" id="fragment-end" min="0.1" step="0.1" value="1">
+            </div>
+          </div>
+
+          <div class="form-row mt-16">
+            <div class="form-group">
+              <label for="gif-width">Ширина GIF</label>
+              <select id="gif-width">
+                <option value="original">Оставить оригинал</option>
+                <option value="320">320 px</option>
+                <option value="480" selected>480 px</option>
+                <option value="720">720 px</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="gif-fps">Частота кадров</label>
+              <select id="gif-fps">
+                <option value="8">8 кадров/с</option>
+                <option value="12" selected>12 кадров/с</option>
+                <option value="15">15 кадров/с</option>
+                <option value="20">20 кадров/с</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group mt-16">
+            <label for="gif-colors">Количество цветов</label>
+            <select id="gif-colors">
+              <option value="64">64 – меньший файл</option>
+              <option value="128" selected>128 – сбалансированно</option>
+              <option value="256">256 – больше деталей</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="hidden" id="gif-settings">
+          <div class="form-row mt-16">
+            <div class="form-group">
+              <label for="video-format">Формат видео</label>
+              <select id="video-format">
+                <option value="mp4" selected>MP4</option>
+                <option value="webm">WebM</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="video-quality">Качество</label>
+              <select id="video-quality">
+                <option value="high">Высокое</option>
+                <option value="balanced" selected>Сбалансированное</option>
+                <option value="small">Меньший файл</option>
+              </select>
+            </div>
+          </div>
+          <p class="text-muted text-sm mt-16">Видео не поддерживает прозрачность GIF. Прозрачные области будут отображаться на черном фоне.</p>
+        </div>
+
+        <div class="video-gif-notice mt-16">
+          <strong>Локальная обработка</strong>
+          <span>Файл не отправляется на сервер. Лимиты: видео до 100 МБ, GIF до 25 МБ и длительность до 60 секунд. При первом запуске браузер загрузит модуль FFmpeg размером около 31 МБ.</span>
+        </div>
+      </div>
+    </section>
+
+    <div class="hidden mt-16" id="action-bar">
+      <button class="btn btn-primary btn-lg" id="convert-btn" type="button">Создать GIF</button>
+    </div>
+
+    <section class="video-gif-status hidden mt-16" id="status-panel" aria-live="polite">
+      <div class="video-gif-status__row">
+        <span id="status-text">Подготовка...</span>
+        <span id="status-percent">0%</span>
+      </div>
+      <div class="video-gif-progress" aria-hidden="true">
+        <div class="video-gif-progress__bar" id="progress-bar"></div>
+      </div>
+    </section>
+
+    <section class="result-area" id="result-area">
+      <hr class="divider">
+      <div class="result-stats" id="result-stats"></div>
+      <div class="video-gif-preview mt-16">
+        <video class="hidden" id="result-video" controls playsinline></video>
+        <img class="hidden" id="result-gif" alt="Результат конвертации">
+      </div>
+      <button class="btn btn-success mt-16" id="download-btn" type="button">Скачать</button>
+    </section>
+  </div>
+</main>
+
+<script src="/js/core.js?v=16"></script>
+<script src="/js/vendor/ffmpeg/ffmpeg.js?v=0.12.15"></script>
+<script src="/js/video-gif.js?v=1"></script>
+</body>
+</html>
