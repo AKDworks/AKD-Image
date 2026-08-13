@@ -19,6 +19,15 @@
   max-width: 520px;
   margin: 0 auto 32px;
 }
+.hero:has(+ .tools-section) {
+  padding-bottom: 8px;
+}
+.hero:has(+ .tools-section) p {
+  margin-bottom: 16px;
+}
+.hero + .tools-section {
+  padding-top: 8px;
+}
 .hero__lead {
   max-width: 600px;
   margin: 0 auto;
@@ -392,8 +401,8 @@
   flex-shrink: 0;
 }
 .tool-sort__chevron {
-  width: 16px;
-  height: 16px;
+  width: 20px;
+  height: 20px;
   color: var(--muted);
   transform-origin: center;
   transition: transform var(--t), color var(--t);
@@ -404,6 +413,9 @@
 .tool-sort__menu {
   position: absolute;
   z-index: 20;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
   top: calc(100% + 8px);
   right: 0;
   width: 210px;
@@ -434,10 +446,12 @@
   cursor: pointer;
 }
 .tool-sort__option:hover,
-.tool-sort__option.is-selected {
-  background: var(--accent-light);
+.tool-sort__option:focus-visible {
+  outline: none;
+  background: var(--bg);
 }
 .tool-sort__option.is-selected {
+  background: var(--accent-light);
   color: var(--accent);
   font-weight: 600;
 }

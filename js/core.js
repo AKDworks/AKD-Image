@@ -36,6 +36,451 @@ const Toast = (() => {
 })();
 
 
+/* Custom selects */
+const CustomSelect = (() => {
+  const instances = new Map();
+  let openInstance = null;
+
+  function enhance(select) {
+    if (!select || instances.has(select)) return instances.get(select);
+
+    const wrapper = document.createElement('div');
+    wrapper.className = 'custom-select';
+    select.parentNode.insertBefore(wrapper, select);
+    wrapper.appendChild(select);
+    select.classList.add('custom-select__native');
+    select.tabIndex = -1;
+
+    const trigger = document.createElement('button');
+    trigger.className = 'custom-select__trigger';
+    trigger.type = 'button';
+    trigger.setAttribute('aria-haspopup', 'listbox');
+    trigger.setAttribute('aria-expanded', 'false');
+    trigger.innerHTML = '<span class="custom-select__value"></span><svg class="custom-select__chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="m7 10 5 5 5-5H7Z" fill="currentColor"/></svg>';
+
+    const label = select.labels?.[0] || select.closest('.form-group')?.querySelector('label');
+
+    const menu = document.createElement('div');
+    menu.className = 'custom-select__menu';
+    menu.setAttribute('role', 'listbox');
+    menu.hidden = true;
+    wrapper.append(trigger, menu);
+
+    const instance = { select, wrapper, trigger, menu, options: [] };
+    instances.set(select, instance);
+
+    function rebuild() {
+      menu.innerHTML = '';
+      instance.options = Array.from(select.options).map((option, index) => {
+        const button = document.createElement('button');
+        button.className = 'custom-select__option';
+        button.type = 'button';
+        button.setAttribute('role', 'option');
+        button.dataset.value = option.value;
+        button.innerHTML = `<span>${option.textContent}</span><svg class="custom-select__check" viewBox="0 0 24 24" aria-hidden="true"><path d="m9.55 18-5.7-5.7 1.4-1.4 4.3 4.3 9.2-9.2 1.4 1.4L9.55 18Z" fill="currentColor"/></svg>`;
+        button.disabled = option.disabled;
+        button.addEventListener('click', () => {
+          if (select.value !== option.value) {
+            select.value = option.value;
+            select.dispatchEvent(new Event('input', { bubbles: true }));
+            select.dispatchEvent(new Event('change', { bubbles: true }));
+          }
+          sync();
+          close(true);
+        });
+        button.addEventListener('keydown', event => handleOptionKeydown(event, index));
+        menu.appendChild(button);
+        return button;
+      });
+      sync();
+    }
+
+    function sync() {
+      const selected = select.selectedOptions[0] || select.options[0];
+      trigger.querySelector('.custom-select__value').textContent = selected ? selected.textContent : '';
+      trigger.setAttribute('aria-label', label
+        ? `${label.textContent.trim()}: ${selected?.textContent || ''}`
+        : selected?.textContent || 'Выбрать формат');
+      trigger.disabled = select.disabled;
+      trigger.title = select.title;
+      instance.options.forEach((button, index) => {
+        const isSelected = select.options[index]?.selected;
+        button.classList.toggle('is-selected', Boolean(isSelected));
+        button.setAttribute('aria-selected', String(Boolean(isSelected)));
+        button.disabled = Boolean(select.options[index]?.disabled);
+      });
+      if (select.disabled) close();
+    }
+
+    function open() {
+      if (select.disabled || !menu.hidden) return;
+      if (openInstance && openInstance !== instance) openInstance.close();
+      menu.hidden = false;
+      trigger.setAttribute('aria-expanded', 'true');
+      wrapper.classList.add('is-open');
+      wrapper.classList.remove('is-upwards');
+      const menuHeight = Math.min(menu.scrollHeight, 280) + 8;
+      const triggerRect = trigger.getBoundingClientRect();
+      const spaceBelow = window.innerHeight - triggerRect.bottom;
+      wrapper.classList.toggle('is-upwards', spaceBelow < menuHeight && triggerRect.top > spaceBelow);
+      openInstance = instance;
+      instance.options[select.selectedIndex]?.scrollIntoView({ block: 'nearest' });
+    }
+
+    function close(returnFocus = false) {
+      if (menu.hidden) return;
+      menu.hidden = true;
+      trigger.setAttribute('aria-expanded', 'false');
+      wrapper.classList.remove('is-open', 'is-upwards');
+      if (openInstance === instance) openInstance = null;
+      if (returnFocus) trigger.focus();
+    }
+
+    function focusOption(index) {
+      const available = instance.options.filter(option => !option.disabled);
+      if (!available.length) return;
+      const current = available.indexOf(instance.options[index]);
+      available[Math.max(0, current)]?.focus();
+    }
+
+    function handleOptionKeydown(event, index) {
+      if (!['ArrowDown', 'ArrowUp', 'Home', 'End', 'Escape'].includes(event.key)) return;
+      event.preventDefault();
+      if (event.key === 'Escape') return close(true);
+      const available = instance.options.filter(option => !option.disabled);
+      const current = available.indexOf(instance.options[index]);
+      const next = event.key === 'Home' ? 0
+        : event.key === 'End' ? available.length - 1
+        : (current + (event.key === 'ArrowDown' ? 1 : -1) + available.length) % available.length;
+      available[next]?.focus();
+    }
+
+    trigger.addEventListener('click', () => menu.hidden ? open() : close());
+    trigger.addEventListener('keydown', event => {
+      if (!['ArrowDown', 'ArrowUp', 'Home', 'End'].includes(event.key)) return;
+      event.preventDefault();
+      open();
+      const selectedIndex = Math.max(0, select.selectedIndex);
+      requestAnimationFrame(() => focusOption(selectedIndex));
+    });
+    select.addEventListener('change', sync);
+    select.addEventListener('ui-sync', sync);
+    select.form?.addEventListener('reset', () => setTimeout(sync));
+    new MutationObserver(sync).observe(select, { attributes: true, childList: true, subtree: true });
+
+    instance.close = close;
+    instance.sync = sync;
+    rebuild();
+    return instance;
+  }
+
+  function init(root = document) {
+    root.querySelectorAll('select[data-custom-select="format"]').forEach(enhance);
+  }
+
+  document.addEventListener('click', event => {
+    if (openInstance && !openInstance.wrapper.contains(event.target)) openInstance.close();
+  });
+  document.addEventListener('keydown', event => {
+    if (event.key === 'Escape' && openInstance) openInstance.close(true);
+  });
+
+  return { init, enhance, sync: select => instances.get(select)?.sync() };
+})();
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', () => CustomSelect.init());
+} else {
+  CustomSelect.init();
+}
+
+/* Custom color pickers */
+const CustomColorPicker = (() => {
+  const instances = new Map();
+  let openInstance = null;
+
+  const clamp = (value, min, max) => Math.min(max, Math.max(min, value));
+
+  function normalizeHex(value) {
+    const raw = String(value || '').trim().replace(/^#/, '');
+    if (/^[0-9a-f]{3}$/i.test(raw)) {
+      return `#${raw.split('').map(char => char + char).join('').toUpperCase()}`;
+    }
+    return /^[0-9a-f]{6}$/i.test(raw) ? `#${raw.toUpperCase()}` : null;
+  }
+
+  function hexToRgb(hex) {
+    const normalized = normalizeHex(hex) || '#000000';
+    const value = Number.parseInt(normalized.slice(1), 16);
+    return {
+      r: (value >> 16) & 255,
+      g: (value >> 8) & 255,
+      b: value & 255,
+    };
+  }
+
+  function rgbToHex(r, g, b) {
+    return `#${[r, g, b]
+      .map(value => clamp(Math.round(value), 0, 255).toString(16).padStart(2, '0'))
+      .join('')}`.toUpperCase();
+  }
+
+  function rgbToHsv(r, g, b) {
+    const red = r / 255;
+    const green = g / 255;
+    const blue = b / 255;
+    const max = Math.max(red, green, blue);
+    const min = Math.min(red, green, blue);
+    const delta = max - min;
+    let hue = 0;
+
+    if (delta) {
+      if (max === red) hue = 60 * (((green - blue) / delta) % 6);
+      else if (max === green) hue = 60 * ((blue - red) / delta + 2);
+      else hue = 60 * ((red - green) / delta + 4);
+    }
+
+    return {
+      h: hue < 0 ? hue + 360 : hue,
+      s: max ? (delta / max) * 100 : 0,
+      v: max * 100,
+    };
+  }
+
+  function hsvToRgb(h, s, v) {
+    const saturation = clamp(s, 0, 100) / 100;
+    const value = clamp(v, 0, 100) / 100;
+    const chroma = value * saturation;
+    const segment = ((h % 360) + 360) % 360 / 60;
+    const second = chroma * (1 - Math.abs((segment % 2) - 1));
+    const match = value - chroma;
+    let red = 0;
+    let green = 0;
+    let blue = 0;
+
+    if (segment < 1) [red, green] = [chroma, second];
+    else if (segment < 2) [red, green] = [second, chroma];
+    else if (segment < 3) [green, blue] = [chroma, second];
+    else if (segment < 4) [green, blue] = [second, chroma];
+    else if (segment < 5) [red, blue] = [second, chroma];
+    else [red, blue] = [chroma, second];
+
+    return {
+      r: Math.round((red + match) * 255),
+      g: Math.round((green + match) * 255),
+      b: Math.round((blue + match) * 255),
+    };
+  }
+
+  function enhance(input) {
+    if (!input || instances.has(input)) return instances.get(input);
+
+    const wrapper = document.createElement('div');
+    wrapper.className = 'custom-color';
+    input.parentNode.insertBefore(wrapper, input);
+    wrapper.appendChild(input);
+    input.classList.add('custom-color__native');
+    input.tabIndex = -1;
+
+    const trigger = document.createElement('button');
+    trigger.className = 'custom-color__trigger';
+    trigger.type = 'button';
+    trigger.setAttribute('aria-haspopup', 'dialog');
+    trigger.setAttribute('aria-expanded', 'false');
+    trigger.innerHTML = `
+      <span class="custom-color__swatch" aria-hidden="true"></span>
+      <span class="custom-color__value"></span>
+      <svg class="custom-color__chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="m7 10 5 5 5-5H7Z" fill="currentColor"/></svg>`;
+
+    const panel = document.createElement('div');
+    panel.className = 'custom-color__panel';
+    panel.hidden = true;
+    panel.setAttribute('role', 'dialog');
+    panel.setAttribute('aria-label', 'Выбор цвета');
+    panel.innerHTML = `
+      <div class="custom-color__saturation" role="slider" tabindex="0" aria-label="Насыщенность и яркость" aria-valuemin="0" aria-valuemax="100">
+        <span class="custom-color__cursor" aria-hidden="true"></span>
+      </div>
+      <label class="custom-color__hue-label">
+        <span>Оттенок</span>
+        <input class="custom-color__hue" type="range" min="0" max="359" step="1" aria-label="Оттенок">
+      </label>
+      <div class="custom-color__fields">
+        <label class="custom-color__hex-field">
+          <span>HEX</span>
+          <input class="custom-color__hex" type="text" maxlength="7" spellcheck="false" autocomplete="off">
+        </label>
+        <label><span>R</span><input class="custom-color__rgb" data-channel="r" type="number" min="0" max="255"></label>
+        <label><span>G</span><input class="custom-color__rgb" data-channel="g" type="number" min="0" max="255"></label>
+        <label><span>B</span><input class="custom-color__rgb" data-channel="b" type="number" min="0" max="255"></label>
+      </div>`;
+    wrapper.append(trigger, panel);
+
+    const label = input.labels?.[0] || input.closest('.form-group')?.querySelector('label');
+    const swatch = trigger.querySelector('.custom-color__swatch');
+    const valueLabel = trigger.querySelector('.custom-color__value');
+    const saturation = panel.querySelector('.custom-color__saturation');
+    const cursor = panel.querySelector('.custom-color__cursor');
+    const hueInput = panel.querySelector('.custom-color__hue');
+    const hexInput = panel.querySelector('.custom-color__hex');
+    const rgbInputs = Object.fromEntries(
+      Array.from(panel.querySelectorAll('.custom-color__rgb'))
+        .map(field => [field.dataset.channel, field])
+    );
+    const initialRgb = hexToRgb(input.value);
+    const initialHsv = rgbToHsv(initialRgb.r, initialRgb.g, initialRgb.b);
+    const state = { ...initialHsv, updating: false };
+    const instance = { input, wrapper, trigger, panel, close: null };
+    instances.set(input, instance);
+
+    function render(hex, rgb, preserveHex = false) {
+      wrapper.style.setProperty('--picker-color', hex);
+      wrapper.style.setProperty('--picker-hue', String(state.h));
+      swatch.style.backgroundColor = hex;
+      valueLabel.textContent = hex;
+      if (!preserveHex) hexInput.value = hex;
+      hueInput.value = String(Math.round(state.h));
+      rgbInputs.r.value = String(rgb.r);
+      rgbInputs.g.value = String(rgb.g);
+      rgbInputs.b.value = String(rgb.b);
+      cursor.style.left = `${state.s}%`;
+      cursor.style.top = `${100 - state.v}%`;
+      saturation.setAttribute('aria-valuetext', `Насыщенность ${Math.round(state.s)}%, яркость ${Math.round(state.v)}%`);
+      trigger.setAttribute('aria-label', label
+        ? `${label.textContent.trim()}: ${hex}`
+        : `Цвет: ${hex}`);
+    }
+
+    function applyHsv({ notify = true, change = false, preserveHex = false } = {}) {
+      const rgb = hsvToRgb(state.h, state.s, state.v);
+      const hex = rgbToHex(rgb.r, rgb.g, rgb.b);
+      state.updating = true;
+      input.value = hex;
+      render(hex, rgb, preserveHex);
+      if (notify) input.dispatchEvent(new Event('input', { bubbles: true }));
+      if (change) input.dispatchEvent(new Event('change', { bubbles: true }));
+      state.updating = false;
+    }
+
+    function applyHex(value, options = {}) {
+      const hex = normalizeHex(value);
+      if (!hex) return false;
+      const rgb = hexToRgb(hex);
+      const hsv = rgbToHsv(rgb.r, rgb.g, rgb.b);
+      state.h = hsv.h;
+      state.s = hsv.s;
+      state.v = hsv.v;
+      applyHsv(options);
+      return true;
+    }
+
+    function setSaturationFromPointer(event, change = false) {
+      const rect = saturation.getBoundingClientRect();
+      state.s = clamp(((event.clientX - rect.left) / rect.width) * 100, 0, 100);
+      state.v = clamp(100 - ((event.clientY - rect.top) / rect.height) * 100, 0, 100);
+      applyHsv({ change });
+    }
+
+    function open() {
+      if (!panel.hidden) return;
+      if (openInstance && openInstance !== instance) openInstance.close();
+      panel.hidden = false;
+      trigger.setAttribute('aria-expanded', 'true');
+      wrapper.classList.add('is-open');
+      wrapper.classList.remove('is-upwards', 'is-align-right');
+      const triggerRect = trigger.getBoundingClientRect();
+      const panelRect = panel.getBoundingClientRect();
+      const spaceBelow = window.innerHeight - triggerRect.bottom;
+      wrapper.classList.toggle('is-upwards', spaceBelow < panelRect.height + 12 && triggerRect.top > spaceBelow);
+      wrapper.classList.toggle('is-align-right', triggerRect.left + panelRect.width > window.innerWidth - 16);
+      openInstance = instance;
+    }
+
+    function close(returnFocus = false) {
+      if (panel.hidden) return;
+      panel.hidden = true;
+      trigger.setAttribute('aria-expanded', 'false');
+      wrapper.classList.remove('is-open', 'is-upwards', 'is-align-right');
+      if (openInstance === instance) openInstance = null;
+      if (returnFocus) trigger.focus();
+    }
+
+    trigger.addEventListener('click', () => panel.hidden ? open() : close());
+    saturation.addEventListener('pointerdown', event => {
+      event.preventDefault();
+      saturation.setPointerCapture(event.pointerId);
+      setSaturationFromPointer(event);
+    });
+    saturation.addEventListener('pointermove', event => {
+      if (saturation.hasPointerCapture(event.pointerId)) setSaturationFromPointer(event);
+    });
+    saturation.addEventListener('pointerup', event => {
+      if (!saturation.hasPointerCapture(event.pointerId)) return;
+      setSaturationFromPointer(event, true);
+      saturation.releasePointerCapture(event.pointerId);
+    });
+    saturation.addEventListener('keydown', event => {
+      if (!['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(event.key)) return;
+      event.preventDefault();
+      if (event.key === 'ArrowLeft') state.s = clamp(state.s - 1, 0, 100);
+      if (event.key === 'ArrowRight') state.s = clamp(state.s + 1, 0, 100);
+      if (event.key === 'ArrowUp') state.v = clamp(state.v + 1, 0, 100);
+      if (event.key === 'ArrowDown') state.v = clamp(state.v - 1, 0, 100);
+      applyHsv({ change: true });
+    });
+    hueInput.addEventListener('input', () => {
+      state.h = Number(hueInput.value);
+      applyHsv();
+    });
+    hueInput.addEventListener('change', () => applyHsv({ change: true }));
+    hexInput.addEventListener('change', () => {
+      if (!applyHex(hexInput.value, { change: true })) hexInput.value = input.value.toUpperCase();
+    });
+    hexInput.addEventListener('keydown', event => {
+      if (event.key === 'Enter') {
+        event.preventDefault();
+        hexInput.blur();
+      }
+    });
+    Object.values(rgbInputs).forEach(field => {
+      field.addEventListener('change', () => {
+        const rgb = {
+          r: clamp(Number(rgbInputs.r.value) || 0, 0, 255),
+          g: clamp(Number(rgbInputs.g.value) || 0, 0, 255),
+          b: clamp(Number(rgbInputs.b.value) || 0, 0, 255),
+        };
+        applyHex(rgbToHex(rgb.r, rgb.g, rgb.b), { change: true });
+      });
+    });
+    input.addEventListener('input', () => {
+      if (!state.updating) applyHex(input.value, { notify: false });
+    });
+
+    instance.close = close;
+    applyHex(input.value, { notify: false });
+    return instance;
+  }
+
+  function init(root = document) {
+    root.querySelectorAll('input[type="color"].color-input').forEach(enhance);
+  }
+
+  document.addEventListener('click', event => {
+    if (openInstance && !openInstance.wrapper.contains(event.target)) openInstance.close();
+  });
+  document.addEventListener('keydown', event => {
+    if (event.key === 'Escape' && openInstance) openInstance.close(true);
+  });
+
+  return { init, enhance };
+})();
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', () => CustomColorPicker.init());
+} else {
+  CustomColorPicker.init();
+}
+
 /* UI */
 const UIUtils = {
   setDisabled(elements, disabled) {
@@ -75,6 +520,7 @@ const UIUtils = {
     }
     select.disabled = hasGif;
     select.title = hasGif ? 'Анимированный GIF сохраняется только как GIF' : '';
+    select.dispatchEvent(new Event('ui-sync'));
   },
 
   resetBatchResult(parts) {
