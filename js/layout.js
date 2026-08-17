@@ -140,6 +140,27 @@
           </svg>
           <span>AKDworks</span>
         </a>
+        <div class="language-control">
+          <button class="language-trigger" type="button" aria-haspopup="menu" aria-expanded="false" aria-label="Выбрать язык">
+            <svg class="language-globe" viewBox="0 -960 960 960" aria-hidden="true" focusable="false">
+              <path d="M480-80q-82 0-155-31.5t-127.5-86Q142-253 111-326T80-480q0-83 31-156t86.5-127Q253-818 326-849t154-31q83 0 156 31t127 86.5Q818-707 849-634t31 154q0 82-31.5 155T763-197.5Q707-142 634-111T480-80Zm0-82q26-36 45-75t31-83H404q12 44 31 83t45 75Zm-104-16q-18-33-31.5-68.5T322-320H204q29 50 72.5 87t99.5 55Zm208 0q56-18 99.5-55t72.5-87H638q-9 46-22.5 81.5T584-178ZM170-400h136q-3-20-4.5-39.5T300-480q0-21 1.5-40.5T306-560H170q-5 20-7.5 39.5T160-480q0 21 2.5 40.5T170-400Zm216 0h188q3-20 4.5-39.5T580-480q0-21-1.5-40.5T574-560H386q-3 20-4.5 39.5T380-480q0 21 1.5 40.5T386-400Zm268 0h136q5-20 7.5-39.5T800-480q0-21-2.5-40.5T790-560H654q3 20 4.5 39.5T660-480q0 21-1.5 40.5T654-400ZM638-640h118q-29-50-72.5-87T584-782q18 33 31.5 68.5T638-640Zm-234 0h152q-12-44-31-83t-45-75q-26 36-45 75t-31 83Zm-200 0h118q9-46 22.5-81.5T376-782q-56 18-99.5 55T204-640Z"></path>
+            </svg>
+            <span class="language-current">Русский</span>
+            <svg class="language-chevron" viewBox="0 0 20 20" aria-hidden="true" focusable="false">
+              <path d="m6 8 4 4 4-4"></path>
+            </svg>
+          </button>
+          <div class="language-menu" role="menu" aria-label="Язык интерфейса">
+            <button class="language-option" type="button" role="menuitemradio" data-language="en" aria-checked="false">
+              <span>English</span>
+              <svg viewBox="0 0 20 20" aria-hidden="true" focusable="false"><path d="m5 10 3 3 7-7"></path></svg>
+            </button>
+            <button class="language-option" type="button" role="menuitemradio" data-language="ru" aria-checked="false">
+              <span>Русский</span>
+              <svg viewBox="0 0 20 20" aria-hidden="true" focusable="false"><path d="m5 10 3 3 7-7"></path></svg>
+            </button>
+          </div>
+        </div>
       </div>
     </footer>
   `;
@@ -179,12 +200,64 @@
     syncButtons();
   }
 
+  function initLanguageControl() {
+    const control = document.querySelector('.language-control');
+    const trigger = control?.querySelector('.language-trigger');
+    const currentLabel = control?.querySelector('.language-current');
+    const buttons = Array.from(control?.querySelectorAll('.language-option[data-language]') || []);
+    if (!control || !trigger || !currentLabel || !buttons.length || !window.AKDI18n) return;
+
+    const languageNames = { en: 'English', ru: 'Русский' };
+
+    function setOpen(isOpen) {
+      control.classList.toggle('is-open', isOpen);
+      trigger.setAttribute('aria-expanded', String(isOpen));
+    }
+
+    function syncButtons() {
+      currentLabel.textContent = languageNames[window.AKDI18n.language] || 'English';
+      buttons.forEach(button => {
+        const isActive = button.dataset.language === window.AKDI18n.language;
+        button.classList.toggle('is-active', isActive);
+        button.setAttribute('aria-checked', String(isActive));
+      });
+    }
+
+    trigger.addEventListener('click', () => {
+      setOpen(!control.classList.contains('is-open'));
+    });
+
+    buttons.forEach(button => {
+      button.addEventListener('click', () => {
+        window.AKDI18n.setLanguage(button.dataset.language);
+        syncButtons();
+        setOpen(false);
+        trigger.focus();
+      });
+    });
+
+    document.addEventListener('click', event => {
+      if (!control.contains(event.target)) setOpen(false);
+    });
+
+    document.addEventListener('keydown', event => {
+      if (event.key !== 'Escape' || !control.classList.contains('is-open')) return;
+      setOpen(false);
+      trigger.focus();
+    });
+
+    window.addEventListener('akd-languagechange', syncButtons);
+
+    syncButtons();
+  }
+
   document.addEventListener('DOMContentLoaded', () => {
     document.body.insertAdjacentHTML('afterbegin', headerHTML);
     document.body.insertAdjacentHTML('beforeend', footerHTML);
     document.body.insertAdjacentHTML('beforeend', toastContainer);
 
     initThemeControl();
+    initLanguageControl();
 
     if (isLocalStaticHost) {
       document.querySelectorAll('a[href^="/"]').forEach(link => {

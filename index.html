@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
+  <script src="/js/i18n.js?v=1"></script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>AKD Image – Бесплатные инструменты для изображений</title>
@@ -18,7 +19,7 @@
     <link rel="preload" href="/fonts/Inter-600.woff2" as="font" type="font/woff2" crossorigin>
     <link rel="preload" href="/fonts/Inter-700.woff2" as="font" type="font/woff2" crossorigin>
     <link rel="preload" href="/fonts/Inter-800.woff2" as="font" type="font/woff2" crossorigin>
-  <link rel="stylesheet" href="css/main.css?v=43">
+<link rel="stylesheet" href="css/main.css?v=44">
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
@@ -30,8 +31,7 @@
   </script>
 </head>
 <body>
-
-<script src="js/layout.js?v=15"></script>
+<script src="js/layout.js?v=16"></script>
 
 <main>
   <section class="hero">
@@ -86,8 +86,8 @@
               <path d="M280-240v-80h160v80H280ZM160-440v-80h400v80H160ZM40-640v-80h640v80H40Zm680 480v-120H600v-80h120v-120h80v120h120v80H800v120h-80Z"/>
             </svg>
             <span class="tool-sort__label" id="tool-sort-label">По умолчанию</span>
-            <svg class="tool-sort__chevron" viewBox="0 -960 960 960" aria-hidden="true">
-              <path d="M480-360 280-560h400L480-360Z"/>
+            <svg class="tool-sort__chevron" viewBox="0 0 20 20" aria-hidden="true">
+              <path d="m6 8 4 4 4-4"/>
             </svg>
           </button>
           <div class="tool-sort__menu" id="tool-sort-menu" role="menu" hidden>
@@ -463,40 +463,40 @@
     }
 
     const popularOrder = [
-      'Сжать изображение',
-      'Изменить размер',
-      'Конвертировать',
-      'Обрезать изображение',
-      'Изображения в PDF',
-      'Водяной знак',
-      'Повернуть / Отразить',
-      'Вырезать GIF',
-      'Видео ↔ GIF',
-      'GIF в кадры',
-      'Фотоэффекты',
-      'Размытие области',
-      'Удалить EXIF',
-      'Коллаж',
-      'Пометки на изображении',
-      'Генератор мемов',
-      'Создать favicon',
-      'Генератор палитры',
-      'Изображение в Base64',
-      'Разделить изображение',
-      'Скругление углов',
-      'Пикселизатор'
+      '/compress',
+      '/resize',
+      '/convert',
+      '/crop',
+      '/pdf',
+      '/watermark',
+      '/rotate',
+      '/gif-trim',
+      '/video-gif',
+      '/gif-frames',
+      '/effects',
+      '/blur',
+      '/exif',
+      '/collage',
+      '/annotate',
+      '/meme',
+      '/favicon',
+      '/palette',
+      '/base64',
+      '/split',
+      '/round',
+      '/pixelate'
     ];
     const newestOrder = [
-      'GIF в кадры',
-      'Видео ↔ GIF',
-      'Вырезать GIF',
-      'Пометки на изображении',
-      'Коллаж',
-      'Изображения в PDF',
-      'Размытие области',
-      'Генератор палитры',
-      'Создать favicon',
-      'Изображение в Base64'
+      '/gif-frames',
+      '/video-gif',
+      '/gif-trim',
+      '/annotate',
+      '/collage',
+      '/pdf',
+      '/blur',
+      '/palette',
+      '/favicon',
+      '/base64'
     ];
     const popularRank = new Map(popularOrder.map((title, index) => [title, index]));
     const newestRank = new Map(newestOrder.map((title, index) => [title, index]));
@@ -573,21 +573,22 @@
 
       if (mode === 'popular') {
         sortedCards.sort((a, b) =>
-          (popularRank.get(getTitle(a)) ?? cards.length) -
-          (popularRank.get(getTitle(b)) ?? cards.length)
+          (popularRank.get(getToolId(a)) ?? cards.length) -
+          (popularRank.get(getToolId(b)) ?? cards.length)
         );
       } else if (mode === 'new') {
         sortedCards.sort((a, b) => {
-          const aRank = newestRank.has(getTitle(a))
-            ? newestRank.get(getTitle(a))
+          const aRank = newestRank.has(getToolId(a))
+            ? newestRank.get(getToolId(a))
             : newestOrder.length + defaultOrder.get(a);
-          const bRank = newestRank.has(getTitle(b))
-            ? newestRank.get(getTitle(b))
+          const bRank = newestRank.has(getToolId(b))
+            ? newestRank.get(getToolId(b))
             : newestOrder.length + defaultOrder.get(b);
           return aRank - bRank;
         });
       } else if (mode === 'alphabetical') {
-        sortedCards.sort((a, b) => getTitle(a).localeCompare(getTitle(b), 'ru'));
+        const locale = window.AKDI18n?.language === 'en' ? 'en' : 'ru';
+        sortedCards.sort((a, b) => getTitle(a).localeCompare(getTitle(b), locale));
       } else {
         sortedCards.sort((a, b) => defaultOrder.get(a) - defaultOrder.get(b));
       }
@@ -602,6 +603,8 @@
         option.setAttribute('aria-checked', String(isSelected));
       });
     };
+
+    window.addEventListener('akd-languagechange', () => applySort(activeSort));
 
     const setSearchOpen = (isOpen, shouldFocus = false) => {
       searchPanel.hidden = !isOpen;
