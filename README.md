@@ -1,167 +1,171 @@
 # AKD Image
 
-AKD Image – бесплатный веб-сервис для локальной обработки статичных изображений и анимированных GIF прямо в браузере.
+**English** | [Русский](README.ru.md)
 
-Сайт: [image.akdworks.com](https://image.akdworks.com/)
+AKD Image is a free web service for processing static images and animated GIFs locally in your browser.
 
-## О проекте
+Website: [image.akdworks.com](https://image.akdworks.com/)
 
-AKD Image помогает выполнять популярные операции со статичными изображениями и анимированными GIF без установки программ и регистрации. Пользователь выбирает нужный инструмент, добавляет файл, настраивает результат и скачивает его обратно на устройство.
+## About
 
-Обработка выполняется локально средствами браузера. Изображения и GIF-анимации не загружаются на сервер AKD Image.
+AKD Image handles common image and animated GIF tasks without installing software or creating an account. Choose a tool, add a file, adjust the settings and download the result back to your device.
 
-## Как пользоваться
+Processing is performed locally by the browser. Images and GIF animations are not uploaded to an AKD Image server.
 
-1. Откройте сайт и выберите подходящий инструмент.
-2. Перетащите изображение в область загрузки, вставьте его из буфера обмена или выберите на устройстве.
-3. Настройте параметры обработки.
-4. Подготовьте результат и скачайте его отдельно или в ZIP-архиве, если инструмент поддерживает пакетную обработку.
+## How to use
 
-## Возможности
+1. Open the website and choose a tool.
+2. Drop an image into the upload area, paste it from the clipboard or select it on your device.
+3. Adjust the processing settings.
+4. Prepare and download the result as an individual file or a ZIP archive when batch processing is supported.
 
-### Оптимизация и преобразование
+## Features
 
-- сжатие изображений;
-- изменение размера;
-- конвертация между JPG, PNG, WebP, AVIF, HEIC/HEIF и BMP;
-- удаление EXIF и других метаданных;
-- преобразование изображения в Base64 и обратно.
+### Optimization and conversion
 
-### Геометрия
+- image compression;
+- resizing;
+- conversion between JPG, PNG, WebP, AVIF, HEIC/HEIF and BMP;
+- EXIF and metadata removal;
+- image to Base64 conversion and restoration.
 
-- обрезка с готовыми пропорциями и точными координатами;
-- поворот и отражение;
-- разделение изображения на части или сетку;
-- скругление углов.
+### Geometry
 
-### Оформление и редактирование
+- cropping with presets or exact coordinates;
+- rotation and mirroring;
+- splitting an image into sections or a grid;
+- rounded corners.
 
-- добавление текстового водяного знака или логотипа;
-- настройка яркости, контраста, насыщенности и других эффектов;
-- пикселизация и размытие выбранной области;
-- создание мемов;
-- добавление текста, стрелок, фигур и других пометок;
-- создание коллажей.
+### Design and editing
 
-### Экспорт и дополнительные инструменты
+- text or image watermarks;
+- brightness, contrast, saturation and other effects;
+- pixelation and selective area blur;
+- meme creation;
+- text, arrows, shapes and freehand annotations;
+- collages.
 
-- создание PDF из одного или нескольких изображений;
-- создание `favicon.ico` и набора PNG-иконок;
-- извлечение цветовой палитры;
-- пакетная обработка и скачивание результатов в ZIP-архиве.
+### Export and additional tools
 
-### Анимированные GIF
+- PDF creation from one or more images;
+- `favicon.ico` and PNG icon set generation;
+- color palette extraction;
+- batch processing with ZIP downloads.
 
-- сжатие и изменение размера GIF-анимаций;
-- обрезка по области и по времени, поворот, отражение и скругление углов;
-- добавление водяных знаков, текста, фигур и других пометок;
-- применение фотоэффектов, пикселизации и размытия выбранной области;
-- создание анимированных мемов;
-- преобразование видео MP4/WebM в GIF и GIF-анимаций в MP4/WebM;
-- извлечение всех кадров GIF в PNG или JPG с отдельным скачиванием и выгрузкой в ZIP;
-- преобразование GIF в Base64 или Data URL и обратно без потери анимации;
-- покадровая обработка с сохранением порядка кадров, длительности и повторения анимации.
+### Animated GIF
 
-## Конфиденциальность
+- GIF compression and resizing;
+- area and timeline trimming, rotation, mirroring and rounded corners;
+- watermarks, text, shapes and annotations;
+- effects, pixelation and selective blur;
+- animated meme creation;
+- MP4/WebM to GIF and GIF to MP4/WebM conversion;
+- extraction of every GIF frame as PNG or JPG, with individual or ZIP downloads;
+- GIF to Base64 or Data URL conversion and restoration without losing animation;
+- frame-by-frame processing that preserves order, timing and loop settings.
 
-В обычных сценариях файлы остаются на устройстве пользователя. Браузер читает выбранные изображения или GIF-анимации, обрабатывает их локально и формирует готовый файл без отправки исходника на сервер.
+## Privacy
 
-Исключение – загрузка логотипа по внешней ссылке в инструменте водяного знака. В этом случае браузер получает изображение с указанного пользователем адреса.
+In normal use, files remain on the user's device. The browser reads the selected images or GIF animations, processes them locally and creates the output without uploading the source files to a server.
 
-Подробнее: [Политика конфиденциальности](https://image.akdworks.com/privacy).
+The exception is loading a watermark logo from an external URL. In that case, the browser requests the image from the address supplied by the user.
 
-## Поддерживаемые форматы
+Learn more in the [Privacy Policy](https://image.akdworks.com/privacy).
 
-Статичные изображения можно загружать в форматах JPG, PNG, WebP, AVIF, HEIC, HEIF, SVG и BMP. Экспорт доступен в JPG, PNG, WebP, AVIF, HEIC и BMP. SVG при редактировании растрируется и по умолчанию сохраняется как PNG, поскольку Canvas не восстанавливает исходную векторную структуру.
+## Supported formats
 
-HEIC и HEIF декодируются локально через WebAssembly. При экспорте создаётся обычное 8-битное HEIC-изображение; Live Photos, HDR, серии изображений, карты глубины и исходные метаданные не переносятся.
+Static images can be imported as JPG, PNG, WebP, AVIF, HEIC, HEIF, SVG and BMP. Export is available as JPG, PNG, WebP, AVIF, HEIC and BMP. SVG files are rasterized before editing and saved as PNG by default because Canvas cannot restore the original vector structure.
 
-Полноценная работа с анимированными GIF доступна в сжатии, изменении размера, водяном знаке, обрезке, обрезке по времени, повороте, фотоэффектах, генераторе мемов, скруглении углов, пикселизации, Base64, размытии области и пометках на изображении.
+HEIC and HEIF are decoded locally through WebAssembly. HEIC export creates a standard 8-bit image; Live Photos, HDR, image sequences, depth maps and original metadata are not preserved.
 
-При обработке GIF изменения применяются ко всем кадрам. Результат сохраняется как анимированный GIF с исходным порядком кадров, их длительностью и параметрами повторения. Выбор статичного формата для такого результата блокируется, чтобы случайно не потерять анимацию.
+Full animated GIF processing is available in compression, resizing, watermarking, cropping, timeline trimming, rotation, effects, meme generation, rounded corners, pixelation, Base64 conversion, selective blur and image annotation.
 
-Инструменты без полноценной покадровой обработки не показывают GIF среди поддерживаемых форматов и не принимают такие файлы.
+GIF changes are applied to every frame. The result preserves frame order, duration and loop settings. Static output formats are disabled for animated results to prevent accidental loss of animation.
 
-В зависимости от выбранного инструмента результат также может быть сохранён как PDF, ZIP, Base64, Data URL или набор файлов favicon.
+Tools without complete frame-by-frame processing do not list GIF as a supported format and do not accept GIF files.
 
-Инструмент «Видео ↔ GIF» принимает видео MP4 и WebM для создания GIF, а также преобразует GIF в MP4 или WebM. Обработка выполняется локально через FFmpeg WebAssembly. При первом запуске браузер загружает модуль размером около 31 МБ с сайта AKD Image, после чего он может использоваться из кэша браузера.
+Depending on the tool, output may also be produced as PDF, ZIP, Base64, Data URL or a favicon file set.
 
-При сохранении в JPG прозрачные области получают белый фон. PNG, WebP и AVIF могут сохранять прозрачность.
+The Video ↔ GIF tool accepts MP4 and WebM video for GIF creation and converts GIF to MP4 or WebM. Processing runs locally through FFmpeg WebAssembly. On first use, the browser downloads an approximately 31 MB module from AKD Image, which may then be reused from the browser cache.
 
-## Интерфейс
+When exporting to JPG, transparent areas receive a white background. PNG, WebP and AVIF can preserve transparency.
 
-- светлая, тёмная и системная тема;
-- адаптивная версия для компьютеров и мобильных устройств;
-- вставка изображения из буфера обмена;
-- фильтрация по категориям и сортировка инструментов;
-- локальный список избранных инструментов для быстрого доступа;
-- короткие адреса страниц;
-- работа без регистрации;
-- фоновая обработка больших изображений в поддерживаемых браузерах;
-- понятные статусы обработки и предпросмотр результата.
+## Interface
 
-## Совместимость и ограничения
+- automatic browser-language detection with English and Russian interfaces;
+- manual language switching with the preference stored locally;
+- light, dark and system themes;
+- responsive desktop and mobile layouts;
+- clipboard image paste;
+- category filters and tool sorting;
+- a local favorites list for quick access;
+- short page URLs;
+- no registration;
+- background processing for large images in supported browsers;
+- clear processing states and result previews.
 
-AKD Image рассчитан на современные версии Chrome, Edge, Firefox и Safari. Скорость обработки зависит от мощности устройства, объёма доступной памяти, размера файлов и разрешения изображений.
+## Compatibility and limits
 
-Для стабильной работы действуют ограничения:
+AKD Image targets current versions of Chrome, Edge, Firefox and Safari. Processing speed depends on device performance, available memory, file size and image resolution.
 
-- до 50 МБ на одно статическое изображение;
-- до 50 файлов и 250 МБ за одну загрузку;
-- до 40 мегапикселей и 16 384 пикселей по одной стороне;
-- до 500 МБ исходных данных при создании ZIP-архива.
+General limits:
 
-Для HEIC и HEIF действуют отдельные ограничения:
+- up to 50 MB per static image;
+- up to 50 files and 250 MB per upload;
+- up to 40 megapixels and 16,384 pixels on either side;
+- up to 500 MB of source data when creating a ZIP archive.
 
-- до 20 МБ на исходный файл;
-- до 20 мегапикселей и 8192 пикселей по одной стороне при сохранении HEIC;
-- один статичный 8-битный кадр без переноса расширенных данных контейнера.
+HEIC and HEIF limits:
 
-Для BMP при сохранении действует ограничение до 20 мегапикселей. BMP и HEIC не поддерживают прозрачность в AKD Image: прозрачные области получают белый фон.
+- up to 20 MB per source file;
+- up to 20 megapixels and 8,192 pixels on either side for HEIC export;
+- one static 8-bit frame without extended container data.
 
-Для анимированных GIF действуют отдельные ограничения:
+BMP export is limited to 20 megapixels. BMP and HEIC do not support transparency in AKD Image, so transparent areas receive a white background.
 
-- до 25 МБ на файл;
-- до 200 кадров и 60 секунд;
-- до 1920 пикселей по одной стороне и 2,1 мегапикселя на кадр;
-- до 24 миллионов пикселей суммарно для всех кадров;
-- не менее 30 мс на один кадр;
-- до 50 МБ для готового GIF.
+Animated GIF limits:
 
-Для инструмента Base64 действует отдельный лимит – до 3 МБ исходных данных при преобразовании изображения в строку и обратно. Это ограничение защищает браузер от зависания при работе с очень длинными строками. Для более крупных изображений сначала используйте сжатие или изменение размера.
+- up to 25 MB per file;
+- up to 200 frames and 60 seconds;
+- up to 1,920 pixels on either side and 2.1 megapixels per frame;
+- up to 24 million pixels across all frames;
+- at least 30 ms per frame;
+- up to 50 MB for the output GIF.
 
-Для инструмента «Видео ↔ GIF» действуют отдельные ограничения:
+Base64 conversion is limited to 3 MB of source data in either direction. This prevents the browser from becoming unresponsive while handling very long strings. Compress or resize larger images first.
 
-- один файл за одну операцию;
-- видео до 100 МБ, GIF до 25 МБ;
-- до 60 секунд длительности;
-- входные видеоформаты MP4 и WebM;
-- выходные видеоформаты MP4 и WebM;
-- скорость зависит от мощности устройства, а вкладку нельзя закрывать до завершения конвертации.
+Video ↔ GIF limits:
 
-## Исходный код и лицензия
+- one file per operation;
+- video up to 100 MB and GIF up to 25 MB;
+- up to 60 seconds;
+- MP4 and WebM video input;
+- MP4 and WebM video output;
+- processing speed depends on the device, and the tab must remain open until conversion finishes.
 
-Репозиторий опубликован для просмотра, изучения и образовательного ознакомления. Это не open-source-проект и не свободная лицензия.
+## Source code and license
 
-Использование сайта и использование его исходного кода – разные вещи:
+The repository is published for review, study and educational reference. This is not an open-source project and does not use a permissive software license.
 
-- инструментами на сайте можно пользоваться бесплатно;
-- нельзя копировать или переносить код в другие проекты без письменного разрешения;
-- нельзя воспроизводить дизайн и интерфейс AKD Image;
-- нельзя распространять изменённые копии проекта;
-- нельзя выдавать проект или его части за собственную работу;
-- ограничения распространяются как на коммерческое, так и на бесплатное использование кода.
+Using the website and using its source code are separate matters:
 
-Все права на оригинальный код, интерфейс, дизайн и документацию AKD Image принадлежат AKDworks. Полные условия находятся в файле [LICENSE](LICENSE).
+- the tools on the website are free to use;
+- code or design may not be copied into other projects without written permission;
+- the AKD Image interface may not be reproduced;
+- modified copies may not be distributed;
+- the project or its parts may not be presented as someone else's work;
+- these restrictions apply to both commercial and non-commercial use of the code.
 
-Сторонние компоненты в каталогах `js/vendor` и `fonts` распространяются по собственным лицензиям. Для HEIC/HEIF используются libheif, libde265 и Kvazaar, собранные в WebAssembly без x265. Конвертация видео и GIF выполняется через ffmpeg.wasm и FFmpeg WebAssembly core. Сведения о версиях, авторах, официальных источниках и условиях собраны на странице [«Лицензии и компоненты»](https://image.akdworks.com/licenses), а полные тексты лицензий хранятся рядом с соответствующими файлами. Условия этих лицензий относятся только к сторонним компонентам и не меняют условия использования AKD Image в целом.
+All rights to the original AKD Image code, interface, design and documentation belong to AKDworks. See [LICENSE](LICENSE) for the complete terms.
 
-## Безопасность
+Third-party components in `js/vendor` and `fonts` remain under their respective licenses. HEIC/HEIF support uses libheif, libde265 and Kvazaar compiled to WebAssembly without x265. Video and GIF conversion uses ffmpeg.wasm and the FFmpeg WebAssembly core. Versions, authors, official sources and license details are listed on the [Licenses and components](https://image.akdworks.com/licenses) page, and full license texts are stored next to the relevant files. These licenses apply only to third-party components and do not change the terms for AKD Image itself.
 
-Не публикуйте сведения об обнаруженных уязвимостях в открытых Issues до их исправления. Порядок отправки приватного отчёта описан в файле [SECURITY.md](SECURITY.md).
+## Security
 
-## Автор
+Do not publish vulnerability details in public Issues before a fix is available. Follow [SECURITY.md](SECURITY.md) to submit a private report.
 
-Проект разработан [AKDworks](https://github.com/AKDworks).
+## Author
 
-© 2026 AKDworks. Все права защищены.
+Developed by [AKDworks](https://github.com/AKDworks).
+
+© 2026 AKDworks. All rights reserved.

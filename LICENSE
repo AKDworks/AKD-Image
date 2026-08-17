@@ -1,51 +1,54 @@
-# Авторские права и условия использования
+# Copyright and Terms of Use
 
-**Проект:** AKD Image  
-**Разработчик:** AKDworks (я)  
-**Год запуска:** 2026
+**Project:** AKD Image
 
-## 1. О документе
+**Developer:** AKDworks (the author)
 
-Оригинальный исходный код проекта AKD Image, его веб-интерфейс, дизайн, структура компонентов и документация – это моя работа. Я обладаю всеми правами на эту интеллектуальную собственность согласно международному законодательству об авторском праве.
+**Year launched:** 2026
 
-## 2. Что разрешено
+## 1. About This Document
 
-Я выложил исходный код на GitHub открыто, и это намеренно. Вы можете:
+The original source code of AKD Image, including its web interface, design, component structure, and documentation, is my work. I retain all rights to this intellectual property under applicable international copyright law.
 
-- изучать, как устроен код и логика работы;
-- разбираться с архитектурой приложения;
-- учиться на примере реализации клиентских инструментов для обработки изображений;
-- использовать это в образовательных целях.
+## 2. What Is Permitted
 
-## 3. Что категорически запрещено
+I have intentionally made the source code publicly available on GitHub. You may:
 
-Без моего письменного согласия вам нельзя:
+- study how the code and its logic work;
+- examine the architecture of the application;
+- learn from the implementation of client-side image-processing tools;
+- use the project for educational purposes.
 
-### 3.1. Копировать и переиспользовать код
+## 3. What Is Strictly Prohibited
 
-Полностью или частично переносить мой исходный код в собственные проекты, веб-сайты, сервисы или приложения. Это касается как коммерческих, так и бесплатных продуктов.
+Without my prior written permission, you may not:
 
-### 3.2. Воссоздавать дизайн и интерфейс
+### 3.1. Copy or Reuse the Code
 
-Брать мой UI/UX, стиль оформления, расположение элементов и общую логику верстки для создания похожих систем.
+Copy or transfer all or any part of my source code into your own projects, websites, services, or applications. This restriction applies to both commercial and non-commercial products.
 
-### 3.3. Скрывать авторство
+### 3.2. Reproduce the Design or Interface
 
-Модифицировать код так, чтобы стереть мои упоминания об авторстве, или присваивать себе мою работу.
+Use my UI/UX, visual style, element layout, or overall layout logic to create similar systems.
 
-## 4. Что будет, если нарушить
+### 3.3. Conceal Authorship
 
-Нарушение этих условий – это незаконное использование моей интеллектуальной собственности.
+Modify the code to remove references to my authorship or claim my work as your own.
 
-Я имею право:
+## 4. Consequences of Violation
 
-- направить официальную жалобу DMCA (Digital Millennium Copyright Act);
-- потребовать от хостинг-провайдеров заблокировать нарушающий ресурс;
-- действовать без предварительного уведомления нарушителя.
+Any violation of these terms constitutes unauthorized use of my intellectual property.
 
-## 5. Сторонние компоненты
+I reserve the right to:
 
-Проект использует сторонние библиотеки в каталоге `js/vendor`. Они распространяются по собственным лицензиям, указанным рядом с соответствующими файлами. Настоящие условия относятся к оригинальному коду, интерфейсу, дизайну и документации AKD Image и не заменяют лицензии сторонних компонентов.
+- submit a formal DMCA (Digital Millennium Copyright Act) takedown notice;
+- request that hosting providers block or remove the infringing resource;
+- take action without prior notice to the infringing party.
 
-© 2026 AKDworks / AKD Image  
-**Все права защищены.**
+## 5. Third-Party Components
+
+The project uses third-party libraries located in the `js/vendor` directory. Those libraries are distributed under their own licenses, which are provided alongside the corresponding files. These terms apply to the original AKD Image code, interface, design, and documentation and do not replace or override the licenses of third-party components.
+
+Copyright (c) 2026 AKDworks / AKD Image
+
+**All rights reserved.**

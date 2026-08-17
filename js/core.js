@@ -56,7 +56,7 @@ const CustomSelect = (() => {
     trigger.type = 'button';
     trigger.setAttribute('aria-haspopup', 'listbox');
     trigger.setAttribute('aria-expanded', 'false');
-    trigger.innerHTML = '<span class="custom-select__value"></span><svg class="custom-select__chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="m7 10 5 5 5-5H7Z" fill="currentColor"/></svg>';
+    trigger.innerHTML = '<span class="custom-select__value"></span><svg class="custom-select__chevron" viewBox="0 0 20 20" aria-hidden="true"><path d="m6 8 4 4 4-4"/></svg>';
 
     const label = select.labels?.[0] || select.closest('.form-group')?.querySelector('label');
 
@@ -290,7 +290,7 @@ const CustomColorPicker = (() => {
     trigger.innerHTML = `
       <span class="custom-color__swatch" aria-hidden="true"></span>
       <span class="custom-color__value"></span>
-      <svg class="custom-color__chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="m7 10 5 5 5-5H7Z" fill="currentColor"/></svg>`;
+      <svg class="custom-color__chevron" viewBox="0 0 20 20" aria-hidden="true"><path d="m6 8 4 4 4-4"/></svg>`;
 
     const panel = document.createElement('div');
     panel.className = 'custom-color__panel';
