@@ -47,9 +47,9 @@
 
 :root {
   /* Palette */
-  --bg:         #F7F8FA;
+  --bg:         #F5F5F2;
   --surface:    #FFFFFF;
-  --border:     #E2E6ED;
+  --border:     #DEDFDB;
   --text:       #1A1D23;
   --muted:      #6B7280;
   --accent:     #2563EB;
