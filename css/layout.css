@@ -152,10 +152,16 @@ main {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  flex-wrap: wrap;
   gap: 16px;
   margin-top: 24px;
   padding-top: 18px;
   border-top: 1px solid var(--border);
+}
+.footer-brand-links {
+  display: flex;
+  align-items: center;
+  gap: 6px;
 }
 .footer-social-link {
   display: inline-flex;
@@ -294,5 +300,13 @@ main {
   }
   .footer-bottom {
     align-items: center;
+  }
+  .footer-bottom .language-control {
+    margin-left: 0;
+  }
+  .footer-bottom .language-menu {
+    right: auto;
+    left: 0;
+    transform-origin: bottom left;
   }
 }
