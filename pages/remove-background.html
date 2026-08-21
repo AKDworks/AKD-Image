@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <script src="/js/i18n.js?v=1"></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Удалить фон – AKD Image</title>
+  <meta name="description" content="Удаляйте фон с изображения локально в браузере с помощью AI и скачивайте результат в PNG с прозрачностью.">
+  <link rel="canonical" href="https://image.akdworks.com/remove-background">
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="preload" href="/fonts/Inter-400.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="/fonts/Inter-500.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="/fonts/Inter-600.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="/fonts/Inter-700.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="/fonts/Inter-800.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="/css/main.css?v=44">
+  <link rel="stylesheet" href="/css/remove-background.css?v=1">
+</head>
+<body>
+<script src="/js/layout.js?v=16"></script>
+
+<main>
+  <div class="container container--narrow tool-page">
+    <div class="tool-page__header">
+      <h1 class="tool-page__title">Удалить фон</h1>
+      <p class="tool-page__subtitle">Отделите главный объект от фона с помощью локальной AI-обработки и скачайте PNG с прозрачностью.</p>
+    </div>
+
+    <div class="dropzone" id="dropzone" tabindex="0" role="button" aria-label="Выбрать изображение">
+      <input type="file" accept="image/jpeg,image/png,image/webp,image/avif,image/heic,image/heif,image/svg+xml,image/bmp,.jpg,.jpeg,.png,.webp,.avif,.heic,.heif,.svg,.bmp">
+      <p class="dropzone__title">Добавьте изображение</p>
+      <p class="dropzone__hint">Выберите файл, вставьте из буфера или перетащите сюда</p>
+      <div class="dropzone__formats">
+        <span class="fmt-badge">JPG</span>
+        <span class="fmt-badge">PNG</span>
+        <span class="fmt-badge">WEBP</span>
+        <span class="fmt-badge">AVIF</span>
+        <span class="fmt-badge">HEIC</span>
+        <span class="fmt-badge">SVG</span>
+        <span class="fmt-badge">BMP</span>
+      </div>
+    </div>
+
+    <section class="tool-panel hidden" id="settings-panel">
+      <div class="tool-panel__head">
+        <h3>Удаление фона</h3>
+        <button class="btn btn-sm btn-secondary" id="replace-file-btn" type="button">Заменить файл</button>
+      </div>
+      <div class="tool-panel__body">
+        <div class="background-source">
+          <img id="source-preview" alt="Предпросмотр исходного изображения">
+        </div>
+        <div class="result-stats mt-16" id="source-stats"></div>
+        <div class="alert alert-info background-model-note">
+          <span>При первом запуске браузер загрузит AI-модель размером около 94 МБ для WebGPU или 183 МБ для WASM. Изображение останется на вашем устройстве, а модель сохранится в кэше браузера.</span>
+        </div>
+      </div>
+    </section>
+
+    <div class="background-actions hidden mt-16" id="action-bar">
+      <button class="btn btn-primary btn-lg" id="remove-btn" type="button">Удалить фон</button>
+    </div>
+
+    <section class="background-status hidden mt-16" id="status-panel" aria-live="polite">
+      <div class="background-status__row">
+        <span id="status-text">Подготовка...</span>
+        <span id="status-percent">0%</span>
+      </div>
+      <div class="progress-bar" aria-hidden="true">
+        <div class="progress-fill" id="progress-bar"></div>
+      </div>
+      <button class="btn btn-sm btn-secondary" id="cancel-btn" type="button">Отменить</button>
+    </section>
+
+    <section class="result-area background-result" id="result-area">
+      <hr class="divider">
+      <div class="background-result__head">
+        <div>
+          <h2>Результат</h2>
+          <p class="text-muted text-sm" id="result-summary"></p>
+        </div>
+        <button class="btn btn-success" id="download-btn" type="button">Скачать PNG</button>
+      </div>
+
+      <div class="background-compare preview-canvas--checker" id="compare-view">
+        <img class="background-compare__image" id="result-preview" alt="Изображение с удалённым фоном">
+        <div class="background-compare__before" id="before-layer">
+          <img class="background-compare__image" id="compare-source" alt="Исходное изображение">
+        </div>
+        <div class="background-compare__divider" id="compare-divider" aria-hidden="true"></div>
+        <input class="background-compare__range" id="compare-range" type="range" min="0" max="100" value="50" aria-label="Сравнить исходное изображение и результат">
+      </div>
+      <div class="background-compare__labels" aria-hidden="true">
+        <span>До</span>
+        <span>После</span>
+      </div>
+    </section>
+  </div>
+</main>
+
+<script src="/js/core.js?v=18"></script>
+<script type="module" src="/js/remove-background.js?v=2"></script>
+</body>
+</html>

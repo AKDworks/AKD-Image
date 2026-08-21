@@ -41,6 +41,7 @@ Processing is performed locally by the browser. Images and GIF animations are no
 - text or image watermarks;
 - brightness, contrast, saturation and other effects;
 - pixelation and selective area blur;
+- AI background removal with transparent PNG output;
 - meme creation;
 - text, arrows, shapes and freehand annotations;
 - collages.
@@ -68,7 +69,7 @@ Processing is performed locally by the browser. Images and GIF animations are no
 
 In normal use, files remain on the user's device. The browser reads the selected images or GIF animations, processes them locally and creates the output without uploading the source files to a server.
 
-The exception is loading a watermark logo from an external URL. In that case, the browser requests the image from the address supplied by the user.
+The exceptions are loading a watermark logo from an external URL and downloading the AI model required for background removal. In both cases, the selected image itself remains on the user's device. The model and runtime hosts may receive ordinary connection metadata, such as an IP address and user agent.
 
 Learn more in the [Privacy Policy](https://image.akdworks.com/privacy).
 
@@ -123,6 +124,13 @@ HEIC and HEIF limits:
 
 BMP export is limited to 20 megapixels. BMP and HEIC do not support transparency in AKD Image, so transparent areas receive a white background.
 
+Background removal limits:
+
+- one static image per operation;
+- up to 25 MB per source file, within the general resolution limits;
+- an initial download of about 94 MB with WebGPU or 183 MB with the WebAssembly fallback;
+- WebGPU is preferred when available, while processing speed and memory use depend on the device.
+
 Animated GIF limits:
 
 - up to 25 MB per file;
@@ -158,7 +166,7 @@ Using the website and using its source code are separate matters:
 
 All rights to the original AKD Image code, interface, design and documentation belong to AKDworks. See [LICENSE](LICENSE) for the complete terms.
 
-Third-party components in `js/vendor` and `fonts` remain under their respective licenses. HEIC/HEIF support uses libheif, libde265 and Kvazaar compiled to WebAssembly without x265. Video and GIF conversion uses ffmpeg.wasm and the FFmpeg WebAssembly core. Versions, authors, official sources and license details are listed on the [Licenses and components](https://image.akdworks.com/licenses) page, and full license texts are stored next to the relevant files. These licenses apply only to third-party components and do not change the terms for AKD Image itself.
+Third-party components in `js/vendor` and `fonts` remain under their respective licenses. HEIC/HEIF support uses libheif, libde265 and Kvazaar compiled to WebAssembly without x265. Video and GIF conversion uses ffmpeg.wasm and the FFmpeg WebAssembly core. Background removal is powered by AKD Vision, Transformers.js, ONNX Runtime Web and the BiRefNet Lite model. Versions, authors, official sources and license details are listed on the [Licenses and components](https://image.akdworks.com/licenses) page, and full license texts are stored next to the relevant files. These licenses apply only to third-party components and do not change the terms for AKD Image itself.
 
 ## Security
 

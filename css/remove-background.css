@@ -1,0 +1,156 @@
+.background-source {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 280px;
+  padding: 12px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--workspace-bg);
+}
+
+.background-source img {
+  display: block;
+  max-width: 100%;
+  max-height: 58vh;
+  border-radius: var(--r-sm);
+}
+
+.background-model-note {
+  margin: 16px 0 0;
+}
+
+.background-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.background-status {
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--surface);
+}
+
+.background-status__row {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  color: var(--muted);
+  font-size: .84rem;
+  font-weight: 600;
+}
+
+.background-status .btn {
+  margin-top: 14px;
+}
+
+.background-result__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.background-result__head h2 {
+  font-size: 1.25rem;
+}
+
+.background-compare {
+  position: relative;
+  width: 100%;
+  min-height: 320px;
+  max-height: 70vh;
+  aspect-ratio: var(--result-aspect, 4 / 3);
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background-color: var(--checker-bg);
+}
+
+.background-compare__image {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  object-position: center;
+  user-select: none;
+  pointer-events: none;
+}
+
+.background-compare__before {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 50%;
+  overflow: hidden;
+}
+
+.background-compare__before .background-compare__image {
+  width: var(--compare-width, 100%);
+  max-width: none;
+}
+
+.background-compare__divider {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  width: 2px;
+  background: var(--accent);
+  transform: translateX(-1px);
+  pointer-events: none;
+}
+
+.background-compare__divider::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 28px;
+  height: 28px;
+  border: 2px solid var(--accent);
+  border-radius: 50%;
+  background: var(--surface);
+  transform: translate(-50%, -50%);
+}
+
+.background-compare__range {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  opacity: 0;
+  cursor: ew-resize;
+}
+
+.background-compare__labels {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 8px;
+  color: var(--muted);
+  font-size: .78rem;
+  font-weight: 600;
+}
+
+@media (max-width: 600px) {
+  .background-source,
+  .background-compare {
+    min-height: 220px;
+  }
+
+  .background-result__head {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .background-result__head .btn,
+  .background-actions .btn {
+    width: 100%;
+  }
+}
