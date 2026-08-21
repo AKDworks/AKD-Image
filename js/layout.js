@@ -28,9 +28,11 @@
     '/gif-trim': '/pages/gif-trim.html',
     '/video-gif': '/pages/video-gif.html',
     '/gif-frames': '/pages/gif-frames.html',
+    '/remove-background': '/pages/remove-background.html',
     '/favorites': '/pages/favorites.html',
     '/privacy': '/pages/privacy.html',
-    '/about': '/pages/about.html'
+    '/about': '/pages/about.html',
+    '/licenses': '/pages/licenses.html'
   };
 
   function routeHref(href, page) {
