@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-  <script src="/js/i18n.js?v=1"></script>
+  <script src="/js/i18n.js?v=3"></script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Повернуть и отразить – AKD Image</title>
@@ -13,7 +13,7 @@
   <link rel="preload" href="/fonts/Inter-600.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="preload" href="/fonts/Inter-700.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="preload" href="/fonts/Inter-800.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="stylesheet" href="/css/main.css?v=44">
+<link rel="stylesheet" href="/css/main.css?v=48">
 </head>
 <body>
 <script src="/js/layout.js?v=16"></script>
@@ -25,7 +25,7 @@
       <h1 class="tool-page__title">
         Повернуть / Отразить
       </h1>
-      <p class="tool-page__subtitle">Исправляйте ориентацию и зеркально отражайте сразу несколько изображений.</p>
+      <p class="tool-page__subtitle">Поворачивайте и зеркально отражайте одно или несколько изображений без сложных редакторов.</p>
     </div>
     <div class="dropzone" id="dropzone">
       <input type="file" accept="image/jpeg,image/png,image/webp,image/avif,image/heic,image/heif,image/svg+xml,image/bmp,image/gif" multiple>
@@ -66,7 +66,7 @@
     </div>
     <div class="file-list hidden" id="file-list"></div>
     <div class="hidden mt-16 flex gap-8 items-center" id="action-bar">
-      <button class="btn btn-primary btn-lg" id="apply-btn">Применить и скачать</button>
+      <button class="btn btn-primary btn-lg" id="apply-btn">Применить</button>
       <span class="text-muted text-sm" id="file-count"></span>
     </div>
     <div class="result-area" id="result-area">
@@ -78,7 +78,7 @@
   </div>
 </main>
 
-<script src="/js/core.js?v=16"></script>
+<script src="/js/core.js?v=22"></script>
 <script>
 (function () {
   const dropzoneEl  = document.getElementById('dropzone');
@@ -238,7 +238,7 @@
 
     applyBtn.disabled = false;
     UIUtils.setBatchLocked(manager, [clearBtn, dlAllBtn, previewBtn], false);
-    applyBtn.innerHTML = 'Применить и скачать';
+    applyBtn.innerHTML = 'Применить';
   });
 
   dlAllBtn.addEventListener('click', async () => {

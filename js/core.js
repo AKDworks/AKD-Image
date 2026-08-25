@@ -175,7 +175,7 @@ const CustomSelect = (() => {
   }
 
   function init(root = document) {
-    root.querySelectorAll('select[data-custom-select="format"]').forEach(enhance);
+    root.querySelectorAll('select:not([multiple]):not([data-native-select])').forEach(enhance);
   }
 
   document.addEventListener('click', event => {
@@ -480,6 +480,350 @@ if (document.readyState === 'loading') {
 } else {
   CustomColorPicker.init();
 }
+
+/* Unified completion screen */
+const ResultFlow = (() => {
+  const TOOL_CATALOG = {
+    compress: { href: '/compress', label: 'Сжать изображение', iconClass: 'ic-green', iconPath: 'M160-400v-80h640v80H160Zm0-120v-80h640v80H160ZM440-80v-128l-64 64-56-56 160-160 160 160-56 56-64-62v126h-80Zm40-560L320-800l56-56 64 64v-128h80v128l64-64 56 56-160 160Z' },
+    resize: { href: '/resize', label: 'Изменить размер', iconClass: 'ic-blue', iconPath: 'M560-280h200v-200h-80v120H560v80ZM200-480h80v-120h120v-80H200v200Zm-40 320q-33 0-56.5-23.5T80-240v-480q0-33 23.5-56.5T160-800h640q33 0 56.5 23.5T880-720v480q0 33-23.5 56.5T800-160H160Zm0-80h640v-480H160v480Zm0 0v-480 480Z' },
+    watermark: { href: '/watermark', label: 'Водяной знак', iconClass: 'ic-orange', iconPath: 'M400-280h360v-240H400v240ZM160-160q-33 0-56.5-23.5T80-240v-480q0-33 23.5-56.5T160-800h640q33 0 56.5 23.5T880-720v480q0 33-23.5 56.5T800-160H160Zm0-80h640v-480H160v480Zm0 0v-480 480Z' },
+    crop: { href: '/crop', label: 'Обрезать изображение', iconClass: 'ic-blue', iconPath: 'M680-40v-160H280q-33 0-56.5-23.5T200-280v-400H40v-80h160v-160h80v640h640v80H760v160h-80Zm0-320v-320H360v-80h320q33 0 56.5 23.5T760-680v320h-80Z' },
+    convert: { href: '/convert', label: 'Конвертировать', iconClass: 'ic-green', iconPath: 'M280-160 80-360l200-200 56 57-103 103h287v80H233l103 103-56 57Zm400-240-56-57 103-103H440v-80h287L624-743l56-57 200 200-200 200Z' },
+    rotate: { href: '/rotate', label: 'Повернуть / Отразить', iconClass: 'ic-blue', iconPath: 'M487-104 150-440h114l280 280 200-200H640v-80h240v240h-80v-104L600-104q-23 23-56.5 23T487-104ZM80-520v-240h80v104l200-200q23-23 56.5-23t56.5 23l337 336H696L416-800 216-600h104v80H80Z' },
+    effects: { href: '/effects', label: 'Фотоэффекты', iconClass: 'ic-orange', iconPath: 'M324-111.5Q251-143 197-197t-85.5-127Q80-397 80-480t31.5-156Q143-709 197-763t127-85.5Q397-880 480-880t156 31.5Q709-817 763-763t85.5 127Q880-563 880-480t-31.5 156Q817-251 763-197t-127 85.5Q563-80 480-80t-156-31.5ZM520-163q119-15 199.5-104.5T800-480q0-123-80.5-212.5T520-797v634Z' },
+    meme: { href: '/meme', label: 'Генератор мемов', iconClass: 'ic-orange', iconPath: 'M620-520q25 0 42.5-17.5T680-580q0-25-17.5-42.5T620-640q-25 0-42.5 17.5T560-580q0 25 17.5 42.5T620-520Zm-280 0q25 0 42.5-17.5T400-580q0-25-17.5-42.5T340-640q-25 0-42.5 17.5T280-580q0 25 17.5 42.5T340-520Zm263.5 221.5Q659-337 684-400H276q25 63 80.5 101.5T480-260q68 0 123.5-38.5ZM324-111.5Q251-143 197-197t-85.5-127Q80-397 80-480t31.5-156Q143-709 197-763t127-85.5Q397-880 480-880t156 31.5Q709-817 763-763t85.5 127Q880-563 880-480t-31.5 156Q817-251 763-197t-127 85.5Q563-80 480-80t-156-31.5ZM480-480Zm227 227q93-93 93-227t-93-227q-93-93-227-93t-227 93q-93 93-93 227t93 227q93 93 227 93t227-93Z' },
+    split: { href: '/split', label: 'Разделить изображение', iconClass: 'ic-blue', iconPath: 'M200-120q-33 0-56.5-23.5T120-200v-560q0-33 23.5-56.5T200-840h560q33 0 56.5 23.5T840-760v560q0 33-23.5 56.5T760-120H200Zm0-80h240v-560H200v560Zm320 0h240v-280H520v280Zm0-360h240v-200H520v200Z' },
+    round: { href: '/round', label: 'Скругление углов', iconClass: 'ic-blue', iconPath: 'M120-120v-80h80v80h-80Zm0-160v-80h80v80h-80Zm0-160v-80h80v80h-80Zm0-160v-80h80v80h-80Zm0-160v-80h80v80h-80Zm160 640v-80h80v80h-80Zm0-640v-80h80v80h-80Zm160 640v-80h80v80h-80Zm160 0v-80h80v80h-80Zm160 0v-80h80v80h-80Zm0-160v-80h80v80h-80Zm80-160h-80v-200q0-50-35-85t-85-35H440v-80h200q83 0 141.5 58.5T840-640v200Z' },
+    pixelate: { href: '/pixelate', label: 'Пикселизатор', iconClass: 'ic-orange', iconPath: 'M120-120v-720h720v720H120Zm80-80h560v-560H200v560Zm0 0v-560 560Z' },
+    exif: { href: '/exif', label: 'Удалить EXIF', iconClass: 'ic-green', iconPath: 'M280-120q-33 0-56.5-23.5T200-200v-520h-40v-80h200v-40h240v40h200v80h-40v520q0 33-23.5 56.5T680-120H280Zm400-600H280v520h400v-520ZM360-280h80v-360h-80v360Zm160 0h80v-360h-80v360ZM280-720v520-520Z' },
+    base64: { href: '/base64', label: 'Изображение в Base64', iconClass: 'ic-green', iconPath: 'M318-120q-82 0-140-58t-58-140q0-40 15-76t43-64l134-133 56 56-134 134q-17 17-25.5 38.5T200-318q0 49 34.5 83.5T318-200q23 0 45-8.5t39-25.5l133-134 57 57-134 133q-28 28-64 43t-76 15Zm79-220-57-57 223-223 57 57-223 223Zm251-28-56-57 134-133q17-17 25-38t8-44q0-50-34-85t-84-35q-23 0-44.5 8.5T558-726L425-592l-57-56 134-134q28-28 64-43t76-15q82 0 139.5 58T839-641q0 39-14.5 75T782-502L648-368Z' },
+    favicon: { href: '/favicon', label: 'Создать favicon', iconClass: 'ic-green', iconPath: 'M325-111.5q-73-31.5-127.5-86t-86-127.5Q80-398 80-480.5t31.5-155q31.5-72.5 86-127t127.5-86Q398-880 480.5-880t155 31.5q72.5 31.5 127 86t86 127Q880-563 880-480.5T848.5-325q-31.5 73-86 127.5t-127 86Q563-80 480.5-80T325-111.5ZM480-162q26-36 45-75t31-83H404q12 44 31 83t45 75Zm-104-16q-18-33-31.5-68.5T322-320H204q29 50 72.5 87t99.5 55Zm208 0q56-18 99.5-55t72.5-87H638q-9 38-22.5 73.5T584-178ZM170-400h136q-3-20-4.5-39.5T300-480q0-21 1.5-40.5T306-560H170q-5 20-7.5 39.5T160-480q0 21 2.5 40.5T170-400Zm216 0h188q3-20 4.5-39.5T580-480q0-21-1.5-40.5T574-560H386q-3 20-4.5 39.5T380-480q0 21 1.5 40.5T386-400Zm268 0h136q5-20 7.5-39.5T800-480q0-21-2.5-40.5T790-560H654q3 20 4.5 39.5T660-480q0 21-1.5 40.5T654-400Zm-16-240h118q-29-50-72.5-87T584-782q18 33 31.5 68.5T638-640Zm-234 0h152q-12-44-31-83t-45-75q-26 36-45 75t-31 83Zm-200 0h118q9-38 22.5-73.5T376-782q-56 18-99.5 55T204-640Z' },
+    palette: { href: '/palette', label: 'Генератор палитры', iconClass: 'ic-orange', iconPath: 'M480-80q-82 0-155-31.5t-127.5-86Q143-252 111.5-325T80-480q0-83 32.5-156t88-127Q256-817 330-848.5T488-880q80 0 151 27.5t124.5 76q53.5 48.5 85 115T880-518q0 115-70 176.5T640-280h-74q-9 0-12.5 5t-3.5 11q0 12 15 34.5t15 51.5q0 50-27.5 74T480-80Zm0-400Zm-177 23q17-17 17-43t-17-43q-17-17-43-17t-43 17q-17 17-17 43t17 43q17 17 43 17t43-17Zm120-160q17-17 17-43t-17-43q-17-17-43-17t-43 17q-17 17-17 43t17 43q17 17 43 17t43-17Zm200 0q17-17 17-43t-17-43q-17-17-43-17t-43 17q-17 17-17 43t17 43q17 17 43 17t43-17Zm120 160q17-17 17-43t-17-43q-17-17-43-17t-43 17q-17 17-17 43t17 43q17 17 43 17t43-17ZM480-160q9 0 14.5-5t5.5-13q0-14-15-33t-15-57q0-42 29-67t71-25h70q66 0 113-38.5T800-518q0-121-92.5-201.5T488-800q-136 0-232 93t-96 227q0 133 93.5 226.5T480-160Z' },
+    blur: { href: '/blur', label: 'Размытие области', iconClass: 'ic-orange', iconPath: 'M106-386q-6-6-6-14t6-14q6-6 14-6t14 6q6 6 6 14t-6 14q-6 6-14 6t-14-6Zm0-160q-6-6-6-14t6-14q6-6 14-6t14 6q6 6 6 14t-6 14q-6 6-14 6t-14-6Zm105.5 334.5Q200-223 200-240t11.5-28.5Q223-280 240-280t28.5 11.5Q280-257 280-240t-11.5 28.5Q257-200 240-200t-28.5-11.5Zm0-160Q200-383 200-400t11.5-28.5Q223-440 240-440t28.5 11.5Q280-417 280-400t-11.5 28.5Q257-360 240-360t-28.5-11.5Zm0-160Q200-543 200-560t11.5-28.5Q223-600 240-600t28.5 11.5Q280-577 280-560t-11.5 28.5Q257-520 240-520t-28.5-11.5Zm0-160Q200-703 200-720t11.5-28.5Q223-760 240-760t28.5 11.5Q280-737 280-720t-11.5 28.5Q257-680 240-680t-28.5-11.5Zm146 334Q340-375 340-400t17.5-42.5Q375-460 400-460t42.5 17.5Q460-425 460-400t-17.5 42.5Q425-340 400-340t-42.5-17.5Zm0-160Q340-535 340-560t17.5-42.5Q375-620 400-620t42.5 17.5Q460-585 460-560t-17.5 42.5Q425-500 400-500t-42.5-17.5Zm14 306Q360-223 360-240t11.5-28.5Q383-280 400-280t28.5 11.5Q440-257 440-240t-11.5 28.5Q417-200 400-200t-28.5-11.5Zm0-480Q360-703 360-720t11.5-28.5Q383-760 400-760t28.5 11.5Q440-737 440-720t-11.5 28.5Q417-680 400-680t-28.5-11.5ZM386-106q-6-6-6-14t6-14q6-6 14-6t14 6q6 6 6 14t-6 14q-6 6-14 6t-14-6Zm0-720q-6-6-6-14t6-14q6-6 14-6t14 6q6 6 6 14t-6 14q-6 6-14 6t-14-6Zm131.5 468.5Q500-375 500-400t17.5-42.5Q535-460 560-460t42.5 17.5Q620-425 620-400t-17.5 42.5Q585-340 560-340t-42.5-17.5Zm0-160Q500-535 500-560t17.5-42.5Q535-620 560-620t42.5 17.5Q620-585 620-560t-17.5 42.5Q585-500 560-500t-42.5-17.5Zm14 306Q520-223 520-240t11.5-28.5Q543-280 560-280t28.5 11.5Q600-257 600-240t-11.5 28.5Q577-200 560-200t-28.5-11.5Zm0-480Q520-703 520-720t11.5-28.5Q543-760 560-760t28.5 11.5Q600-737 600-720t-11.5 28.5Q577-680 560-680t-28.5-11.5ZM546-106q-6-6-6-14t6-14q6-6 14-6t14 6q6 6 6 14t-6 14q-6 6-14 6t-14-6Zm0-720q-6-6-6-14t6-14q6-6 14-6t14 6q6 6 6 14t-6 14q-6 6-14 6t-14-6Zm145.5 614.5Q680-223 680-240t11.5-28.5Q703-280 720-280t28.5 11.5Q760-257 760-240t-11.5 28.5Q737-200 720-200t-28.5-11.5Zm0-160Q680-383 680-400t11.5-28.5Q703-440 720-440t28.5 11.5Q760-417 760-400t-11.5 28.5Q737-360 720-360t-28.5-11.5Zm0-160Q680-543 680-560t11.5-28.5Q703-600 720-600t28.5 11.5Q760-577 760-560t-11.5 28.5Q737-520 720-520t-28.5-11.5Zm0-160Q680-703 680-720t11.5-28.5Q703-760 720-760t28.5 11.5Q760-737 760-720t-11.5 28.5Q737-680 720-680t-28.5-11.5ZM826-386q-6-6-6-14t6-14q6-6 14-6t14 6q6 6 6 14t-6 14q-6 6-14 6t-14-6Zm0-160q-6-6-6-14t6-14q6-6 14-6t14 6q6 6 6 14t-6 14q-6 6-14 6t-14-6Z' },
+    pdf: { href: '/pdf', label: 'Изображения в PDF', iconClass: 'ic-green', iconPath: 'M360-460h40v-80h40q17 0 28.5-11.5T480-580v-40q0-17-11.5-28.5T440-660h-80v200Zm40-120v-40h40v40h-40Zm120 120h80q17 0 28.5-11.5T640-500v-120q0-17-11.5-28.5T600-660h-80v200Zm40-40v-120h40v120h-40Zm120 40h40v-80h40v-40h-40v-40h40v-40h-80v200ZM320-240q-33 0-56.5-23.5T240-320v-480q0-33 23.5-56.5T320-880h480q33 0 56.5 23.5T880-800v480q0 33-23.5 56.5T800-240H320Zm0-80h480v-480H320v480ZM160-80q-33 0-56.5-23.5T80-160v-560h80v560h560v80H160Zm160-720v480-480Z' },
+    collage: { href: '/collage', label: 'Коллаж', iconClass: 'ic-orange', iconPath: 'M440-120H200q-33 0-56.5-23.5T120-200v-560q0-33 23.5-56.5T200-840h240v720Zm-80-80v-560H200v560h160Zm160-320v-320h240q33 0 56.5 23.5T840-760v240H520Zm80-80h160v-160H600v160Zm-80 480v-320h320v240q0 33-23.5 56.5T760-120H520Zm80-80h160v-160H600v160ZM360-480Zm240-120Zm0 240Z' },
+    annotate: { href: '/annotate', label: 'Пометки на изображении', iconClass: 'ic-orange', iconPath: 'M240-120q-45 0-89-22t-71-58q26 0 53-20.5t27-59.5q0-50 35-85t85-35q50 0 85 35t35 85q0 66-47 113t-113 47Zm0-80q33 0 56.5-23.5T320-280q0-17-11.5-28.5T280-320q-17 0-28.5 11.5T240-280q0 23-5.5 42T220-202q5 2 10 2h10Zm230-160L360-470l358-358q11-11 27.5-11.5T774-828l54 54q12 12 12 28t-12 28L470-360Zm-190 80Z' },
+    'gif-trim': { href: '/gif-trim', label: 'Вырезать GIF', iconClass: 'ic-blue', iconPath: 'M760-120 480-400l-94 94q8 15 11 32t3 34q0 66-47 113T240-80q-66 0-113-47T80-240q0-66 47-113t113-47q17 0 34 3t32 11l94-94-94-94q-15 8-32 11t-34 3q-66 0-113-47T80-720q0-66 47-113t113-47q66 0 113 47t47 113q0 17-3 34t-11 32l494 494v40H760ZM600-520l-80-80 240-240h120v40L600-520ZM296.5-663.5Q320-687 320-720t-23.5-56.5Q273-800 240-800t-56.5 23.5Q160-753 160-720t23.5 56.5Q207-640 240-640t56.5-23.5ZM494-466q6-6 6-14t-6-14q-6-6-14-6t-14 6q-6 6-6 14t6 14q6 6 14 6t14-6ZM296.5-183.5Q320-207 320-240t-23.5-56.5Q273-320 240-320t-56.5 23.5Q160-273 160-240t23.5 56.5Q207-160 240-160t56.5-23.5Z' },
+    'video-gif': { href: '/video-gif', label: 'Видео ↔ GIF', iconClass: 'ic-orange', iconPath: 'm480-420 240-160-240-160v320Zm28 220h224q-7 26-24 42t-44 20L228-85q-33 5-59.5-15.5T138-154L85-591q-4-33 16-59t53-30l46-6v80l-36 5 54 437 290-36Zm-148-80q-33 0-56.5-23.5T280-360v-440q0-33 23.5-56.5T360-880h440q33 0 56.5 23.5T880-800v440q0 33-23.5 56.5T800-280H360Zm0-80h440v-440H360v440Zm220-220ZM218-164Z' },
+    'gif-frames': { href: '/gif-frames', label: 'GIF в кадры', iconClass: 'ic-orange', iconPath: 'M360-400h400L622-580l-92 120-62-80-108 140Zm-40 160q-33 0-56.5-23.5T240-320v-480q0-33 23.5-56.5T320-880h480q33 0 56.5 23.5T880-800v480q0 33-23.5 56.5T800-240H320Zm0-80h480v-480H320v480ZM160-80q-33 0-56.5-23.5T80-160v-560h80v560h560v80H160Zm160-720v480-480Z' },
+    'remove-background': { href: '/remove-background', label: 'Удалить фон', iconClass: 'ic-orange', iconPath: 'M120-574v-85l181-181h85L120-574Zm0-196v-70h70l-70 70Zm527 67q-10-11-21.5-21.5T602-743l97-97h85L647-703ZM220-361l77-77q7 11 14.5 20t16.5 17q-28 7-56.5 17.5T220-361Zm480-197v-2q0-19-3-37t-9-35l152-152v86L700-558ZM436-776l65-64h85l-64 64q-11-2-21-3t-21-1q-11 0-22 1t-22 3ZM120-375v-85l144-144q-2 11-3 22t-1 22q0 11 1 21t3 20L120-375Zm709 83q-8-12-18.5-23T788-335l52-52v85l-11 10Zm-116-82q-7-3-14-5.5t-14-4.5q-9-3-17.5-6t-17.5-5l190-191v86L713-374Zm-233-26q-66 0-113-47t-47-113q0-66 47-113t113-47q66 0 113 47t47 113q0 66-47 113t-113 47Zm56.5-103.5Q560-527 560-560t-23.5-56.5Q513-640 480-640t-56.5 23.5Q400-593 400-560t23.5 56.5Q447-480 480-480t56.5-23.5ZM160-120v-71q0-34 17-63t47-44q51-26 115.5-44T480-360q76 0 140.5 18T736-298q30 15 47 44t17 63v71H160Zm81-80h478q-2-9-7-15.5T699-226q-36-18-91.5-36T480-280q-72 0-127.5 18T261-226q-8 4-13 11t-7 15Zm239 0Zm0-360Z' },
+  };
+
+  const CONTINUATION_MAP = {
+    compress: ['resize', 'convert', 'crop', 'exif'],
+    resize: ['compress', 'crop', 'convert', 'watermark'],
+    convert: ['compress', 'resize', 'exif', 'pdf'],
+    watermark: ['compress', 'resize', 'convert', 'pdf'],
+    crop: ['resize', 'compress', 'effects', 'watermark'],
+    rotate: ['crop', 'resize', 'compress', 'watermark'],
+    effects: ['compress', 'resize', 'watermark', 'meme'],
+    meme: ['compress', 'resize', 'annotate', 'watermark'],
+    split: ['compress', 'resize', 'pdf', 'collage'],
+    base64: ['compress', 'convert', 'resize', 'favicon'],
+    blur: ['crop', 'annotate', 'compress', 'watermark'],
+    pdf: ['compress', 'resize', 'convert', 'collage'],
+    collage: ['compress', 'resize', 'watermark', 'pdf'],
+    annotate: ['compress', 'resize', 'watermark', 'pdf'],
+    'gif-trim': ['video-gif', 'gif-frames', 'compress', 'resize'],
+    'video-gif': ['gif-trim', 'gif-frames', 'compress', 'resize'],
+    'gif-frames': ['video-gif', 'gif-trim', 'collage', 'pdf'],
+    round: ['compress', 'resize', 'watermark', 'convert'],
+    pixelate: ['compress', 'resize', 'effects', 'meme'],
+    exif: ['compress', 'resize', 'convert', 'watermark'],
+    favicon: ['resize', 'crop', 'convert', 'palette'],
+    palette: ['effects', 'meme', 'collage', 'annotate'],
+    'remove-background': ['crop', 'resize', 'watermark', 'collage'],
+  };
+
+  let screen = null;
+  let toolPage = null;
+  let legacyArea = null;
+  let legacyObserver = null;
+  let scheduled = false;
+
+  function createElement(tag, className, text) {
+    const element = document.createElement(tag);
+    if (className) element.className = className;
+    if (text !== undefined) element.textContent = text;
+    return element;
+  }
+
+  function ensureScreen() {
+    if (screen?.isConnected) return screen;
+    toolPage = document.querySelector('main .tool-page');
+    if (!toolPage) return null;
+
+    screen = createElement('section', 'container container--narrow result-flow hidden');
+    screen.setAttribute('aria-live', 'polite');
+    screen.innerHTML = `
+      <div class="result-flow__hero">
+        <div class="result-flow__icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24"><path d="m5 12.5 4.25 4.25L19 7"/></svg>
+        </div>
+        <h1 class="result-flow__title" tabindex="-1"></h1>
+        <p class="result-flow__description"></p>
+        <button class="btn btn-primary btn-lg result-flow__download" type="button"></button>
+        <div class="result-flow__secondary"></div>
+      </div>
+      <div class="result-flow__stats hidden"></div>
+      <div class="result-flow__actions">
+        <button class="btn btn-secondary result-flow__back" type="button">Вернуться к настройкам</button>
+        <button class="btn btn-secondary result-flow__restart" type="button">Обработать ещё</button>
+      </div>
+      <section class="result-flow__continue">
+        <h2>Продолжить работу</h2>
+        <div class="result-flow__suggestions"></div>
+      </section>
+    `;
+    toolPage.insertAdjacentElement('afterend', screen);
+    return screen;
+  }
+
+  function readStats(source) {
+    if (!source) return [];
+    return Array.from(source.querySelectorAll('.stat-card')).map(card => ({
+      label: card.querySelector('.stat-card__label')?.textContent.trim() || '',
+      value: card.querySelector('.stat-card__value')?.textContent.trim() || '',
+      accent: card.classList.contains('stat-green'),
+    })).filter(stat => stat.label || stat.value);
+  }
+
+  function renderStats(stats = []) {
+    const container = screen.querySelector('.result-flow__stats');
+    container.replaceChildren();
+    container.classList.toggle('hidden', !stats.length);
+    stats.forEach(stat => {
+      const card = createElement('div', 'result-flow__stat' + (stat.accent ? ' is-accent' : ''));
+      card.append(
+        createElement('div', 'result-flow__stat-label', stat.label),
+        createElement('div', 'result-flow__stat-value', stat.value)
+      );
+      container.appendChild(card);
+    });
+  }
+
+  function currentToolSlug() {
+    const path = window.location.pathname.replace(/\/$/, '');
+    const lastSegment = path.split('/').filter(Boolean).pop() || '';
+    return lastSegment.replace(/\.html$/i, '');
+  }
+
+  function suggestionItems(suggestions) {
+    const currentTool = currentToolSlug();
+    const source = suggestions || CONTINUATION_MAP[currentTool] || Object.keys(TOOL_CATALOG);
+    const resolved = source
+      .map(item => typeof item === 'string' ? TOOL_CATALOG[item] : item)
+      .filter(Boolean)
+      .filter(item => item.href !== `/${currentTool}`);
+
+    const unique = [];
+    const used = new Set();
+    resolved.forEach(item => {
+      if (used.has(item.href)) return;
+      used.add(item.href);
+      unique.push(item);
+    });
+
+    if (unique.length < 4) {
+      Object.values(TOOL_CATALOG).forEach(item => {
+        if (item.href === `/${currentTool}` || used.has(item.href)) return;
+        used.add(item.href);
+        unique.push(item);
+      });
+    }
+
+    return unique.slice(0, 4);
+  }
+
+  function renderSuggestions(suggestions) {
+    const items = suggestionItems(suggestions);
+    const container = screen.querySelector('.result-flow__suggestions');
+    container.replaceChildren();
+    items.forEach(item => {
+      const link = createElement('a', 'result-flow__suggestion');
+      link.href = item.href;
+      const content = createElement('span', 'result-flow__suggestion-content');
+      if (item.iconPath) {
+        const icon = createElement('span', `result-flow__suggestion-icon ${item.iconClass || ''}`.trim());
+        const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+        const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        svg.setAttribute('viewBox', '0 -960 960 960');
+        svg.setAttribute('aria-hidden', 'true');
+        path.setAttribute('d', item.iconPath);
+        svg.appendChild(path);
+        icon.appendChild(svg);
+        content.appendChild(icon);
+      }
+      content.appendChild(createElement('span', 'result-flow__suggestion-label', item.label));
+      link.append(
+        content,
+        createElement('span', 'result-flow__suggestion-arrow', '→')
+      );
+      container.appendChild(link);
+    });
+  }
+
+  async function runAction(button, action) {
+    if (!action || button.disabled) return;
+    const label = button.textContent;
+    button.disabled = true;
+    button.innerHTML = '<span class="spinner"></span> Подготовка...';
+    try {
+      await action();
+    } catch (error) {
+      console.error(error);
+      Toast.error(error.message || 'Не удалось скачать результат.');
+    } finally {
+      button.disabled = false;
+      button.textContent = label;
+    }
+  }
+
+  function hide({ clearLegacy = false } = {}) {
+    if (!screen || !toolPage) return;
+    screen.classList.add('hidden');
+    toolPage.classList.remove('hidden');
+    document.body.classList.remove('result-flow-open');
+    if (clearLegacy && legacyArea) legacyArea.classList.remove('visible');
+    window.scrollTo({ top: 0, behavior: 'auto' });
+  }
+
+  function show(options = {}) {
+    if (!ensureScreen()) return;
+    const {
+      title = 'Результат готов!',
+      description = 'Обработка завершена. Результат готов к скачиванию.',
+      downloadLabel = 'Скачать результат',
+      onDownload,
+      secondaryActions = [],
+      stats = [],
+      restartLabel = 'Обработать ещё',
+      backLabel = 'Вернуться к настройкам',
+      onRestart,
+      onBack,
+      suggestions,
+      sourceArea = null,
+    } = options;
+
+    legacyArea = sourceArea;
+    const titleElement = screen.querySelector('.result-flow__title');
+    const descriptionElement = screen.querySelector('.result-flow__description');
+    const downloadButton = screen.querySelector('.result-flow__download');
+    const secondary = screen.querySelector('.result-flow__secondary');
+    const backButton = screen.querySelector('.result-flow__back');
+    const restartButton = screen.querySelector('.result-flow__restart');
+
+    titleElement.textContent = title;
+    descriptionElement.textContent = description;
+    downloadButton.textContent = downloadLabel;
+    downloadButton.classList.toggle('hidden', typeof onDownload !== 'function');
+    downloadButton.onclick = () => runAction(downloadButton, onDownload);
+
+    secondary.replaceChildren();
+    secondary.classList.toggle('hidden', !secondaryActions.length);
+    secondaryActions.forEach(action => {
+      const button = createElement('button', 'btn btn-secondary', action.label);
+      button.type = 'button';
+      button.addEventListener('click', () => runAction(button, action.onClick));
+      secondary.appendChild(button);
+    });
+
+    renderStats(stats);
+    renderSuggestions(suggestions);
+
+    backButton.textContent = backLabel;
+    backButton.onclick = () => {
+      hide({ clearLegacy: true });
+      if (onBack) onBack();
+    };
+    restartButton.textContent = restartLabel;
+    restartButton.onclick = () => {
+      if (onRestart) {
+        hide({ clearLegacy: true });
+        onRestart();
+      } else {
+        window.location.reload();
+      }
+    };
+
+    toolPage.classList.add('hidden');
+    screen.classList.remove('hidden');
+    document.body.classList.add('result-flow-open');
+    window.scrollTo({ top: 0, behavior: 'auto' });
+    requestAnimationFrame(() => titleElement.focus({ preventScroll: true }));
+  }
+
+  function legacyDownloadTarget(area) {
+    const areaButtons = Array.from(area.querySelectorAll('button[id^="download"], .result-download'));
+    const visibleButton = areaButtons.find(button => !button.classList.contains('hidden') && !button.hidden);
+    if (visibleButton) return visibleButton;
+
+    const fileButtons = Array.from(toolPage.querySelectorAll('.file-list .dl-btn'));
+    if (fileButtons.length === 1) return fileButtons[0];
+    return areaButtons[0] || null;
+  }
+
+  function triggerLegacyDownload(target) {
+    return new Promise(resolve => {
+      target.click();
+      let checks = 0;
+      const check = () => {
+        checks++;
+        if (!target.disabled || checks > 3000) {
+          resolve();
+          return;
+        }
+        setTimeout(check, 100);
+      };
+      setTimeout(check, 50);
+    });
+  }
+
+  function showLegacy(area) {
+    if (!area.classList.contains('visible')) return;
+    if (!ensureScreen()) return;
+    const target = legacyDownloadTarget(area);
+    if (!target) return;
+    const fileDownloads = toolPage.querySelectorAll('.file-list .dl-btn').length;
+    const isMultiple = fileDownloads > 1 || /ZIP/i.test(target.textContent);
+    let downloadLabel = target.textContent.trim() || 'Скачать результат';
+    if (target.classList.contains('dl-btn')) downloadLabel = 'Скачать изображение';
+
+    show({
+      title: 'Результат готов!',
+      description: isMultiple
+        ? 'Обработка завершена. Файлы готовы к скачиванию.'
+        : 'Обработка завершена. Файл готов к скачиванию.',
+      downloadLabel,
+      onDownload: () => triggerLegacyDownload(target),
+      stats: readStats(area.querySelector('#result-stats, .result-stats')),
+      sourceArea: area,
+    });
+  }
+
+  function scheduleLegacy(area) {
+    if (scheduled) return;
+    scheduled = true;
+    queueMicrotask(() => {
+      scheduled = false;
+      showLegacy(area);
+    });
+  }
+
+  function initLegacyObserver() {
+    const area = document.getElementById('result-area');
+    if (!area || area.dataset.resultFlow === 'manual') return;
+    legacyObserver?.disconnect();
+    legacyObserver = new MutationObserver(() => {
+      if (area.classList.contains('visible')) scheduleLegacy(area);
+      else if (screen && !screen.classList.contains('hidden') && legacyArea === area) hide();
+    });
+    legacyObserver.observe(area, { attributes: true, attributeFilter: ['class'] });
+    if (area.classList.contains('visible')) scheduleLegacy(area);
+  }
+
+  return { show, hide, readStats, initLegacyObserver };
+})();
 
 /* UI */
 const UIUtils = {
@@ -2066,7 +2410,10 @@ class FileListManager {
     const existing = info.querySelector('.dl-btn');
     if (existing) existing.remove();
     dl.className += ' dl-btn';
+    dl.dataset.resultFilename = filename;
     dl.addEventListener('click', event => event.stopPropagation());
     info.appendChild(dl);
   }
 }
+
+ResultFlow.initLegacyObserver();

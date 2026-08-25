@@ -305,7 +305,6 @@
     elements.resultStats.innerHTML = `
       <div class="stat-card"><div class="stat-card__label">Формат</div><div class="stat-card__value">${isGif ? 'GIF' : elements.format.value.toUpperCase()}</div></div>
       <div class="stat-card stat-green"><div class="stat-card__label">Размер файла</div><div class="stat-card__value">${formatSize(blob.size)}</div></div>
-      <div class="stat-card"><div class="stat-card__label">Обработка</div><div class="stat-card__value">Локально</div></div>
     `;
     elements.download.textContent = `Скачать ${isGif ? 'GIF' : elements.format.value.toUpperCase()}`;
     elements.resultArea.classList.add('visible');

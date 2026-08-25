@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-  <script src="/js/i18n.js?v=1"></script>
+  <script src="/js/i18n.js?v=3"></script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Конвертировать изображение – AKD Image</title>
@@ -13,7 +13,32 @@
   <link rel="preload" href="/fonts/Inter-600.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="preload" href="/fonts/Inter-700.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="preload" href="/fonts/Inter-800.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="stylesheet" href="/css/main.css?v=44">
+<link rel="stylesheet" href="/css/main.css?v=48">
+    <style>
+@media (max-width: 600px) {
+    main :where(div, section):has(select):has(input[type="range"]) {
+        grid-template-columns: minmax(0, 1fr) !important;
+    }
+
+    main :where(div, label):has(select),
+        main :where(div, label):has(input[type="range"]) {
+            grid-column: 1 / -1 !important;
+            justify-self: stretch !important;
+            width: 100% !important;
+            max-width: none !important;
+            min-width: 0;
+        }
+
+        main select,
+        main input[type="range"],
+        main .custom-select,
+        main [role="combobox"] {
+            width: 100% !important;
+            max-width: none !important;
+            min-width: 0;
+        }
+    }
+    </style>
 </head>
 <body>
 <script src="/js/layout.js?v=16"></script>
@@ -25,7 +50,7 @@
       <h1 class="tool-page__title">
         Конвертировать изображение
       </h1>
-      <p class="tool-page__subtitle">Преобразуйте JPG, PNG, WebP, AVIF, HEIC/HEIF, SVG и BMP, сохраняя удобный баланс качества и размера.</p>
+      <p class="tool-page__subtitle">Преобразуйте изображения в нужный формат и настройте качество результата.</p>
     </div>
     <div class="dropzone" id="dropzone">
       <input type="file" accept="image/jpeg,image/png,image/webp,image/avif,image/heic,image/heif,image/svg+xml,image/bmp" multiple>
@@ -90,7 +115,7 @@
   </div>
 </main>
 
-<script src="/js/core.js?v=18"></script>
+<script src="/js/core.js?v=22"></script>
 <script>
 (function () {
   const dropzoneEl  = document.getElementById('dropzone');

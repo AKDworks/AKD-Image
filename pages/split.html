@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-  <script src="/js/i18n.js?v=1"></script>
+  <script src="/js/i18n.js?v=3"></script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Разделить изображение – AKD Image</title>
@@ -13,7 +13,7 @@
   <link rel="preload" href="/fonts/Inter-600.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="preload" href="/fonts/Inter-700.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="preload" href="/fonts/Inter-800.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="stylesheet" href="/css/main.css?v=44">
+<link rel="stylesheet" href="/css/main.css?v=48">
 </head>
 <body>
 <script src="/js/layout.js?v=16"></script>
@@ -23,7 +23,7 @@
 
     <div class="tool-page__header">
       <h1 class="tool-page__title">Разделить изображение</h1>
-      <p class="tool-page__subtitle">Нарежьте длинный скриншот на равные части или подготовьте сетку изображений для публикации.</p>
+      <p class="tool-page__subtitle">Разделите длинный скриншот на части или нарежьте изображение ровной сеткой.</p>
     </div>
     <div class="dropzone" id="dropzone">
       <input type="file" accept="image/jpeg,image/png,image/webp,image/avif,image/heic,image/heif,image/svg+xml,image/bmp">
@@ -46,9 +46,9 @@
       </div>
       <div class="tool-panel__body">
         
-        <div class="form-group">
+        <div class="form-group split-mode-group">
           <label>Режим нарезки</label>
-          <div class="flex gap-16 mt-8">
+          <div class="flex gap-16 mt-8 split-mode-options">
             <label class="radio-label">
               <input type="radio" name="split-mode" value="vertical" checked> По вертикали (скриншоты)
             </label>
@@ -58,14 +58,14 @@
           </div>
         </div>
 
-        <div class="form-row mt-16" id="mode-vertical">
+        <div class="form-row mt-16 split-values-row" id="mode-vertical">
           <div class="form-group">
             <label>Количество частей</label>
             <input type="number" id="vert-parts" min="2" max="20" value="3" class="w-full">
           </div>
         </div>
 
-        <div class="form-row mt-16 hidden" id="mode-grid">
+        <div class="form-row mt-16 hidden split-values-row split-values-row--grid" id="mode-grid">
           <div class="form-group">
             <label>Столбцы (по горизонтали)</label>
             <input type="number" id="grid-cols" min="1" max="10" value="3" class="w-full">
@@ -87,10 +87,10 @@
     <div class="file-list hidden" id="file-list"></div>
     <div class="hidden mt-16 flex gap-8 items-center flex-wrap" id="action-bar">
       <button class="btn btn-primary btn-lg" id="split-btn">
-        Нарезать и скачать (ZIP)
+        Разделить изображение
       </button>
     </div>
-    <div class="result-area" id="result-area">
+    <div class="result-area" id="result-area" data-result-flow="manual">
       <hr class="divider">
       <div class="result-stats" id="result-stats"></div>
     </div>
@@ -98,7 +98,7 @@
   </div>
 </main>
 
-<script src="/js/core.js?v=16"></script>
+<script src="/js/core.js?v=22"></script>
 <script>
 (function () {
   const dropzoneEl  = document.getElementById('dropzone');
@@ -297,14 +297,19 @@
       manager.setStatus(item.id, 'Готово', 'status-done');
       manager.setMeta(item.id, `${count} фрагментов · ${FileUtils.formatSize(zipBlob.size)}`);
       
-      FileUtils.downloadBlob(zipBlob, `${baseName}_split.zip`);
-      Toast.success('ZIP-архив скачан.');
-      
       resultStats.innerHTML = `
         <div class="stat-card"><div class="stat-card__label">Фрагментов</div><div class="stat-card__value">${count}</div></div>
-        <div class="stat-card stat-green"><div class="stat-card__label">Скачано</div><div class="stat-card__value">ZIP-архив</div></div>
+        <div class="stat-card stat-green"><div class="stat-card__label">Размер ZIP</div><div class="stat-card__value">${FileUtils.formatSize(zipBlob.size)}</div></div>
       `;
       UIUtils.showBatchResult({ resultArea }, 1);
+      ResultFlow.show({
+        title: 'Результат готов!',
+        description: 'Изображение разделено. ZIP-архив готов к скачиванию.',
+        downloadLabel: 'Скачать всё (ZIP)',
+        onDownload: () => FileUtils.downloadBlob(zipBlob, `${baseName}_split.zip`),
+        stats: ResultFlow.readStats(resultStats),
+        sourceArea: resultArea,
+      });
 
     } catch(err) {
       manager.setStatus(item.id, 'Ошибка', 'status-error');
@@ -314,7 +319,7 @@
     
     splitBtn.disabled = false;
     UIUtils.setBatchLocked(manager, [clearBtn, previewBtn], false);
-    splitBtn.innerHTML = 'Нарезать и скачать (ZIP)';
+    splitBtn.innerHTML = 'Разделить изображение';
   });
 
 })();

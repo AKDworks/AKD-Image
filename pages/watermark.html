@@ -1,11 +1,11 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-  <script src="/js/i18n.js?v=1"></script>
+  <script src="/js/i18n.js?v=3"></script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Водяной знак – AKD Image</title>
-  <meta name="description" content="Добавляйте водяной знак на JPG, PNG, WebP, AVIF, HEIC/HEIF, SVG, BMP и анимированные GIF с локальной обработкой.">
+  <meta name="description" content="Добавляйте текстовый водяной знак к одному изображению или целому набору с локальной обработкой в браузере.">
   <link rel="canonical" href="https://image.akdworks.com/watermark">
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
   <link rel="preload" href="/fonts/Inter-400.woff2" as="font" type="font/woff2" crossorigin>
@@ -13,7 +13,7 @@
   <link rel="preload" href="/fonts/Inter-600.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="preload" href="/fonts/Inter-700.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="preload" href="/fonts/Inter-800.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="stylesheet" href="/css/main.css?v=44">
+<link rel="stylesheet" href="/css/main.css?v=48">
 </head>
 <body>
 <script src="/js/layout.js?v=16"></script>
@@ -25,7 +25,7 @@
       <h1 class="tool-page__title">
         Водяной знак
       </h1>
-      <p class="tool-page__subtitle">Защитите изображения текстом или логотипом и примените одинаковые настройки ко всему набору файлов.</p>
+      <p class="tool-page__subtitle">Добавьте текстовый водяной знак, настройте его оформление и примените к одному изображению или целому набору.</p>
     </div>
     <div class="dropzone" id="dropzone">
       <input type="file" accept="image/jpeg,image/png,image/webp,image/avif,image/heic,image/heif,image/svg+xml,image/bmp,image/gif" multiple>
@@ -51,25 +51,17 @@
         </div>
       </div>
       <div class="tool-panel__body">
-        <div class="wm-tabs">
-          <button class="wm-tab active" data-tab="text">Текст</button>
-          <button class="wm-tab" data-tab="image">Изображение / Логотип</button>
-        </div>
-        <div id="tab-text">
-          <div class="form-row">
+        <div class="wm-text-settings">
+          <div class="form-row wm-text-row">
             <div class="form-group flex-1">
               <label>Текст водяного знака</label>
               <input type="text" id="wm-text" value="© AKD Image" placeholder="Введите текст...">
             </div>
           </div>
-          <div class="form-row mt-8">
+          <div class="form-row mt-8 wm-typography-grid">
             <div class="form-group">
               <label>Цвет текста</label>
               <input type="color" class="color-input" id="wm-color" value="#ffffff">
-            </div>
-            <div class="form-group">
-              <label>Размер шрифта (px)</label>
-              <input type="number" id="wm-font-size" value="36" min="8" max="300">
             </div>
             <div class="form-group">
               <label>Шрифт</label>
@@ -91,43 +83,9 @@
             </div>
           </div>
         </div>
-        <div id="tab-image" class="hidden">
-          <div class="dropzone dropzone--compact" id="logo-dropzone">
-            <input type="file" accept="image/png,image/svg+xml,image/webp,image/avif" id="logo-input">
-            <p class="dropzone__title dropzone__title--sm">Загрузите файл водяного знака</p>
-            <p class="dropzone__hint">PNG, SVG, WEBP, AVIF</p>
-          </div>
-
-          <div class="logo-url-card">
-            <label class="logo-url-card__label">Или вставьте ссылку на SVG / картинку</label>
-            <div class="logo-url-card__row">
-              <input type="url" class="logo-url-card__input" id="logo-url-input" maxlength="2048" placeholder="https://example.com/logo.png">
-              <button class="btn btn-secondary logo-url-card__button" id="logo-url-add">Добавить</button>
-            </div>
-            <div class="saved-logos" id="saved-logos-container">
-              <label class="saved-logos__label">Мои ссылки</label>
-              <div class="saved-logos__list" id="saved-logos-list">
-              </div>
-            </div>
-          </div>
-
-          <div class="logo-preview hidden mt-8" id="logo-preview-wrap">
-            <img class="logo-preview__img" id="logo-preview" crossorigin="anonymous" referrerpolicy="no-referrer">
-            <button class="btn btn-sm btn-secondary" id="remove-logo">Удалить</button>
-          </div>
-
-          <div class="form-group mt-8">
-            <label>Размер логотипа (% от ширины)</label>
-            <div class="range-row">
-              <input type="range" id="logo-size" min="5" max="80" value="20">
-              <span id="logo-size-val">20%</span>
-            </div>
-          </div>
-        </div>
-
         <hr class="divider">
-        <div class="form-row form-row--start">
-          <div class="form-group">
+        <div class="wm-placement-grid">
+          <div class="form-group wm-position-group">
             <label>Позиция</label>
             <div class="position-grid" id="position-grid">
               <button class="pos-btn" data-pos="top-left"     title="Верх лево">1</button>
@@ -141,27 +99,36 @@
               <button class="pos-btn active" data-pos="bottom-right" title="Низ право">9</button>
             </div>
           </div>
-          <div class="form-group flex-1">
-            <label>Прозрачность</label>
-            <div class="range-row">
-              <input type="range" id="wm-opacity" min="5" max="100" value="70">
-              <span id="wm-opacity-val">70%</span>
+          <div class="wm-placement-controls">
+            <div class="form-group">
+              <label>Размер текста</label>
+              <div class="range-row">
+                <input type="range" id="wm-font-size" min="8" max="200" value="36">
+                <span id="wm-font-size-val">36 px</span>
+              </div>
             </div>
-            <div class="mt-8">
+            <div class="form-group">
+              <label>Прозрачность</label>
+              <div class="range-row">
+                <input type="range" id="wm-opacity" min="5" max="100" value="70">
+                <span id="wm-opacity-val">70%</span>
+              </div>
+            </div>
+            <div class="form-group wm-padding-group">
               <label>Отступ от края (px)</label>
               <input type="number" class="wm-padding-input" id="wm-padding" value="20" min="0" max="200">
             </div>
+            <div class="toggle-row wm-tile-row">
+              <div>
+                <div class="toggle-label">Замостить по всему изображению</div>
+                <div class="toggle-hint">Водяной знак повторяется по диагонали</div>
+              </div>
+              <label class="toggle">
+                <input type="checkbox" id="wm-tile">
+                <span class="toggle-track"></span>
+              </label>
+            </div>
           </div>
-        </div>
-        <div class="toggle-row">
-          <div>
-            <div class="toggle-label">Замостить по всему изображению</div>
-            <div class="toggle-hint">Водяной знак повторяется по диагонали</div>
-          </div>
-          <label class="toggle">
-            <input type="checkbox" id="wm-tile">
-            <span class="toggle-track"></span>
-          </label>
         </div>
 
         <button class="btn btn-secondary mt-16 hidden" id="preview-btn">
@@ -185,7 +152,7 @@
   </div>
 </main>
 
-<script src="/js/core.js?v=19"></script>
+<script src="/js/core.js?v=22"></script>
 <script>
 (function () {
   const dropzoneEl  = document.getElementById('dropzone');
@@ -204,28 +171,15 @@
   const wmText     = document.getElementById('wm-text');
   const wmColor    = document.getElementById('wm-color');
   const wmFontSize = document.getElementById('wm-font-size');
+  const wmFontSizeVal = document.getElementById('wm-font-size-val');
   const wmFont     = document.getElementById('wm-font');
   const wmOpacity  = document.getElementById('wm-opacity');
   const wmOpacityVal = document.getElementById('wm-opacity-val');
   const wmPadding  = document.getElementById('wm-padding');
   const wmTile     = document.getElementById('wm-tile');
-  const logoSizeInput = document.getElementById('logo-size');
-  const logoSizeVal   = document.getElementById('logo-size-val');
 
+  wmFontSize.addEventListener('input', () => { wmFontSizeVal.textContent = wmFontSize.value + ' px'; });
   wmOpacity.addEventListener('input', () => { wmOpacityVal.textContent = wmOpacity.value + '%'; });
-  logoSizeInput.addEventListener('input', () => { logoSizeVal.textContent = logoSizeInput.value + '%'; });
-
-  let activeTab = 'text';
-  document.querySelectorAll('.wm-tab').forEach(tab => {
-    tab.addEventListener('click', () => {
-      activeTab = tab.dataset.tab;
-      document.querySelectorAll('.wm-tab').forEach(t => t.classList.remove('active'));
-      tab.classList.add('active');
-      document.getElementById('tab-text').classList.toggle('hidden', activeTab !== 'text');
-      document.getElementById('tab-image').classList.toggle('hidden', activeTab !== 'image');
-      previewScheduler.schedule();
-    });
-  });
 
   let selectedPos = 'bottom-right';
   document.querySelectorAll('.pos-btn').forEach(btn => {
@@ -236,143 +190,6 @@
       previewScheduler.schedule();
     });
   });
-
-  let logoImage = null;
-  const logoInput = document.getElementById('logo-input');
-  const logoUrlInput = document.getElementById('logo-url-input');
-  const logoUrlAddBtn = document.getElementById('logo-url-add');
-  const savedLogosList = document.getElementById('saved-logos-list');
-  const logoPreviewWrap = document.getElementById('logo-preview-wrap');
-  const logoPreviewEl   = document.getElementById('logo-preview');
-
-  const MAX_SAVED_LOGOS = 20;
-
-  function normalizeLogoUrl(value) {
-    const url = new URL(value);
-    if (url.protocol !== 'https:') throw new Error('Используйте ссылку с HTTPS');
-    if (url.username || url.password) throw new Error('Ссылка не должна содержать логин или пароль');
-    return url.href;
-  }
-
-  function saveLogoUrls() {
-    try {
-      localStorage.setItem('akd_watermark_svgs', JSON.stringify(savedLogos));
-    } catch (err) {
-      console.error(err);
-      Toast.error('Не удалось сохранить список ссылок.');
-    }
-  }
-
-  let savedLogos = [];
-  try {
-    const stored = JSON.parse(localStorage.getItem('akd_watermark_svgs') || '[]');
-    if (Array.isArray(stored)) {
-      savedLogos = stored
-        .filter(value => typeof value === 'string' && value.length <= 2048)
-        .map(value => {
-          try { return normalizeLogoUrl(value); } catch { return null; }
-        })
-        .filter(Boolean)
-        .slice(0, MAX_SAVED_LOGOS);
-    }
-  } catch (err) {
-    console.error(err);
-  }
-
-  function renderSavedLogos() {
-    savedLogosList.innerHTML = '';
-    if (savedLogos.length === 0) {
-      const empty = document.createElement('span');
-      empty.className = 'saved-logos__empty';
-      empty.textContent = 'Список пуст';
-      savedLogosList.appendChild(empty);
-      return;
-    }
-    savedLogos.forEach((url, index) => {
-      const item = document.createElement('div');
-      item.className = 'saved-logos__item';
-      
-      const label = document.createElement('span');
-      label.textContent = url.length > 30 ? url.substring(0, 27) + '...' : url;
-      label.title = url;
-      label.className = 'saved-logos__text';
-      label.onclick = () => selectLogoUrl(url);
-
-      const delBtn = document.createElement('button');
-      delBtn.className = 'btn-icon saved-logos__delete';
-      delBtn.textContent = '✕';
-      delBtn.onclick = (e) => {
-        e.stopPropagation();
-        deleteLogoUrl(index);
-      };
-
-      item.appendChild(label);
-      item.appendChild(delBtn);
-      savedLogosList.appendChild(item);
-    });
-  }
-
-  async function selectLogoUrl(url) {
-    try {
-      const safeUrl = normalizeLogoUrl(url);
-      logoImage = await FileUtils.loadImage(safeUrl);
-      logoPreviewEl.src = safeUrl;
-      logoPreviewWrap.classList.remove('hidden');
-      Toast.success('Логотип загружен.');
-      previewScheduler.refresh();
-    } catch(e) {
-      Toast.error('Не удалось загрузить изображение по ссылке.');
-    }
-  }
-
-  function deleteLogoUrl(index) {
-    savedLogos.splice(index, 1);
-    saveLogoUrls();
-    renderSavedLogos();
-  }
-
-  logoUrlAddBtn.addEventListener('click', () => {
-    try {
-      const url = normalizeLogoUrl(logoUrlInput.value.trim());
-      if (!savedLogos.includes(url)) {
-        if (savedLogos.length >= MAX_SAVED_LOGOS) {
-          Toast.error(`Можно сохранить не более ${MAX_SAVED_LOGOS} ссылок.`);
-          return;
-        }
-        savedLogos.push(url);
-        saveLogoUrls();
-        renderSavedLogos();
-        logoUrlInput.value = '';
-        selectLogoUrl(url);
-      }
-    } catch (err) {
-      Toast.error(err.message || 'Введите корректную HTTPS-ссылку.');
-    }
-  });
-
-  logoInput.addEventListener('change', async () => {
-    const f = logoInput.files[0];
-    if (!f) return;
-    try {
-      const src = await FileUtils.readAsDataURL(f);
-      logoImage = await FileUtils.loadImage(src);
-      logoPreviewEl.src = src;
-      logoPreviewWrap.classList.remove('hidden');
-      previewScheduler.refresh();
-    } catch (err) {
-      console.error(err);
-      Toast.error(err.message || 'Не удалось загрузить логотип.');
-    }
-  });
-
-  document.getElementById('remove-logo').addEventListener('click', () => {
-    logoImage = null;
-    logoPreviewWrap.classList.add('hidden');
-    logoInput.value = '';
-    previewScheduler.refresh();
-  });
-
-  renderSavedLogos();
 
   const manager = new FileListManager(fileListEl);
   let files = [], results = [];
@@ -411,52 +228,33 @@
     const pad     = parseInt(wmPadding.value) || 0;
     ctx.globalAlpha = opacity;
 
-    if (activeTab === 'text') {
-      const text     = wmText.value || '© AKD Image';
-      const fontSize = parseInt(wmFontSize.value) || 36;
-      const style    = document.querySelector('input[name="wm-style"]:checked').value;
-      ctx.font       = `${style === 'italic' ? 'italic ' : ''}${style === 'bold' ? 'bold ' : ''}${fontSize}px ${wmFont.value}`;
-      ctx.fillStyle  = wmColor.value;
-      ctx.textBaseline = 'middle';
+    const text     = wmText.value || '© AKD Image';
+    const fontSize = parseInt(wmFontSize.value) || 36;
+    const style    = document.querySelector('input[name="wm-style"]:checked').value;
+    ctx.font       = `${style === 'italic' ? 'italic ' : ''}${style === 'bold' ? 'bold ' : ''}${fontSize}px ${wmFont.value}`;
+    ctx.fillStyle  = wmColor.value;
+    ctx.textBaseline = 'middle';
 
-      if (wmTile.checked) {
-        ctx.save();
-        ctx.globalAlpha = Math.min(opacity, 0.3);
-        const metrics = ctx.measureText(text);
-        const tw = metrics.width + 60, th = fontSize + 40;
-        for (let y = -canvas.height; y < canvas.height * 2; y += th) {
-          for (let x = -canvas.width; x < canvas.width * 2; x += tw) {
-            ctx.save();
-            ctx.translate(x + tw/2, y + th/2);
-            ctx.rotate(-Math.PI / 6);
-            ctx.fillText(text, 0, 0);
-            ctx.restore();
-          }
+    if (wmTile.checked) {
+      ctx.save();
+      ctx.globalAlpha = Math.min(opacity, 0.3);
+      const metrics = ctx.measureText(text);
+      const tw = metrics.width + 60, th = fontSize + 40;
+      for (let y = -canvas.height; y < canvas.height * 2; y += th) {
+        for (let x = -canvas.width; x < canvas.width * 2; x += tw) {
+          ctx.save();
+          ctx.translate(x + tw/2, y + th/2);
+          ctx.rotate(-Math.PI / 6);
+          ctx.fillText(text, 0, 0);
+          ctx.restore();
         }
-        ctx.restore();
-      } else {
-        const metrics = ctx.measureText(text);
-        const tw = metrics.width;
-        const [x, y] = calcPos(canvas.width, canvas.height, tw, fontSize, pad, selectedPos);
-        ctx.fillText(text, x, y);
       }
+      ctx.restore();
     } else {
-      if (!logoImage) { ctx.globalAlpha = 1; return canvas; }
-      const logoW = Math.round(canvas.width * (parseInt(logoSizeInput.value) / 100));
-      const logoH = Math.round(logoImage.naturalHeight * (logoW / logoImage.naturalWidth));
-
-      if (wmTile.checked) {
-        ctx.globalAlpha = Math.min(opacity, 0.3);
-        const stepX = logoW + 40, stepY = logoH + 40;
-        for (let y = 0; y < canvas.height; y += stepY) {
-          for (let x = 0; x < canvas.width; x += stepX) {
-            ctx.drawImage(logoImage, x, y, logoW, logoH);
-          }
-        }
-      } else {
-        const [x, y] = calcPos(canvas.width, canvas.height, logoW, logoH, pad, selectedPos);
-        ctx.drawImage(logoImage, x, y, logoW, logoH);
-      }
+      const metrics = ctx.measureText(text);
+      const tw = metrics.width;
+      const [x, y] = calcPos(canvas.width, canvas.height, tw, fontSize, pad, selectedPos);
+      ctx.fillText(text, x, y);
     }
 
     ctx.globalAlpha = 1;
@@ -497,9 +295,6 @@
 
   applyBtn.addEventListener('click', async () => {
     if (!files.length) return;
-    if (activeTab === 'image' && !logoImage) {
-      Toast.error('Загрузите логотип для водяного знака.'); return;
-    }
     applyBtn.disabled = true;
     UIUtils.setBatchLocked(manager, [clearBtn, dlAllBtn, previewBtn], true);
     applyBtn.innerHTML = '<span class="spinner"></span> Обработка...';

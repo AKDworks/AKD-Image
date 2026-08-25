@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-  <script src="/js/i18n.js?v=1"></script>
+  <script src="/js/i18n.js?v=3"></script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>GIF в кадры – AKD Image</title>
@@ -13,7 +13,7 @@
   <link rel="preload" href="/fonts/Inter-600.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="preload" href="/fonts/Inter-700.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="preload" href="/fonts/Inter-800.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="stylesheet" href="/css/main.css?v=44">
+<link rel="stylesheet" href="/css/main.css?v=48">
 </head>
 <body>
 <script src="/js/layout.js?v=16"></script>
@@ -22,7 +22,7 @@
   <div class="container container--narrow tool-page">
     <div class="tool-page__header">
       <h1 class="tool-page__title">GIF в кадры</h1>
-      <p class="tool-page__subtitle">Извлеките все кадры анимации в PNG или JPG, просмотрите их и скачайте отдельно либо одним ZIP-архивом.</p>
+      <p class="tool-page__subtitle">Извлеките все кадры GIF и скачайте их отдельно или одним архивом.</p>
     </div>
 
     <div class="dropzone" id="dropzone" tabindex="0" role="button" aria-label="Выбрать GIF">
@@ -46,7 +46,7 @@
 
         <div class="result-stats mt-16" id="source-stats"></div>
 
-        <div class="form-row mt-16">
+        <div class="form-row mt-16 gif-frames-settings-row">
           <div class="form-group">
             <label for="output-format">Формат кадров</label>
             <select id="output-format" data-custom-select="format">
@@ -64,7 +64,7 @@
       </div>
     </section>
 
-    <div class="hidden mt-16" id="action-bar">
+    <div class="hidden mt-16 gif-frames-action-bar" id="action-bar">
       <button class="btn btn-primary btn-lg" id="extract-btn" type="button">Извлечь кадры</button>
     </div>
 
@@ -92,7 +92,7 @@
   </div>
 </main>
 
-<script src="/js/core.js?v=18"></script>
+<script src="/js/core.js?v=22"></script>
 <script src="/js/gif-frames.js?v=1"></script>
 </body>
 </html>

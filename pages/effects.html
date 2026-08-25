@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-  <script src="/js/i18n.js?v=1"></script>
+  <script src="/js/i18n.js?v=3"></script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Фотоэффекты – AKD Image</title>
@@ -13,7 +13,7 @@
   <link rel="preload" href="/fonts/Inter-600.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="preload" href="/fonts/Inter-700.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="preload" href="/fonts/Inter-800.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="stylesheet" href="/css/main.css?v=44">
+<link rel="stylesheet" href="/css/main.css?v=48">
 </head>
 <body>
 <script src="/js/layout.js?v=16"></script>
@@ -25,7 +25,7 @@
       <h1 class="tool-page__title">
         Фотоэффекты
       </h1>
-      <p class="tool-page__subtitle">Настройте свет, цвет и резкость изображения, наблюдая изменения прямо в рабочей области.</p>
+      <p class="tool-page__subtitle">Настройте яркость, контраст, цвет и размытие с моментальным предпросмотром результата.</p>
     </div>
     <div class="dropzone" id="dropzone">
       <input type="file" accept="image/jpeg,image/png,image/webp,image/avif,image/heic,image/heif,image/svg+xml,image/bmp,image/gif">
@@ -110,7 +110,7 @@
               </div>
             </div>
 
-            <button class="btn btn-primary btn-block mt-16" id="save-btn">Сохранить изображение</button>
+            <button class="btn btn-primary btn-block mt-16" id="save-btn">Применить эффекты</button>
             <button class="btn btn-secondary btn-block mt-8" id="change-img-btn" type="button" data-open-file-picker>Заменить файл</button>
 
           </div>
@@ -122,7 +122,7 @@
   </div>
 </main>
 
-<script src="/js/core.js?v=16"></script>
+<script src="/js/core.js?v=22"></script>
 <script>
 (function () {
   const dropzoneEl  = document.getElementById('dropzone');
@@ -264,15 +264,24 @@
         quality: 0.95,
       });
       const filename = activeFile.name.replace(/\.[^.]+$/, '') + '_effect.' + ext;
-      FileUtils.downloadBlob(blob, filename);
-      Toast.success('Изображение сохранено.');
+      ResultFlow.show({
+        title: 'Результат готов!',
+        description: 'Эффекты применены. Изображение готово к скачиванию.',
+        downloadLabel: 'Скачать изображение',
+        onDownload: () => FileUtils.downloadBlob(blob, filename),
+        stats: [
+          { label: 'До', value: FileUtils.formatSize(activeFile.size) },
+          { label: 'После', value: FileUtils.formatSize(blob.size), accent: true },
+          { label: 'Формат', value: ext.toUpperCase() },
+        ],
+      });
     } catch (err) {
       console.error(err);
       Toast.error(err.message || 'Не удалось сохранить изображение.');
     }
 
     saveBtn.disabled = false;
-    saveBtn.innerHTML = 'Сохранить изображение';
+    saveBtn.innerHTML = 'Применить эффекты';
   });
 
 })();

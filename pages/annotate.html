@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-  <script src="/js/i18n.js?v=1"></script>
+  <script src="/js/i18n.js?v=3"></script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Пометки на изображении – AKD Image</title>
@@ -13,7 +13,7 @@
   <link rel="preload" href="/fonts/Inter-600.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="preload" href="/fonts/Inter-700.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="preload" href="/fonts/Inter-800.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="stylesheet" href="/css/main.css?v=44">
+<link rel="stylesheet" href="/css/main.css?v=48">
 </head>
 <body>
 <script src="/js/layout.js?v=16"></script>
@@ -23,7 +23,7 @@
 
     <div class="tool-page__header">
       <h1 class="tool-page__title">Пометки на изображении</h1>
-      <p class="tool-page__subtitle">Добавьте текст, обводку, стрелку, круг, овал или свободную пометку на фото и скриншот. Готовые пометки можно перемещать.</p>
+      <p class="tool-page__subtitle">Добавьте текст, кисть, стрелку, круг, овал или рамку и перемещайте готовые пометки.</p>
     </div>
 
     <div class="dropzone" id="dropzone">
@@ -79,7 +79,7 @@
           <button class="btn btn-secondary" type="button" data-tool="text">Текст</button>
         </div>
 
-        <div class="form-row mt-16">
+        <div class="form-row mt-16 annotate-settings-row">
           <div class="form-group">
             <label for="stroke-color">Цвет</label>
             <input class="color-input" type="color" id="stroke-color" value="#2563EB">
@@ -93,7 +93,7 @@
           </div>
         </div>
 
-        <div class="form-row mt-16">
+        <div class="form-row mt-16 annotate-settings-row">
           <div class="form-group">
             <label for="font-size">Размер текста</label>
             <div class="range-row">
@@ -103,13 +103,13 @@
           </div>
         </div>
 
-        <div class="flex gap-8 mt-16 flex-wrap">
+        <div class="flex gap-8 mt-16 flex-wrap annotate-clear-row">
           <button class="btn btn-secondary" id="clear-btn" type="button">Очистить разметку</button>
         </div>
       </div>
     </div>
 
-    <div class="hidden mt-16 flex gap-8 items-center" id="action-bar">
+    <div class="hidden mt-16 flex gap-8 items-center annotate-action-bar" id="action-bar">
       <button class="btn btn-primary btn-lg" id="save-btn" type="button">Подготовить результат</button>
     </div>
 
@@ -128,7 +128,7 @@
   </div>
 </main>
 
-<script src="/js/core.js?v=19"></script>
+<script src="/js/core.js?v=22"></script>
 <script>
 (function () {
   const dropzoneEl = document.getElementById('dropzone');

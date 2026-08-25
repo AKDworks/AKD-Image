@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-  <script src="/js/i18n.js?v=1"></script>
+  <script src="/js/i18n.js?v=3"></script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Изображения в PDF – AKD Image</title>
@@ -13,7 +13,7 @@
   <link rel="preload" href="/fonts/Inter-600.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="preload" href="/fonts/Inter-700.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="preload" href="/fonts/Inter-800.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="stylesheet" href="/css/main.css?v=44">
+<link rel="stylesheet" href="/css/main.css?v=48">
 </head>
 <body>
 <script src="/js/layout.js?v=16"></script>
@@ -22,7 +22,7 @@
   <div class="container container--narrow tool-page">
     <div class="tool-page__header">
       <h1 class="tool-page__title">Изображения в PDF</h1>
-      <p class="tool-page__subtitle">Объедините одно или несколько изображений в PDF с выбранным форматом страниц, отступами и режимом размещения.</p>
+      <p class="tool-page__subtitle">Соберите несколько изображений в один PDF и настройте страницы и отступы.</p>
     </div>
 
     <div class="dropzone" id="dropzone">
@@ -49,7 +49,7 @@
         </div>
       </div>
       <div class="tool-panel__body">
-        <div class="form-row">
+        <div class="form-row pdf-settings-row">
           <div class="form-group">
             <label for="page-size">Формат страницы</label>
             <select id="page-size">
@@ -69,7 +69,7 @@
           </div>
         </div>
 
-        <div class="form-row mt-16">
+        <div class="form-row mt-16 pdf-settings-row">
           <div class="form-group">
             <label for="fit-mode">Размещение</label>
             <select id="fit-mode">
@@ -86,7 +86,7 @@
           </div>
         </div>
 
-        <div class="form-group mt-16">
+        <div class="form-group mt-16 pdf-quality-group">
           <label for="quality">Качество изображений</label>
           <div class="range-row">
             <input type="range" id="quality" min="50" max="100" value="88">
@@ -111,7 +111,7 @@
   </div>
 </main>
 
-<script src="/js/core.js?v=16"></script>
+<script src="/js/core.js?v=22"></script>
 <script>
 (function () {
   const pageSizes = {

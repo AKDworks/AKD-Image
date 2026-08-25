@@ -38,7 +38,7 @@ Processing is performed locally by the browser. Images and GIF animations are no
 
 ### Design and editing
 
-- text or image watermarks;
+- customizable text watermarks;
 - brightness, contrast, saturation and other effects;
 - pixelation and selective area blur;
 - AI background removal with transparent PNG output;
@@ -69,7 +69,7 @@ Processing is performed locally by the browser. Images and GIF animations are no
 
 In normal use, files remain on the user's device. The browser reads the selected images or GIF animations, processes them locally and creates the output without uploading the source files to a server.
 
-The exceptions are loading a watermark logo from an external URL and downloading the AI model required for background removal. In both cases, the selected image itself remains on the user's device. The model and runtime hosts may receive ordinary connection metadata, such as an IP address and user agent.
+The only external download used during processing is the AI model required for background removal. The selected image remains on the user's device. The model and runtime hosts may receive ordinary connection metadata, such as an IP address and user agent.
 
 Learn more in the [Privacy Policy](https://image.akdworks.com/privacy).
 

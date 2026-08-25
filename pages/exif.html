@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-  <script src="/js/i18n.js?v=1"></script>
+  <script src="/js/i18n.js?v=3"></script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Удаление метаданных (EXIF) – AKD Image</title>
@@ -13,7 +13,7 @@
   <link rel="preload" href="/fonts/Inter-600.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="preload" href="/fonts/Inter-700.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="preload" href="/fonts/Inter-800.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="stylesheet" href="/css/main.css?v=44">
+<link rel="stylesheet" href="/css/main.css?v=48">
 </head>
 <body>
 <script src="/js/layout.js?v=16"></script>
@@ -23,7 +23,7 @@
 
     <div class="tool-page__header">
       <h1 class="tool-page__title">Удаление метаданных (EXIF)</h1>
-      <p class="tool-page__subtitle">Очистите изображения от геолокации, данных камеры и другой скрытой информации перед публикацией.</p>
+      <p class="tool-page__subtitle">Удалите геолокацию, данные камеры и другие скрытые метаданные перед публикацией.</p>
     </div>
 
     <div class="dropzone" id="dropzone">
@@ -79,7 +79,7 @@
   </div>
 </main>
 
-<script src="/js/core.js?v=16"></script>
+<script src="/js/core.js?v=22"></script>
 <script>
 (function () {
   const dropzoneEl  = document.getElementById('dropzone');

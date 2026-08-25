@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-  <script src="/js/i18n.js?v=1"></script>
+  <script src="/js/i18n.js?v=3"></script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Изображение в Base64 – AKD Image</title>
@@ -13,7 +13,7 @@
   <link rel="preload" href="/fonts/Inter-600.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="preload" href="/fonts/Inter-700.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="preload" href="/fonts/Inter-800.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="stylesheet" href="/css/main.css?v=44">
+<link rel="stylesheet" href="/css/main.css?v=48">
 </head>
 <body>
 <script src="/js/layout.js?v=16"></script>
@@ -22,7 +22,7 @@
   <div class="container container--narrow tool-page">
     <div class="tool-page__header">
       <h1 class="tool-page__title">Изображение в Base64</h1>
-      <p class="tool-page__subtitle">Получите Data URL или чистую Base64-строку либо восстановите из неё исходное изображение.</p>
+      <p class="tool-page__subtitle">Кодируйте изображение в Data URL или Base64 и восстанавливайте файл из готовой строки.</p>
     </div>
 
     <div class="base64-tabs" role="tablist" aria-label="Режим конвертации">
@@ -66,7 +66,7 @@
             </div>
           </div>
 
-          <div class="form-row mt-16">
+          <div class="form-row mt-16 base64-format-row">
             <div class="form-group">
               <label for="output-type">Формат строки</label>
               <select id="output-type">
@@ -82,8 +82,9 @@
           </div>
 
           <div class="base64-actions mt-16">
-            <button class="btn btn-primary" id="copy-output" type="button">Копировать</button>
-            <button class="btn btn-secondary" id="download-text" type="button">Скачать TXT</button>
+            <button class="btn btn-primary" id="encode-finish" type="button">Подготовить результат</button>
+            <button class="btn btn-primary hidden" id="copy-output" type="button">Копировать</button>
+            <button class="btn btn-secondary hidden" id="download-text" type="button">Скачать TXT</button>
             <span class="text-muted text-sm" id="output-length"></span>
           </div>
         </div>
@@ -103,7 +104,7 @@
             <div class="text-muted text-sm mt-8">До 3 МБ исходных данных для плавной работы.</div>
           </div>
 
-          <div class="form-row mt-16">
+          <div class="form-row mt-16 base64-format-row">
             <div class="form-group">
               <label for="input-format">Формат чистой строки Base64</label>
               <select id="input-format" data-custom-select="format">
@@ -119,7 +120,7 @@
             </div>
           </div>
 
-          <button class="btn btn-primary btn-lg mt-16" id="decode-btn" type="button">Преобразовать</button>
+          <button class="btn btn-primary btn-lg mt-16 base64-decode-button" id="decode-btn" type="button">Преобразовать</button>
         </div>
       </div>
 
@@ -139,7 +140,7 @@
   </div>
 </main>
 
-<script src="/js/core.js?v=18"></script>
+<script src="/js/core.js?v=22"></script>
 <script>
 (function () {
   const tabs = document.querySelectorAll('.base64-tab');
@@ -319,6 +320,24 @@
     const filename = sourceFile.name.replace(/\.[^.]+$/, '') + '-base64.txt';
     FileUtils.downloadBlob(new Blob([output.value], { type: 'text/plain;charset=utf-8' }), filename);
   });
+  document.getElementById('encode-finish').addEventListener('click', () => {
+    if (!output.value || !sourceFile) return;
+    ResultFlow.show({
+      title: 'Base64 готов!',
+      description: 'Строка подготовлена. Скопируйте её или скачайте как TXT-файл.',
+      downloadLabel: 'Копировать Base64',
+      onDownload: () => copyText(output.value),
+      secondaryActions: [{
+        label: 'Скачать TXT',
+        onClick: () => document.getElementById('download-text').click(),
+      }],
+      stats: [
+        { label: 'Формат', value: outputType.value === 'data-url' ? 'Data URL' : 'Base64' },
+        { label: 'Символов', value: String(output.value.length), accent: true },
+        { label: 'Файл', value: FileUtils.formatSize(sourceFile.size) },
+      ],
+    });
+  });
 
   document.getElementById('decode-clear').addEventListener('click', () => {
     input.value = '';
@@ -336,6 +355,17 @@
         try {
           FileUtils.validateImageSize(decodedPreview.naturalWidth, decodedPreview.naturalHeight);
           decodedMeta.textContent = `${decodedPreview.naturalWidth} × ${decodedPreview.naturalHeight} · ${FileUtils.formatSize(decodedBlob.size)}`;
+          ResultFlow.show({
+            title: 'Изображение восстановлено!',
+            description: 'Base64 преобразован в изображение, готовое к скачиванию.',
+            downloadLabel: 'Скачать изображение',
+            onDownload: () => FileUtils.downloadBlob(decodedBlob, decodedFilename),
+            stats: [
+              { label: 'Формат', value: extensionForMime(decodedBlob.type).toUpperCase() },
+              { label: 'Размер', value: `${decodedPreview.naturalWidth} × ${decodedPreview.naturalHeight}` },
+              { label: 'Файл', value: FileUtils.formatSize(decodedBlob.size), accent: true },
+            ],
+          });
         } catch (err) {
           clearDecodedResult();
           Toast.error(err.message);

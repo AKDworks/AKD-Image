@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-  <script src="/js/i18n.js?v=1"></script>
+  <script src="/js/i18n.js?v=3"></script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Размытие области – AKD Image</title>
@@ -13,7 +13,7 @@
   <link rel="preload" href="/fonts/Inter-600.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="preload" href="/fonts/Inter-700.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="preload" href="/fonts/Inter-800.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="stylesheet" href="/css/main.css?v=44">
+<link rel="stylesheet" href="/css/main.css?v=48">
 </head>
 <body>
 <script src="/js/layout.js?v=16"></script>
@@ -23,7 +23,7 @@
 
     <div class="tool-page__header">
       <h1 class="tool-page__title">Размытие области</h1>
-      <p class="tool-page__subtitle">Выделите часть изображения и скройте ее мягким размытием. Файл обрабатывается локально в браузере.</p>
+      <p class="tool-page__subtitle">Скройте лицо, номер, логин или фрагмент скриншота с настраиваемой силой размытия.</p>
     </div>
 
     <div class="dropzone" id="dropzone">
@@ -79,7 +79,7 @@
           </div>
         </div>
 
-        <div class="form-row">
+        <div class="form-row blur-dimensions-grid">
           <div class="form-group">
             <label>X (слева, px)</label>
             <input type="number" id="area-x" value="0" min="0">
@@ -120,7 +120,7 @@
   </div>
 </main>
 
-<script src="/js/core.js?v=16"></script>
+<script src="/js/core.js?v=22"></script>
 <script>
 (function () {
   const dropzoneEl   = document.getElementById('dropzone');
