@@ -2,6 +2,8 @@
 (() => {
   const MAX_FILE_SIZE = 100 * 1024 * 1024;
   const MAX_DURATION = 60;
+  const MIN_FRAGMENT_SECONDS = 0.1;
+  const TIMELINE_HEIGHT = 64;
   const CORE_URL = '/js/vendor/ffmpeg/ffmpeg-core.js';
   const WASM_URL = '/js/vendor/ffmpeg/ffmpeg-core.wasm';
   const validModes = {
@@ -34,6 +36,15 @@
     gifSettings: document.getElementById('gif-settings'),
     start: document.getElementById('fragment-start'),
     end: document.getElementById('fragment-end'),
+    startRange: document.getElementById('fragment-start-range'),
+    endRange: document.getElementById('fragment-end-range'),
+    timeline: document.getElementById('video-timeline'),
+    timelineFrames: document.getElementById('video-timeline-frames'),
+    timelineSelection: document.getElementById('video-timeline-selection'),
+    timelineDrag: document.getElementById('video-timeline-drag'),
+    timelinePlayhead: document.getElementById('video-timeline-playhead'),
+    timelineDuration: document.getElementById('video-timeline-duration'),
+    selectionSummary: document.getElementById('video-selection-summary'),
     width: document.getElementById('gif-width'),
     fps: document.getElementById('gif-fps'),
     colors: document.getElementById('gif-colors'),
@@ -60,6 +71,9 @@
   let resultName = '';
   let ffmpeg = null;
   let processing = false;
+  let timelineRevision = 0;
+  let segmentDrag = null;
+  let playheadAnimationFrame = 0;
 
   function extension(file) {
     return file.name.split('.').pop()?.toLowerCase() || '';
@@ -77,6 +91,227 @@
 
   function formatDuration(seconds) {
     return `${seconds.toFixed(2).replace('.', ',')} с`;
+  }
+
+  function readSeconds(input, fallback) {
+    const value = Number(input.value);
+    return Number.isFinite(value) ? value : fallback;
+  }
+
+  function selectionDurationLimit() {
+    if (!metadata) return 0;
+    return Math.min(metadata.duration, Math.floor((metadata.duration + Number.EPSILON) * 100) / 100);
+  }
+
+  function resetVideoTimeline() {
+    timelineRevision++;
+    window.cancelAnimationFrame(playheadAnimationFrame);
+    playheadAnimationFrame = 0;
+    segmentDrag = null;
+    elements.timelineFrames.replaceChildren();
+    elements.timelineFrames.style.removeProperty('grid-template-columns');
+    elements.timelineSelection.style.left = '0';
+    elements.timelineSelection.style.width = '0';
+    elements.timelineDrag.style.left = '0';
+    elements.timelineDrag.style.width = '0';
+    elements.timelineDrag.classList.remove('is-dragging');
+    elements.timelineDrag.setAttribute('aria-valuemax', '0');
+    elements.timelineDrag.setAttribute('aria-valuenow', '0');
+    elements.timelinePlayhead.style.left = '0';
+    elements.timelinePlayhead.style.opacity = '0';
+    elements.timelineDuration.textContent = '0,00 с';
+    elements.selectionSummary.textContent = '';
+    elements.startRange.max = '0';
+    elements.endRange.max = '0';
+    elements.startRange.value = '0';
+    elements.endRange.value = '0';
+  }
+
+  function updateVideoPlayhead(position = elements.videoPreview.currentTime) {
+    if (!metadata || mode !== 'video' || !Number.isFinite(position)) return;
+    const percent = Math.min(100, Math.max(0, (position / metadata.duration) * 100));
+    elements.timelinePlayhead.style.left = `${percent}%`;
+    elements.timelinePlayhead.style.opacity = '1';
+  }
+
+  function stopPlayheadAnimation() {
+    window.cancelAnimationFrame(playheadAnimationFrame);
+    playheadAnimationFrame = 0;
+    updateVideoPlayhead();
+  }
+
+  function startPlayheadAnimation() {
+    window.cancelAnimationFrame(playheadAnimationFrame);
+    const update = () => {
+      updateVideoPlayhead();
+      if (!elements.videoPreview.paused && !elements.videoPreview.ended) {
+        playheadAnimationFrame = window.requestAnimationFrame(update);
+      } else {
+        playheadAnimationFrame = 0;
+      }
+    };
+    update();
+  }
+
+  function syncVideoSelection(changed, { seekPreview = true, normalizeInputs = true } = {}) {
+    if (!metadata || mode !== 'video') return;
+    const maxSeconds = selectionDurationLimit();
+    const minDuration = Math.min(MIN_FRAGMENT_SECONDS, maxSeconds);
+    let start = Math.min(Math.max(0, readSeconds(elements.start, 0)), Math.max(0, maxSeconds - minDuration));
+    let end = Math.min(Math.max(minDuration, readSeconds(elements.end, maxSeconds)), maxSeconds);
+
+    if (end - start < minDuration) {
+      if (changed === 'end') start = Math.max(0, end - minDuration);
+      else end = Math.min(maxSeconds, start + minDuration);
+    }
+
+    if (normalizeInputs) {
+      elements.start.value = start.toFixed(2);
+      elements.end.value = end.toFixed(2);
+    } else if (changed === 'start') {
+      elements.end.value = end.toFixed(2);
+    } else {
+      elements.start.value = start.toFixed(2);
+    }
+    elements.startRange.value = String(start);
+    elements.endRange.value = String(end);
+    const selectionLeft = `${(start / maxSeconds) * 100}%`;
+    const selectionWidth = `${((end - start) / maxSeconds) * 100}%`;
+    elements.timelineSelection.style.left = selectionLeft;
+    elements.timelineSelection.style.width = selectionWidth;
+    elements.timelineDrag.style.left = selectionLeft;
+    elements.timelineDrag.style.width = selectionWidth;
+    elements.timelineDrag.setAttribute('aria-valuemax', String(Math.max(0, maxSeconds - (end - start))));
+    elements.timelineDrag.setAttribute('aria-valuenow', start.toFixed(2));
+    elements.selectionSummary.textContent = `Будет сохранён фрагмент: ${formatDuration(start)} – ${formatDuration(end)} (${formatDuration(end - start)}).`;
+
+    if (seekPreview && Number.isFinite(elements.videoPreview.duration)) {
+      const target = changed === 'end' ? Math.max(0, end - 0.01) : start;
+      try {
+        elements.videoPreview.currentTime = target;
+        updateVideoPlayhead(target);
+      } catch { /* Preview may still be loading. */ }
+    }
+    clearResult();
+  }
+
+  function moveSelectedSegment(nextStart, seekPreview = true) {
+    if (!metadata || mode !== 'video') return;
+    const maxSeconds = selectionDurationLimit();
+    const start = readSeconds(elements.start, 0);
+    const end = readSeconds(elements.end, maxSeconds);
+    const duration = Math.round((end - start) * 100) / 100;
+    const clampedStart = Math.min(Math.max(0, Math.round(nextStart * 100) / 100), Math.max(0, maxSeconds - duration));
+    elements.start.value = clampedStart.toFixed(2);
+    elements.end.value = Math.min(maxSeconds, clampedStart + duration).toFixed(2);
+    syncVideoSelection('segment', { seekPreview });
+  }
+
+  function beginSegmentDrag(event) {
+    if (!metadata || mode !== 'video' || (event.button !== undefined && event.button !== 0)) return;
+    const width = elements.timeline.getBoundingClientRect().width;
+    if (!width) return;
+    segmentDrag = {
+      pointerId: event.pointerId,
+      clientX: event.clientX,
+      start: readSeconds(elements.start, 0),
+      pixelsPerSecond: width / selectionDurationLimit(),
+    };
+    elements.timelineDrag.classList.add('is-dragging');
+    elements.timelineDrag.setPointerCapture(event.pointerId);
+    event.preventDefault();
+  }
+
+  function continueSegmentDrag(event) {
+    if (!segmentDrag || event.pointerId !== segmentDrag.pointerId) return;
+    const deltaSeconds = (event.clientX - segmentDrag.clientX) / segmentDrag.pixelsPerSecond;
+    moveSelectedSegment(segmentDrag.start + deltaSeconds);
+  }
+
+  function endSegmentDrag(event) {
+    if (!segmentDrag || event.pointerId !== segmentDrag.pointerId) return;
+    if (elements.timelineDrag.hasPointerCapture(event.pointerId)) {
+      elements.timelineDrag.releasePointerCapture(event.pointerId);
+    }
+    elements.timelineDrag.classList.remove('is-dragging');
+    segmentDrag = null;
+  }
+
+  function waitForVideoData(video) {
+    if (video.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA) return Promise.resolve();
+    return new Promise((resolve, reject) => {
+      const timer = window.setTimeout(() => finish(new Error('Не удалось подготовить кадры видео')), 15000);
+      const finish = error => {
+        window.clearTimeout(timer);
+        video.removeEventListener('loadeddata', onLoad);
+        video.removeEventListener('error', onError);
+        if (error) reject(error);
+        else resolve();
+      };
+      const onLoad = () => finish();
+      const onError = () => finish(new Error('Не удалось подготовить кадры видео'));
+      video.addEventListener('loadeddata', onLoad, { once: true });
+      video.addEventListener('error', onError, { once: true });
+    });
+  }
+
+  function seekVideo(video, time) {
+    if (Math.abs(video.currentTime - time) < 0.01 && video.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA) {
+      return Promise.resolve();
+    }
+    return new Promise((resolve, reject) => {
+      const timer = window.setTimeout(() => finish(new Error('Не удалось получить кадр видео')), 5000);
+      const finish = error => {
+        window.clearTimeout(timer);
+        video.removeEventListener('seeked', onSeeked);
+        video.removeEventListener('error', onError);
+        if (error) reject(error);
+        else resolve();
+      };
+      const onSeeked = () => finish();
+      const onError = () => finish(new Error('Не удалось получить кадр видео'));
+      video.addEventListener('seeked', onSeeked, { once: true });
+      video.addEventListener('error', onError, { once: true });
+      video.currentTime = time;
+    });
+  }
+
+  async function renderVideoTimeline() {
+    const revision = ++timelineRevision;
+    const video = document.createElement('video');
+    video.preload = 'auto';
+    video.muted = true;
+    video.playsInline = true;
+    video.src = sourceUrl;
+
+    try {
+      await waitForVideoData(video);
+      const frameCount = Math.min(16, Math.max(8, Math.round(metadata.duration / 3)));
+      const lastTime = Math.max(0, metadata.duration - 0.05);
+      const canvas = document.createElement('canvas');
+      canvas.height = TIMELINE_HEIGHT;
+      canvas.width = Math.max(80, Math.min(160, Math.round(TIMELINE_HEIGHT * metadata.width / metadata.height)));
+      const context = canvas.getContext('2d');
+      const fragment = document.createDocumentFragment();
+
+      for (let index = 0; index < frameCount; index++) {
+        if (revision !== timelineRevision) return;
+        const time = frameCount === 1 ? 0 : (lastTime * index) / (frameCount - 1);
+        await seekVideo(video, time);
+        context.drawImage(video, 0, 0, canvas.width, canvas.height);
+        const image = document.createElement('img');
+        image.src = canvas.toDataURL('image/jpeg', 0.72);
+        image.alt = '';
+        fragment.appendChild(image);
+      }
+
+      if (revision !== timelineRevision) return;
+      elements.timelineFrames.replaceChildren(fragment);
+      elements.timelineFrames.style.gridTemplateColumns = `repeat(${frameCount}, minmax(0, 1fr))`;
+    } finally {
+      video.removeAttribute('src');
+      video.load();
+    }
   }
 
   function setProgress(value, text) {
@@ -102,6 +337,7 @@
   function clearSource() {
     activeFile = null;
     metadata = null;
+    resetVideoTimeline();
     elements.input.value = '';
     elements.settingsPanel.classList.add('hidden');
     elements.actionBar.classList.add('hidden');
@@ -204,14 +440,26 @@
     `).join('');
 
     if (isVideo) {
-      elements.start.max = Math.max(0, metadata.duration - 0.1).toFixed(2);
-      elements.end.max = metadata.duration.toFixed(2);
+      const selectionLimit = selectionDurationLimit();
+      const maxSeconds = selectionLimit.toFixed(2);
+      elements.start.max = Math.max(0, selectionLimit - MIN_FRAGMENT_SECONDS).toFixed(2);
+      elements.end.max = maxSeconds;
+      elements.startRange.max = maxSeconds;
+      elements.endRange.max = maxSeconds;
       elements.start.value = '0';
-      elements.end.value = Math.min(metadata.duration, 10).toFixed(2);
+      elements.end.value = Math.min(selectionLimit, 10).toFixed(2);
+      elements.timelineDuration.textContent = formatDuration(metadata.duration);
+      syncVideoSelection('start', { seekPreview: false });
+      updateVideoPlayhead(0);
     }
     elements.dropzone.classList.add('hidden');
     elements.settingsPanel.classList.remove('hidden');
     elements.actionBar.classList.remove('hidden');
+    if (isVideo) {
+      renderVideoTimeline().catch(error => {
+        if (mode === 'video' && activeFile) console.warn(error);
+      });
+    }
   }
 
   async function selectFile(file) {
@@ -225,6 +473,9 @@
       metadata = await inspectFile(file);
       if (!Number.isFinite(metadata.duration) || metadata.duration <= 0) throw new Error('Не удалось определить длительность файла');
       if (metadata.duration > MAX_DURATION) throw new Error('Длительность файла не должна превышать 60 секунд');
+      if (mode === 'video' && metadata.duration + Number.EPSILON < MIN_FRAGMENT_SECONDS) {
+        throw new Error('Видео должно быть не короче 0,1 секунды');
+      }
       renderSource();
     } catch (error) {
       if (sourceUrl) URL.revokeObjectURL(sourceUrl);
@@ -253,7 +504,8 @@
   function videoToGifArgs(inputName, outputName) {
     const start = Number(elements.start.value);
     const end = Number(elements.end.value);
-    if (!Number.isFinite(start) || !Number.isFinite(end) || start < 0 || end > metadata.duration || end - start < 0.1) {
+    const fragmentDuration = Math.round((end - start) * 100) / 100;
+    if (!Number.isFinite(start) || !Number.isFinite(end) || start < 0 || end > metadata.duration || fragmentDuration < MIN_FRAGMENT_SECONDS) {
       throw new Error('Проверьте начало и конец фрагмента');
     }
     const selectedWidth = elements.width.value === 'original'
@@ -264,7 +516,7 @@
     const filter = `fps=${fps},scale=${selectedWidth}:-1:flags=lanczos,split[s0][s1];[s0]palettegen=max_colors=${colors}:stats_mode=diff[p];[s1][p]paletteuse=dither=sierra2_4a:diff_mode=rectangle`;
     return [
       '-ss', start.toFixed(2),
-      '-t', (end - start).toFixed(2),
+      '-t', fragmentDuration.toFixed(2),
       '-i', inputName,
       '-vf', filter,
       '-loop', '0',
@@ -371,6 +623,46 @@
     elements.dropzone.classList.remove('drag-over');
     selectFile(event.dataTransfer.files[0]);
   });
+  elements.startRange.addEventListener('input', () => {
+    elements.start.value = elements.startRange.value;
+    syncVideoSelection('start');
+  });
+  elements.endRange.addEventListener('input', () => {
+    elements.end.value = elements.endRange.value;
+    syncVideoSelection('end');
+  });
+  elements.start.addEventListener('input', () => {
+    if (elements.start.value !== '') syncVideoSelection('start', { normalizeInputs: false });
+  });
+  elements.end.addEventListener('input', () => {
+    if (elements.end.value !== '') syncVideoSelection('end', { normalizeInputs: false });
+  });
+  elements.start.addEventListener('change', () => syncVideoSelection('start'));
+  elements.end.addEventListener('change', () => syncVideoSelection('end'));
+  elements.timelineDrag.addEventListener('pointerdown', beginSegmentDrag);
+  elements.timelineDrag.addEventListener('pointermove', continueSegmentDrag);
+  elements.timelineDrag.addEventListener('pointerup', endSegmentDrag);
+  elements.timelineDrag.addEventListener('pointercancel', endSegmentDrag);
+  elements.timelineDrag.addEventListener('lostpointercapture', endSegmentDrag);
+  elements.timelineDrag.addEventListener('keydown', event => {
+    if (!metadata || mode !== 'video') return;
+    const duration = readSeconds(elements.end, 0) - readSeconds(elements.start, 0);
+    const maxStart = Math.max(0, selectionDurationLimit() - duration);
+    let nextStart = readSeconds(elements.start, 0);
+    if (event.key === 'ArrowLeft') nextStart -= event.shiftKey ? 0.1 : 0.01;
+    else if (event.key === 'ArrowRight') nextStart += event.shiftKey ? 0.1 : 0.01;
+    else if (event.key === 'Home') nextStart = 0;
+    else if (event.key === 'End') nextStart = maxStart;
+    else return;
+    event.preventDefault();
+    moveSelectedSegment(nextStart);
+  });
+  elements.videoPreview.addEventListener('play', startPlayheadAnimation);
+  elements.videoPreview.addEventListener('pause', stopPlayheadAnimation);
+  elements.videoPreview.addEventListener('ended', stopPlayheadAnimation);
+  elements.videoPreview.addEventListener('timeupdate', () => updateVideoPlayhead());
+  elements.videoPreview.addEventListener('seeked', () => updateVideoPlayhead());
+  elements.videoPreview.addEventListener('loadedmetadata', () => updateVideoPlayhead());
   elements.convert.addEventListener('click', convert);
   elements.download.addEventListener('click', () => {
     if (!resultUrl || !resultBlob) return;
