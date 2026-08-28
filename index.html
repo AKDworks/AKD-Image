@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-  <script src="/js/i18n.js?v=3"></script>
+  <script src="/js/i18n.js?v=5"></script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>AKD Image – Бесплатные инструменты для изображений</title>
@@ -13,13 +13,13 @@
   <meta property="og:url" content="https://image.akdworks.com/">
   <meta property="og:type" content="website">
   <link rel="canonical" href="https://image.akdworks.com/">
-  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="icon" href="/assets/icons/favicon.svg" type="image/svg+xml">
     <link rel="preload" href="/fonts/Inter-400.woff2" as="font" type="font/woff2" crossorigin>
     <link rel="preload" href="/fonts/Inter-500.woff2" as="font" type="font/woff2" crossorigin>
     <link rel="preload" href="/fonts/Inter-600.woff2" as="font" type="font/woff2" crossorigin>
     <link rel="preload" href="/fonts/Inter-700.woff2" as="font" type="font/woff2" crossorigin>
     <link rel="preload" href="/fonts/Inter-800.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="stylesheet" href="css/main.css?v=48">
+<link rel="stylesheet" href="css/main.css?v=61">
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
@@ -31,7 +31,7 @@
   </script>
 </head>
 <body>
-<script src="js/layout.js?v=16"></script>
+<script src="js/layout.js?v=21"></script>
 
 <main>
   <section class="hero">
@@ -59,19 +59,42 @@
             </svg>
             <span class="favorites-manage-link__label">Настроить избранное</span>
           </a>
-          <button
-            class="tool-sort__trigger tool-search__trigger"
-            id="tool-search-trigger"
-            type="button"
-            aria-expanded="false"
-            aria-controls="tool-search-panel"
-            aria-label="Открыть поиск инструментов"
-            title="Поиск инструментов"
-          >
-            <svg class="tool-sort__icon" viewBox="0 -960 960 960" aria-hidden="true">
-              <path d="M784-120 532-372q-30 24-69 38t-83 14q-109 0-184.5-75.5T120-580q0-109 75.5-184.5T380-840q109 0 184.5 75.5T640-580q0 44-14 83t-38 69l252 252-56 56ZM380-400q75 0 127.5-52.5T560-580q0-75-52.5-127.5T380-760q-75 0-127.5 52.5T200-580q0 75 52.5 127.5T380-400Z"/>
-            </svg>
-          </button>
+          <div class="tool-search" id="tool-search">
+            <button
+              class="tool-sort__trigger tool-search__trigger"
+              id="tool-search-trigger"
+              type="button"
+              aria-expanded="false"
+              aria-controls="tool-search-panel"
+              aria-label="Открыть поиск инструментов"
+              title="Поиск инструментов"
+            >
+              <svg class="tool-sort__icon" viewBox="0 -960 960 960" aria-hidden="true">
+                <path d="M784-120 532-372q-30 24-69 38t-83 14q-109 0-184.5-75.5T120-580q0-109 75.5-184.5T380-840q109 0 184.5 75.5T640-580q0 44-14 83t-38 69l252 252-56 56ZM380-400q75 0 127.5-52.5T560-580q0-75-52.5-127.5T380-760q-75 0-127.5 52.5T200-580q0 75 52.5 127.5T380-400Z"/>
+              </svg>
+            </button>
+            <div class="tool-search-panel" id="tool-search-panel" hidden>
+              <div class="tool-search-field">
+                <svg class="tool-search-field__icon" viewBox="0 -960 960 960" aria-hidden="true">
+                  <path d="M784-120 532-372q-30 24-69 38t-83 14q-109 0-184.5-75.5T120-580q0-109 75.5-184.5T380-840q109 0 184.5 75.5T640-580q0 44-14 83t-38 69l252 252-56 56ZM380-400q75 0 127.5-52.5T560-580q0-75-52.5-127.5T380-760q-75 0-127.5 52.5T200-580q0 75 52.5 127.5T380-400Z"/>
+                </svg>
+                <input
+                  class="tool-search-field__input"
+                  id="tool-search-input"
+                  type="search"
+                  placeholder="Найти инструмент"
+                  aria-label="Поиск по названию и описанию инструмента"
+                  autocomplete="off"
+                  spellcheck="false"
+                >
+                <button class="tool-search-field__clear" id="tool-search-clear" type="button" aria-label="Закрыть поиск" title="Закрыть поиск">
+                  <svg viewBox="0 -960 960 960" aria-hidden="true">
+                    <path d="m256-200-56-56 224-224-224-224 56-56 224 224 224-224 56 56-224 224 224 224-56 56-224-224-224 224Z"/>
+                  </svg>
+                </button>
+              </div>
+            </div>
+          </div>
           <div class="tool-sort" id="tool-sort">
           <button
             class="tool-sort__trigger"
@@ -109,27 +132,6 @@
             </button>
           </div>
           </div>
-        </div>
-      </div>
-      <div class="tool-search-panel" id="tool-search-panel" hidden>
-        <div class="tool-search-field">
-          <svg class="tool-search-field__icon" viewBox="0 -960 960 960" aria-hidden="true">
-            <path d="M784-120 532-372q-30 24-69 38t-83 14q-109 0-184.5-75.5T120-580q0-109 75.5-184.5T380-840q109 0 184.5 75.5T640-580q0 44-14 83t-38 69l252 252-56 56ZM380-400q75 0 127.5-52.5T560-580q0-75-52.5-127.5T380-760q-75 0-127.5 52.5T200-580q0 75 52.5 127.5T380-400Z"/>
-          </svg>
-          <input
-            class="tool-search-field__input"
-            id="tool-search-input"
-            type="search"
-            placeholder="Найти инструмент"
-            aria-label="Поиск по названию и описанию инструмента"
-            autocomplete="off"
-            spellcheck="false"
-          >
-          <button class="tool-search-field__clear" id="tool-search-clear" type="button" aria-label="Закрыть поиск" title="Закрыть поиск">
-            <svg viewBox="0 -960 960 960" aria-hidden="true">
-              <path d="m256-200-56-56 224-224-224-224 56-56 224 224 224-224 56 56-224 224 224 224-56 56-224-224-224 224Z"/>
-            </svg>
-          </button>
         </div>
       </div>
       <div class="favorites-empty" id="favorites-empty" hidden>
@@ -365,21 +367,17 @@
         </div>
 
         <div class="feature-item">
-          <div class="feature-item__icon">
-            <svg width="32" height="32" viewBox="0 -960 960 960" fill="currentColor">
-              <path d="M480-540ZM80-160v-80h400v80H80Zm120-120q-33 0-56.5-23.5T120-360v-360q0-33 23.5-56.5T200-800h560q33 0 56.5 23.5T840-720H200v360h280v80H200Zm600 40v-320H640v320h160Zm-180 80q-25 0-42.5-17.5T560-220v-360q0-25 17.5-42.5T620-640h200q25 0 42.5 17.5T880-580v360q0 25-17.5 42.5T820-160H620Zm100-300q13 0 21.5-9t8.5-21q0-13-8.5-21.5T720-520q-12 0-21 8.5t-9 21.5q0 12 9 21t21 9Zm0 60Z"/>
-            </svg>
+          <div class="feature-item__icon feature-item__icon--text">
+            23
           </div>
-          <div class="feature-item__label">На любом устройстве</div>
+          <div class="feature-item__label">Инструмента</div>
         </div>
 
         <div class="feature-item">
-          <div class="feature-item__icon">
-            <svg width="32" height="32" viewBox="0 -960 960 960" fill="currentColor">
-              <path d="M668.5-531.5Q680-543 680-560t-11.5-28.5Q657-600 640-600t-28.5 11.5Q600-577 600-560t11.5 28.5Q623-520 640-520t28.5-11.5ZM320-600h200v-80H320v80ZM180-120q-34-114-67-227.5T80-580q0-92 64-156t156-64h200q29-38 70.5-59t89.5-21q25 0 42.5 17.5T720-820q0 6-1.5 12t-3.5 11q-4 11-7.5 22.5T702-751l91 91h87v279l-113 37-67 224H480v-80h-80v80H180Zm60-80h80v-80h240v80h80l62-206 98-33v-141h-40L620-720q0-20 2.5-38.5T630-796q-29 8-51 27.5T547-720H300q-58 0-99 41t-41 99q0 98 27 191.5T240-200Zm240-298Z"/>
-            </svg>
+          <div class="feature-item__icon feature-item__icon--text">
+            10+
           </div>
-          <div class="feature-item__label">Полностью бесплатно</div>
+          <div class="feature-item__label">Поддерживаемых форматов</div>
         </div>
 
         <div class="feature-item">
@@ -406,6 +404,7 @@
     const sortLabel = document.getElementById('tool-sort-label');
     const sortOptions = Array.from(document.querySelectorAll('.tool-sort__option'));
     const toolSort = document.getElementById('tool-sort');
+    const toolSearch = document.getElementById('tool-search');
     const searchTrigger = document.getElementById('tool-search-trigger');
     const searchPanel = document.getElementById('tool-search-panel');
     const searchInput = document.getElementById('tool-search-input');
@@ -417,6 +416,7 @@
     const favoritesManageLink = document.getElementById('favorites-manage-link');
     const favoritesEmpty = document.getElementById('favorites-empty');
     const favoritesEmptyMessage = document.getElementById('favorites-empty-message');
+    const desktopSearchMedia = window.matchMedia('(min-width: 769px)');
     const defaultOrder = new Map(cards.map((card, index) => [card, index]));
     const favoritesStorageKey = 'akd-image-favorites';
     const navigationStateKey = 'akd-image-home-navigation';
@@ -461,6 +461,8 @@
       } catch {
         /* The browser can still restore its own history position. */
       }
+
+      syncSortWidth();
     });
 
     try {
@@ -517,6 +519,20 @@
       popular: 'Популярные',
       new: 'Новые',
       alphabetical: 'По алфавиту'
+    };
+    const sortWidthContext = document.createElement('canvas').getContext('2d');
+
+    const syncSortWidth = () => {
+      requestAnimationFrame(() => {
+        const labelText = sortLabel.textContent.trim();
+        const labelStyle = getComputedStyle(sortLabel);
+        if (sortWidthContext) {
+          sortWidthContext.font = labelStyle.font || `${labelStyle.fontWeight} ${labelStyle.fontSize} ${labelStyle.fontFamily}`;
+        }
+        const labelWidth = sortWidthContext?.measureText(labelText).width || labelText.length * 8;
+        const triggerWidth = Math.max(116, Math.min(214, Math.ceil(labelWidth + 76)));
+        toolSort.style.setProperty('--tool-sort-width', `${triggerWidth}px`);
+      });
     };
 
     const getTitle = card => card.querySelector('.tool-card__title').textContent.trim();
@@ -614,12 +630,14 @@
         option.classList.toggle('is-selected', isSelected);
         option.setAttribute('aria-checked', String(isSelected));
       });
+      syncSortWidth();
     };
 
     window.addEventListener('akd-languagechange', () => applySort(activeSort));
 
     const setSearchOpen = (isOpen, shouldFocus = false) => {
       searchPanel.hidden = !isOpen;
+      toolSearch.classList.toggle('is-open', isOpen);
       searchTrigger.setAttribute('aria-expanded', String(isOpen));
       searchTrigger.setAttribute('aria-label', isOpen ? 'Закрыть поиск инструментов' : 'Открыть поиск инструментов');
 
@@ -699,6 +717,12 @@
 
     searchClear.addEventListener('click', closeSearch);
 
+    toolSearch.addEventListener('focusout', event => {
+      if (!desktopSearchMedia.matches || searchPanel.hidden) return;
+      if (event.relatedTarget && toolSearch.contains(event.relatedTarget)) return;
+      setSearchOpen(false);
+    });
+
     sortTrigger.addEventListener('click', () => {
       const willOpen = sortMenu.hidden;
       sortMenu.hidden = !willOpen;
@@ -740,6 +764,8 @@
     }
 
     updateCatalog();
+    syncSortWidth();
+    document.fonts?.ready.then(syncSortWidth);
 
     if (navigationState && Number.isFinite(Number(navigationState.scrollY))) {
       const restoreScroll = () => {

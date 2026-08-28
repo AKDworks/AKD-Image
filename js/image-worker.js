@@ -133,15 +133,52 @@ function drawImage(bitmap, canvas, context, task) {
   }
 
   if (task.type === 'blurArea') {
-    if (!('filter' in context)) throw new Error('WORKER_FILTER_UNSUPPORTED');
     context.drawImage(bitmap, 0, 0);
+
+    const mode = task.mode || 'blur';
+    const area = {
+      x: Math.max(0, Math.round(Number(task.area.x) || 0)),
+      y: Math.max(0, Math.round(Number(task.area.y) || 0)),
+      width: Math.max(1, Math.round(Number(task.area.width) || 1)),
+      height: Math.max(1, Math.round(Number(task.area.height) || 1)),
+    };
+
+    if (mode === 'black') {
+      context.fillStyle = '#000000';
+      context.fillRect(area.x, area.y, area.width, area.height);
+      return;
+    }
+
+    if (mode === 'pixelate') {
+      const pixelSize = Math.max(1, Number(task.pixelSize) || 16);
+      const smallWidth = Math.max(1, Math.ceil(area.width / pixelSize));
+      const smallHeight = Math.max(1, Math.ceil(area.height / pixelSize));
+      const pixelCanvas = new OffscreenCanvas(smallWidth, smallHeight);
+      const pixelContext = pixelCanvas.getContext('2d');
+      pixelContext.drawImage(
+        bitmap,
+        area.x, area.y, area.width, area.height,
+        0, 0, smallWidth, smallHeight
+      );
+      context.save();
+      context.imageSmoothingEnabled = false;
+      context.drawImage(
+        pixelCanvas,
+        0, 0, smallWidth, smallHeight,
+        area.x, area.y, area.width, area.height
+      );
+      context.restore();
+      return;
+    }
+
+    if (!('filter' in context)) throw new Error('WORKER_FILTER_UNSUPPORTED');
     const blurredCanvas = new OffscreenCanvas(canvas.width, canvas.height);
     const blurredContext = blurredCanvas.getContext('2d');
     blurredContext.filter = `blur(${Math.max(0, Number(task.radius) || 0)}px)`;
     blurredContext.drawImage(bitmap, 0, 0);
     context.save();
     context.beginPath();
-    context.rect(task.area.x, task.area.y, task.area.width, task.area.height);
+    context.rect(area.x, area.y, area.width, area.height);
     context.clip();
     context.drawImage(blurredCanvas, 0, 0);
     context.restore();

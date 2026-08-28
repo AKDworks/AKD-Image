@@ -88,14 +88,9 @@
     <header class="site-header">
       <div class="container inner">
         <div class="header-side header-side--start">
-          <a href="${homeHref}" class="logo">
-            <svg class="logo-mark" viewBox="0 0 64 64" aria-hidden="true" focusable="false">
-              <rect width="64" height="64" rx="16" fill="#2563EB"/>
-              <rect x="15" y="17" width="34" height="30" rx="5" fill="none" stroke="#FFFFFF" stroke-width="5"/>
-              <path d="M17 41l12-10 7 7 5-5 8 8" fill="none" stroke="#FFFFFF" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
-              <circle cx="41" cy="26" r="3.5" fill="#FFFFFF"/>
-            </svg>
-            AKD Image
+          <a href="${homeHref}" class="logo" aria-label="AKD Image">
+            <img class="logo-mark" src="/assets/icons/favicon.svg" alt="" aria-hidden="true">
+            <span>AKD Image</span>
           </a>
         </div>
         <div class="header-side header-side--end">

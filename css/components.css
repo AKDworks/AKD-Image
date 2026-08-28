@@ -805,7 +805,7 @@ input[type="number"]::-webkit-outer-spin-button {
   flex-direction: column;
   align-items: center;
   text-align: center;
-  padding: 34px 24px 30px;
+  padding: 34px 0 30px;
 }
 .result-flow__icon {
   display: grid;
@@ -839,7 +839,7 @@ input[type="number"]::-webkit-outer-spin-button {
   line-height: 1.6;
 }
 .result-flow__download {
-  width: min(100%, 576px);
+  width: 100%;
   min-height: 54px;
   justify-content: center;
   box-shadow: none;
@@ -850,7 +850,7 @@ input[type="number"]::-webkit-outer-spin-button {
   justify-content: center;
   flex-wrap: wrap;
   gap: 10px;
-  width: min(100%, 576px);
+  width: 100%;
   margin-top: 12px;
 }
 .result-flow__secondary .btn {
@@ -890,7 +890,7 @@ input[type="number"]::-webkit-outer-spin-button {
   justify-content: center;
   flex-wrap: wrap;
   gap: 10px;
-  width: min(100%, 576px);
+  width: 100%;
   margin-left: auto;
   margin-right: auto;
   margin-bottom: 24px;

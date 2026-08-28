@@ -78,6 +78,9 @@ const CustomSelect = (() => {
         button.setAttribute('role', 'option');
         button.dataset.value = option.value;
         button.innerHTML = `<span>${option.textContent}</span><svg class="custom-select__check" viewBox="0 0 24 24" aria-hidden="true"><path d="m9.55 18-5.7-5.7 1.4-1.4 4.3 4.3 9.2-9.2 1.4 1.4L9.55 18Z" fill="currentColor"/></svg>`;
+        if (option.dataset.previewFont) {
+          button.querySelector('span').style.fontFamily = option.dataset.previewFont;
+        }
         button.disabled = option.disabled;
         button.addEventListener('click', () => {
           if (select.value !== option.value) {
@@ -97,7 +100,9 @@ const CustomSelect = (() => {
 
     function sync() {
       const selected = select.selectedOptions[0] || select.options[0];
-      trigger.querySelector('.custom-select__value').textContent = selected ? selected.textContent : '';
+      const value = trigger.querySelector('.custom-select__value');
+      value.textContent = selected ? selected.textContent : '';
+      value.style.fontFamily = selected?.dataset.previewFont || '';
       trigger.setAttribute('aria-label', label
         ? `${label.textContent.trim()}: ${selected?.textContent || ''}`
         : selected?.textContent || 'Выбрать формат');
@@ -1849,7 +1854,7 @@ const ImageProcessor = (() => {
   function getWorker() {
     if (worker) return worker;
 
-    worker = new Worker('/js/image-worker.js?v=2', { type: 'module' });
+    worker = new Worker('/js/image-worker.js?v=3', { type: 'module' });
     worker.addEventListener('message', event => {
       const task = pending.get(event.data.id);
       if (!task) return;
@@ -1997,6 +2002,44 @@ const ImageProcessor = (() => {
 
     if (task.type === 'blurArea') {
       context.drawImage(image, 0, 0);
+
+      const mode = task.mode || 'blur';
+      const area = {
+        x: Math.max(0, Math.round(Number(task.area.x) || 0)),
+        y: Math.max(0, Math.round(Number(task.area.y) || 0)),
+        width: Math.max(1, Math.round(Number(task.area.width) || 1)),
+        height: Math.max(1, Math.round(Number(task.area.height) || 1)),
+      };
+
+      if (mode === 'black') {
+        context.fillStyle = '#000000';
+        context.fillRect(area.x, area.y, area.width, area.height);
+        return;
+      }
+
+      if (mode === 'pixelate') {
+        const pixelSize = Math.max(1, Number(task.pixelSize) || 16);
+        const smallWidth = Math.max(1, Math.ceil(area.width / pixelSize));
+        const smallHeight = Math.max(1, Math.ceil(area.height / pixelSize));
+        const pixelCanvas = document.createElement('canvas');
+        pixelCanvas.width = smallWidth;
+        pixelCanvas.height = smallHeight;
+        pixelCanvas.getContext('2d').drawImage(
+          image,
+          area.x, area.y, area.width, area.height,
+          0, 0, smallWidth, smallHeight
+        );
+        context.save();
+        context.imageSmoothingEnabled = false;
+        context.drawImage(
+          pixelCanvas,
+          0, 0, smallWidth, smallHeight,
+          area.x, area.y, area.width, area.height
+        );
+        context.restore();
+        return;
+      }
+
       const blurredCanvas = document.createElement('canvas');
       blurredCanvas.width = canvas.width;
       blurredCanvas.height = canvas.height;
@@ -2005,7 +2048,7 @@ const ImageProcessor = (() => {
       blurredContext.drawImage(image, 0, 0);
       context.save();
       context.beginPath();
-      context.rect(task.area.x, task.area.y, task.area.width, task.area.height);
+      context.rect(area.x, area.y, area.width, area.height);
       context.clip();
       context.drawImage(blurredCanvas, 0, 0);
       context.restore();

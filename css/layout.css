@@ -49,11 +49,11 @@ main {
   flex-shrink: 0;
 }
 .logo-mark {
-  width: 26px;
-  height: 26px;
+  width: 30px;
+  height: 30px;
   display: block;
   border-radius: 7px;
-  flex: 0 0 26px;
+  flex: 0 0 30px;
   overflow: hidden;
 }
 .logo-icon {
