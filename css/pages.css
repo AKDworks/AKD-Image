@@ -552,6 +552,7 @@
 .tools-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  grid-auto-rows: 1fr;
   gap: 16px;
   align-items: stretch;
 }
@@ -1164,6 +1165,16 @@
 }
 
 #blur-mode-group .radio-option {
+  justify-content: center;
+  text-align: center;
+}
+
+#mode-group {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+#mode-group .radio-option {
   justify-content: center;
   text-align: center;
 }
@@ -2011,7 +2022,10 @@
   .tool-sort__menu {
     width: min(210px, calc(100vw - 32px));
   }
-  .tools-grid { grid-template-columns: 1fr; }
+  .tools-grid {
+    grid-template-columns: 1fr;
+    grid-auto-rows: auto;
+  }
   .tool-card {
     min-height: 216px;
     padding: 22px 20px 18px;

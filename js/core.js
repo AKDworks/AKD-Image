@@ -488,6 +488,29 @@ if (document.readyState === 'loading') {
 
 /* Unified completion screen */
 const ResultFlow = (() => {
+  const PREVIEW_HISTORY_KEY = 'akdResultPreview';
+  const PREVIEW_MODES = {
+    compress: 'compare',
+    convert: 'single',
+    watermark: 'compare',
+    effects: 'compare',
+    meme: 'compare',
+    round: 'compare',
+    pixelate: 'compare',
+    blur: 'compare',
+    annotate: 'compare',
+    'remove-background': 'compare',
+    resize: 'single',
+    crop: 'single',
+    rotate: 'single',
+    collage: 'single',
+    palette: 'single',
+    'gif-trim': 'single',
+    'gif-frames': 'single',
+    'video-gif': 'single',
+    favicon: 'single',
+  };
+
   const TOOL_CATALOG = {
     compress: { href: '/compress', label: 'Сжать изображение', iconClass: 'ic-green', iconPath: 'M160-400v-80h640v80H160Zm0-120v-80h640v80H160ZM440-80v-128l-64 64-56-56 160-160 160 160-56 56-64-62v126h-80Zm40-560L320-800l56-56 64 64v-128h80v128l64-64 56 56-160 160Z' },
     resize: { href: '/resize', label: 'Изменить размер', iconClass: 'ic-blue', iconPath: 'M560-280h200v-200h-80v120H560v80ZM200-480h80v-120h120v-80H200v200Zm-40 320q-33 0-56.5-23.5T80-240v-480q0-33 23.5-56.5T160-800h640q33 0 56.5 23.5T880-720v480q0 33-23.5 56.5T800-160H160Zm0-80h640v-480H160v480Zm0 0v-480 480Z' },
@@ -545,12 +568,263 @@ const ResultFlow = (() => {
   let legacyArea = null;
   let legacyObserver = null;
   let scheduled = false;
+  let previewModal = null;
+  let previewConfig = null;
+  let previewIndex = 0;
+  let previewObjectUrls = [];
+  let previewHistoryClosing = false;
 
   function createElement(tag, className, text) {
     const element = document.createElement(tag);
     if (className) element.className = className;
     if (text !== undefined) element.textContent = text;
     return element;
+  }
+
+  function translate(value) {
+    return window.AKDI18n?.t(value) || value;
+  }
+
+  function isBrowserImage(value) {
+    if (!(value instanceof Blob)) return Boolean(value);
+    const type = (value.type || '').toLowerCase();
+    return type.startsWith('image/') && !/hei[cf]/.test(type);
+  }
+
+  function elementPreviewSource(element) {
+    if (!element) return null;
+    if (element instanceof HTMLCanvasElement) {
+      try {
+        return element.toDataURL('image/png');
+      } catch {
+        return null;
+      }
+    }
+    if (element instanceof HTMLVideoElement) return element.currentSrc || element.src || null;
+    if (element instanceof HTMLImageElement) return element.currentSrc || element.src || null;
+    return null;
+  }
+
+  function normalizePreview(config) {
+    if (!config) return null;
+    const mode = config.mode === 'compare' ? 'compare' : 'single';
+    const sourceItems = config.items || [config];
+    const items = sourceItems.map(item => ({
+      before: item.before || null,
+      after: item.after || item.src || null,
+      label: item.label || '',
+      media: item.media || (item.after instanceof Blob && item.after.type.startsWith('video/') ? 'video' : 'image'),
+    })).filter(item => {
+      if (item.media === 'video') return mode === 'single' && Boolean(item.after);
+      if (!isBrowserImage(item.after)) return false;
+      return mode !== 'compare' || isBrowserImage(item.before);
+    });
+    return items.length ? { mode, items } : null;
+  }
+
+  function resolveLegacyPreview(area) {
+    const explicit = normalizePreview(area?._resultPreview);
+    if (explicit) return explicit;
+
+    const slug = currentToolSlug();
+    const mode = PREVIEW_MODES[slug];
+    if (!mode) return null;
+
+    const rows = Array.from(toolPage.querySelectorAll('.file-list .file-item'));
+    const items = rows.map(row => ({
+      before: row._sourcePreview || row.querySelector('img.file-item__thumb')?.src || row._sourceFile || null,
+      after: row._resultBlob || null,
+      label: row._resultFilename || row.querySelector('.file-item__name')?.textContent.trim() || '',
+    })).filter(item => isBrowserImage(item.after) && (mode !== 'compare' || isBrowserImage(item.before)));
+    if (items.length) return normalizePreview({ mode, items });
+
+    const resultImage = area.querySelector('#result-img, #result-preview, #preview, #result-gif:not(.hidden), img:not(.hidden)');
+    const resultVideo = area.querySelector('#result-video:not(.hidden), video:not(.hidden)');
+    const after = elementPreviewSource(resultImage || resultVideo);
+    if (!after) return null;
+
+    if (mode === 'compare') {
+      const sourceImage = toolPage.querySelector('#compare-source, #source-img, #source-preview');
+      const before = elementPreviewSource(sourceImage);
+      if (!before) return null;
+      return normalizePreview({ mode, before, after });
+    }
+    return normalizePreview({ mode, after, media: resultVideo && !resultImage ? 'video' : 'image' });
+  }
+
+  function ensurePreviewModal() {
+    if (previewModal?.isConnected) return previewModal;
+    previewModal = createElement('div', 'modal-overlay result-preview-overlay hidden');
+    previewModal.setAttribute('role', 'dialog');
+    previewModal.setAttribute('aria-modal', 'true');
+    previewModal.setAttribute('aria-labelledby', 'result-preview-title');
+    previewModal.innerHTML = `
+      <div class="modal result-preview-modal">
+        <div class="modal__head result-preview-modal__head">
+          <div>
+            <h3 id="result-preview-title">Предпросмотр</h3>
+            <div class="result-preview-modal__counter hidden" aria-live="polite"></div>
+          </div>
+          <button class="modal__close result-preview-modal__close" type="button" aria-label="Закрыть">×</button>
+        </div>
+        <div class="modal__body result-preview-modal__body">
+          <div class="result-preview-modal__stage">
+            <div class="result-preview-media preview-canvas--checker">
+              <img class="result-preview-media__after" alt="Результат">
+              <video class="result-preview-media__video hidden" controls playsinline></video>
+              <div class="result-preview-media__before">
+                <img alt="Исходное изображение">
+              </div>
+              <div class="result-preview-media__divider" aria-hidden="true"><span>↔</span></div>
+              <input class="result-preview-media__range" type="range" min="0" max="100" value="50" aria-label="Сравнить исходное изображение и результат">
+            </div>
+          </div>
+          <div class="result-preview-modal__labels hidden" aria-hidden="true"><span>До</span><span>После</span></div>
+          <div class="result-preview-modal__navigation hidden">
+            <button class="btn btn-secondary result-preview-modal__previous" type="button">Назад</button>
+            <span class="result-preview-modal__filename"></span>
+            <button class="btn btn-secondary result-preview-modal__next" type="button">Далее</button>
+          </div>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(previewModal);
+
+    const close = () => requestClosePreview();
+    previewModal.querySelector('.result-preview-modal__close').addEventListener('click', close);
+    previewModal.addEventListener('click', event => {
+      if (event.target === previewModal) close();
+    });
+    previewModal.querySelector('.result-preview-media__range').addEventListener('input', event => {
+      previewModal.querySelector('.result-preview-media').style.setProperty('--preview-position', `${event.target.value}%`);
+    });
+    previewModal.querySelector('.result-preview-modal__previous').addEventListener('click', () => renderPreviewItem(previewIndex - 1));
+    previewModal.querySelector('.result-preview-modal__next').addEventListener('click', () => renderPreviewItem(previewIndex + 1));
+    document.addEventListener('keydown', event => {
+      if (previewModal?.classList.contains('hidden')) return;
+      if (event.key === 'Escape') close();
+      if (event.key === 'ArrowLeft' && previewConfig?.items.length > 1 && event.target.type !== 'range') renderPreviewItem(previewIndex - 1);
+      if (event.key === 'ArrowRight' && previewConfig?.items.length > 1 && event.target.type !== 'range') renderPreviewItem(previewIndex + 1);
+    });
+    window.addEventListener('popstate', event => {
+      previewHistoryClosing = false;
+      const shouldOpen = Boolean(event.state?.[PREVIEW_HISTORY_KEY]);
+      const isOpen = !previewModal.classList.contains('hidden');
+      if (shouldOpen && !isOpen && previewConfig) {
+        openPreview(previewConfig, { fromHistory: true });
+      } else if (!shouldOpen && isOpen) {
+        closePreview();
+      }
+    });
+    return previewModal;
+  }
+
+  function releasePreviewUrls() {
+    previewObjectUrls.forEach(url => URL.revokeObjectURL(url));
+    previewObjectUrls = [];
+  }
+
+  function previewUrl(value) {
+    if (value instanceof Blob) {
+      const url = URL.createObjectURL(value);
+      previewObjectUrls.push(url);
+      return url;
+    }
+    return String(value || '');
+  }
+
+  function renderPreviewItem(index) {
+    if (!previewConfig?.items.length) return;
+    releasePreviewUrls();
+    const count = previewConfig.items.length;
+    previewIndex = (index + count) % count;
+    const item = previewConfig.items[previewIndex];
+    const modal = ensurePreviewModal();
+    const media = modal.querySelector('.result-preview-media');
+    const afterImage = media.querySelector('.result-preview-media__after');
+    const afterVideo = media.querySelector('.result-preview-media__video');
+    const beforeImage = media.querySelector('.result-preview-media__before img');
+    const range = media.querySelector('.result-preview-media__range');
+    const compare = previewConfig.mode === 'compare';
+
+    const isVideo = item.media === 'video';
+    const afterUrl = previewUrl(item.after);
+    afterImage.classList.toggle('hidden', isVideo);
+    afterVideo.classList.toggle('hidden', !isVideo);
+    afterImage.src = isVideo ? '' : afterUrl;
+    afterVideo.src = isVideo ? afterUrl : '';
+    beforeImage.src = compare ? previewUrl(item.before) : '';
+    media.classList.toggle('is-single', !compare);
+    media.classList.remove('is-portrait');
+    modal.querySelector('.result-preview-modal__labels').classList.toggle('hidden', !compare);
+    range.value = '50';
+    media.style.setProperty('--preview-position', '50%');
+
+    const applyImageAspect = () => {
+      if (!afterImage.naturalWidth || !afterImage.naturalHeight) return;
+      const ratio = afterImage.naturalWidth / afterImage.naturalHeight;
+      media.style.setProperty('--preview-ratio', String(ratio));
+      media.classList.toggle('is-portrait', ratio < 1);
+    };
+    const applyVideoAspect = () => {
+      if (!afterVideo.videoWidth || !afterVideo.videoHeight) return;
+      const ratio = afterVideo.videoWidth / afterVideo.videoHeight;
+      media.style.setProperty('--preview-ratio', String(ratio));
+      media.classList.toggle('is-portrait', ratio < 1);
+    };
+    if (isVideo) afterVideo.addEventListener('loadedmetadata', applyVideoAspect, { once: true });
+    else if (afterImage.complete) applyImageAspect();
+    else afterImage.addEventListener('load', applyImageAspect, { once: true });
+
+    const multiple = count > 1;
+    const navigation = modal.querySelector('.result-preview-modal__navigation');
+    const counter = modal.querySelector('.result-preview-modal__counter');
+    navigation.classList.toggle('hidden', !multiple);
+    counter.classList.toggle('hidden', !multiple);
+    counter.textContent = multiple ? `${previewIndex + 1} / ${count}` : '';
+    navigation.querySelector('.result-preview-modal__filename').textContent = item.label || `${translate('Изображение')} ${previewIndex + 1}`;
+  }
+
+  function openPreview(config, { fromHistory = false } = {}) {
+    previewConfig = normalizePreview(config);
+    if (!previewConfig) return;
+    const modal = ensurePreviewModal();
+    const isOpen = !modal.classList.contains('hidden');
+    if (!fromHistory && !isOpen && !history.state?.[PREVIEW_HISTORY_KEY]) {
+      try {
+        const currentState = history.state && typeof history.state === 'object' ? history.state : {};
+        history.pushState({ ...currentState, [PREVIEW_HISTORY_KEY]: true }, '', window.location.href);
+      } catch {
+        /* Preview still works when browser history is unavailable. */
+      }
+    }
+    previewHistoryClosing = false;
+    modal.querySelector('#result-preview-title').textContent = previewConfig.mode === 'compare'
+      ? 'Сравнение до и после'
+      : 'Предпросмотр результата';
+    renderPreviewItem(0);
+    modal.classList.remove('hidden');
+    modal.querySelector('.result-preview-modal__close').focus({ preventScroll: true });
+  }
+
+  function closePreview() {
+    if (!previewModal) return;
+    const video = previewModal.querySelector('.result-preview-media__video');
+    video.pause();
+    video.removeAttribute('src');
+    video.load();
+    previewModal.classList.add('hidden');
+    releasePreviewUrls();
+  }
+
+  function requestClosePreview() {
+    if (!previewModal || previewModal.classList.contains('hidden') || previewHistoryClosing) return;
+    if (history.state?.[PREVIEW_HISTORY_KEY]) {
+      previewHistoryClosing = true;
+      history.back();
+      return;
+    }
+    closePreview();
   }
 
   function ensureScreen() {
@@ -574,6 +848,7 @@ const ResultFlow = (() => {
       <div class="result-flow__actions">
         <button class="btn btn-secondary result-flow__back" type="button">Вернуться к настройкам</button>
         <button class="btn btn-secondary result-flow__restart" type="button">Обработать ещё</button>
+        <button class="btn btn-secondary result-flow__preview hidden" type="button">Предпросмотр</button>
       </div>
       <section class="result-flow__continue">
         <h2>Продолжить работу</h2>
@@ -686,6 +961,8 @@ const ResultFlow = (() => {
 
   function hide({ clearLegacy = false } = {}) {
     if (!screen || !toolPage) return;
+    requestClosePreview();
+    previewConfig = null;
     screen.classList.add('hidden');
     toolPage.classList.remove('hidden');
     document.body.classList.remove('result-flow-open');
@@ -708,12 +985,14 @@ const ResultFlow = (() => {
       onBack,
       suggestions,
       sourceArea = null,
+      preview = null,
     } = options;
 
     legacyArea = sourceArea;
     const titleElement = screen.querySelector('.result-flow__title');
     const descriptionElement = screen.querySelector('.result-flow__description');
     const downloadButton = screen.querySelector('.result-flow__download');
+    const previewButton = screen.querySelector('.result-flow__preview');
     const secondary = screen.querySelector('.result-flow__secondary');
     const backButton = screen.querySelector('.result-flow__back');
     const restartButton = screen.querySelector('.result-flow__restart');
@@ -723,6 +1002,11 @@ const ResultFlow = (() => {
     downloadButton.textContent = downloadLabel;
     downloadButton.classList.toggle('hidden', typeof onDownload !== 'function');
     downloadButton.onclick = () => runAction(downloadButton, onDownload);
+
+    previewConfig = normalizePreview(preview);
+    previewButton.classList.toggle('hidden', !previewConfig);
+    previewButton.textContent = previewConfig?.mode === 'compare' ? 'Сравнить до и после' : 'Предпросмотр';
+    previewButton.onclick = () => openPreview(previewConfig);
 
     secondary.replaceChildren();
     secondary.classList.toggle('hidden', !secondaryActions.length);
@@ -803,6 +1087,7 @@ const ResultFlow = (() => {
       onDownload: () => triggerLegacyDownload(target),
       stats: readStats(area.querySelector('#result-stats, .result-stats')),
       sourceArea: area,
+      preview: resolveLegacyPreview(area),
     });
   }
 
@@ -2372,6 +2657,7 @@ class FileListManager {
 
     if (FileUtils.isSupportedImage(file)) {
       FileUtils.readAsDataURL(file).then(src => {
+        row._sourcePreview = src;
         const thumb = row.querySelector('.file-item__thumb');
         if (!thumb) return;
         const image = document.createElement('img');
@@ -2383,6 +2669,7 @@ class FileListManager {
     }
 
     const item = { id, file, el: row };
+    row._sourceFile = file;
     this.items.push(item);
     if (this.selectedId === null) this.select(id, false);
     FileUtils.getImageDetails(file).then(details => {
@@ -2454,6 +2741,8 @@ class FileListManager {
     if (existing) existing.remove();
     dl.className += ' dl-btn';
     dl.dataset.resultFilename = filename;
+    row._resultBlob = blob;
+    row._resultFilename = filename;
     dl.addEventListener('click', event => event.stopPropagation());
     info.appendChild(dl);
   }

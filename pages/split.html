@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-  <script src="/js/i18n.js?v=5"></script>
+  <script src="/js/i18n.js?v=11"></script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Разделить изображение – AKD Image</title>
@@ -13,7 +13,7 @@
   <link rel="preload" href="/fonts/Inter-600.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="preload" href="/fonts/Inter-700.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="preload" href="/fonts/Inter-800.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="stylesheet" href="/css/main.css?v=61">
+<link rel="stylesheet" href="/css/main.css?v=69">
 </head>
 <body>
 <script src="/js/layout.js?v=21"></script>
@@ -98,7 +98,7 @@
   </div>
 </main>
 
-<script src="/js/core.js?v=22"></script>
+<script src="/js/core.js?v=28"></script>
 <script>
 (function () {
   const dropzoneEl  = document.getElementById('dropzone');
@@ -271,6 +271,7 @@
       let count = 0;
       let zipSize = 0;
       const total = cols * rows;
+      const previewItems = [];
 
       for (let y = 0; y < rows; y++) {
         for (let x = 0; x < cols; x++) {
@@ -283,7 +284,9 @@
             throw new Error(`Размер ZIP превышает лимит ${FileUtils.formatSize(FileUtils.MAX_ZIP_SIZE)}`);
           }
           const suffix = mode === 'vertical' ? `_part${y+1}` : `_row${y+1}_col${x+1}`;
-          zip.file(`${baseName}${suffix}.${ext}`, blob);
+          const partFilename = `${baseName}${suffix}.${ext}`;
+          zip.file(partFilename, blob);
+          previewItems.push({ after: blob, label: partFilename });
           
           count++;
           manager.setProgress(item.id, 40 + (count / total) * 50);
@@ -309,6 +312,10 @@
         onDownload: () => FileUtils.downloadBlob(zipBlob, `${baseName}_split.zip`),
         stats: ResultFlow.readStats(resultStats),
         sourceArea: resultArea,
+        preview: {
+          mode: 'single',
+          items: previewItems,
+        },
       });
 
     } catch(err) {

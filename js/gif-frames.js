@@ -41,6 +41,7 @@
     extractedFrames = [];
     framesGrid.innerHTML = '';
     resultSummary.textContent = '';
+    resultArea._resultPreview = null;
     resultArea.classList.remove('visible');
   }
 
@@ -123,6 +124,13 @@
 
     framesGrid.appendChild(fragment);
     resultSummary.textContent = `${result.frameCount} кадров · ${extension.toUpperCase()} · ${FileUtils.formatSize(result.totalSize)}`;
+    resultArea._resultPreview = {
+      mode: 'single',
+      items: extractedFrames.map(frame => ({
+        after: frame.blob,
+        label: frame.filename,
+      })),
+    };
     resultArea.classList.add('visible');
   }
 

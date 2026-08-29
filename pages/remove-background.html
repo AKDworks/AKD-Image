@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-  <script src="/js/i18n.js?v=5"></script>
+  <script src="/js/i18n.js?v=11"></script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Удалить фон – AKD Image</title>
@@ -13,8 +13,8 @@
   <link rel="preload" href="/fonts/Inter-600.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="preload" href="/fonts/Inter-700.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="preload" href="/fonts/Inter-800.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="stylesheet" href="/css/main.css?v=61">
-  <link rel="stylesheet" href="/css/remove-background.css?v=1">
+<link rel="stylesheet" href="/css/main.css?v=69">
+  <link rel="stylesheet" href="/css/remove-background.css?v=3">
 </head>
 <body>
 <script src="/js/layout.js?v=21"></script>
@@ -52,7 +52,10 @@
         </div>
         <div class="result-stats mt-16" id="source-stats"></div>
         <div class="alert alert-info background-model-note">
-          <span>При первом запуске браузер загрузит AI-модель размером около 94 МБ для WebGPU или 183 МБ для WASM. Изображение останется на вашем устройстве, а модель сохранится в кэше браузера.</span>
+          <div class="background-model-note__content">
+            <p>При первом запуске браузер загрузит AI-модель размером около 94 МБ для WebGPU или 183 МБ для WASM. Изображение останется на вашем устройстве, а модель сохранится в кэше браузера.</p>
+            <p><strong>AKD Vision</strong> <span>– Собственная технология локальной AI-обработки изображений от AKDworks.</span></p>
+          </div>
         </div>
       </div>
     </section>
@@ -98,7 +101,7 @@
   </div>
 </main>
 
-<script src="/js/core.js?v=22"></script>
+<script src="/js/core.js?v=28"></script>
 <script type="module" src="/js/remove-background.js?v=2"></script>
 </body>
 </html>

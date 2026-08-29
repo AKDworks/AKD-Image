@@ -18,7 +18,22 @@
 }
 
 .background-model-note {
+  align-items: flex-start;
   margin: 16px 0 0;
+}
+
+.background-model-note__content {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+}
+
+.background-model-note__content p {
+  margin: 0;
+}
+
+.background-model-note__content strong {
+  font-weight: 800;
 }
 
 .background-actions {

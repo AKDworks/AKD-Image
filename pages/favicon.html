@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-  <script src="/js/i18n.js?v=5"></script>
+  <script src="/js/i18n.js?v=11"></script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Генератор favicon – AKD Image</title>
@@ -13,7 +13,7 @@
   <link rel="preload" href="/fonts/Inter-600.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="preload" href="/fonts/Inter-700.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="preload" href="/fonts/Inter-800.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="stylesheet" href="/css/main.css?v=61">
+<link rel="stylesheet" href="/css/main.css?v=69">
 </head>
 <body>
 <script src="/js/layout.js?v=21"></script>
@@ -115,7 +115,7 @@
   </div>
 </main>
 
-<script src="/js/core.js?v=22"></script>
+<script src="/js/core.js?v=28"></script>
 <script>
 (function () {
   const filenames = {
@@ -210,6 +210,7 @@
 
   function resetResults() {
     results = [];
+    resultArea._resultPreview = null;
     resultsEl.replaceChildren();
     resultStats.replaceChildren();
     resultArea.classList.remove('visible');
@@ -391,6 +392,13 @@
       if (icoBlob) results.push({ blob: icoBlob, filename: 'favicon.ico' });
 
       renderResults(entries, icoBlob);
+      resultArea._resultPreview = {
+        mode: 'single',
+        items: entries.map(entry => ({
+          after: entry.blob,
+          label: entry.filename,
+        })),
+      };
       resultStats.innerHTML = `
         <div class="stat-card"><div class="stat-card__label">PNG-иконки</div><div class="stat-card__value">${entries.length}</div></div>
         <div class="stat-card stat-green"><div class="stat-card__label">favicon.ico</div><div class="stat-card__value">${icoBlob ? 'Готов' : 'Нет'}</div></div>
