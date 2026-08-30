@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <script src="/js/i18n.js?v=14"></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Оптимизировать GIF – AKD Image</title>
+  <meta name="description" content="Уменьшайте размер анимированных GIF локально в браузере: настройте качество и количество цветов без загрузки файла на сервер.">
+  <link rel="canonical" href="https://image.akdworks.com/gif-optimize">
+  <link rel="icon" href="/assets/icons/favicon.svg" type="image/svg+xml">
+  <link rel="preload" href="/fonts/Inter-400.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="/fonts/Inter-500.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="/fonts/Inter-600.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="/fonts/Inter-700.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="/fonts/Inter-800.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="/css/main.css?v=69">
+</head>
+<body>
+<script src="/js/layout.js?v=22"></script>
+
+<main>
+  <div class="container container--narrow tool-page">
+    <div class="tool-page__header">
+      <h1 class="tool-page__title">Оптимизировать GIF</h1>
+      <p class="tool-page__subtitle">Уменьшайте размер GIF-анимаций, сохраняя кадры, длительность и повторение.</p>
+    </div>
+
+    <div class="dropzone" id="dropzone">
+      <input type="file" accept="image/gif,.gif" multiple>
+      <p class="dropzone__title">Добавьте GIF-анимации</p>
+      <p class="dropzone__hint">Выберите файлы, вставьте из буфера или перетащите сюда</p>
+      <div class="dropzone__formats">
+        <span class="fmt-badge">GIF</span>
+      </div>
+    </div>
+
+    <section class="tool-panel hidden" id="settings-panel">
+      <div class="tool-panel__head">
+        <h3>Настройки оптимизации</h3>
+        <div class="tool-panel__head-actions">
+          <button class="btn btn-sm btn-secondary" type="button" data-open-file-picker>Добавить файлы</button>
+          <button class="btn btn-sm btn-secondary" id="clear-btn" type="button" data-open-file-picker>Заменить файлы</button>
+        </div>
+      </div>
+      <div class="tool-panel__body">
+        <div class="form-group">
+          <label for="quality">Качество / количество цветов GIF</label>
+          <div class="range-row">
+            <input type="range" id="quality" min="10" max="100" value="82">
+            <span id="quality-val">82%</span>
+          </div>
+          <p class="text-muted text-sm mt-8">Оптимизация уменьшает палитру, сохраняя кадры, длительность и повторение. Если исходный GIF уже легче, он останется без изменений.</p>
+        </div>
+
+        <canvas class="preview-canvas hidden" id="preview-canvas"></canvas>
+        <p class="text-muted text-sm mt-8 hidden" id="preview-meta"></p>
+
+      </div>
+    </section>
+
+    <div class="file-list hidden" id="file-list"></div>
+    <div class="hidden mt-16 flex gap-8 items-center" id="action-bar">
+      <button class="btn btn-primary btn-lg" id="optimize-btn" type="button">Оптимизировать всё</button>
+      <span class="text-muted text-sm" id="file-count"></span>
+    </div>
+
+    <section class="result-area" id="result-area">
+      <hr class="divider">
+      <div class="result-stats" id="result-stats"></div>
+      <button class="btn btn-success hidden" id="download-all-btn" type="button">Скачать всё (ZIP)</button>
+    </section>
+  </div>
+</main>
+
+<script src="/js/core.js?v=35"></script>
+<script src="/js/gif-optimize.js?v=4"></script>
+</body>
+</html>

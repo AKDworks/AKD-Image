@@ -11,6 +11,11 @@
       "permanent": true
     },
     {
+      "source": "/pages/gif-optimize.html",
+      "destination": "/gif-optimize",
+      "permanent": true
+    },
+    {
       "source": "/pages/resize.html",
       "destination": "/resize",
       "permanent": true
@@ -145,6 +150,10 @@
     {
       "source": "/compress",
       "destination": "/pages/compress.html"
+    },
+    {
+      "source": "/gif-optimize",
+      "destination": "/pages/gif-optimize.html"
     },
     {
       "source": "/resize",

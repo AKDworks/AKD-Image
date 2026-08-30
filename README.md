@@ -57,7 +57,7 @@ Processing is performed locally by the browser. Images and GIF animations are no
 
 ### Animated GIF
 
-- GIF compression and resizing;
+- GIF optimization and resizing;
 - area and timeline trimming, rotation, mirroring and rounded corners;
 - watermarks, text, shapes and annotations;
 - effects, pixelation and selective blur;
@@ -81,7 +81,7 @@ Static images can be imported as JPG, PNG, WebP, AVIF, HEIC, HEIF, SVG and BMP. 
 
 HEIC and HEIF are decoded locally through WebAssembly. HEIC export creates a standard 8-bit image; Live Photos, HDR, image sequences, depth maps and original metadata are not preserved.
 
-Full animated GIF processing is available in compression, resizing, watermarking, cropping, timeline trimming, rotation, effects, meme generation, rounded corners, pixelation, Base64 conversion, selective blur and image annotation.
+Full animated GIF processing is available in GIF optimization, resizing, watermarking, cropping, timeline trimming, rotation, effects, meme generation, rounded corners, pixelation, Base64 conversion, selective blur and image annotation.
 
 GIF changes are applied to every frame. The result preserves frame order, duration and loop settings. Static output formats are disabled for animated results to prevent accidental loss of animation.
 

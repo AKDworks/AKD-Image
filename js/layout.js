@@ -7,6 +7,7 @@
   const systemDarkQuery = '(prefers-color-scheme: dark)';
   const localRoutes = {
     '/compress': '/pages/compress.html',
+    '/gif-optimize': '/pages/gif-optimize.html',
     '/resize': '/pages/resize.html',
     '/watermark': '/pages/watermark.html',
     '/crop': '/pages/crop.html',

@@ -1,11 +1,11 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-  <script src="/js/i18n.js?v=11"></script>
+  <script src="/js/i18n.js?v=14"></script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Сжать изображение – AKD Image</title>
-  <meta name="description" content="Сжимайте JPG, PNG, WebP, AVIF, HEIC/HEIF, SVG, BMP и анимированные GIF прямо в браузере без загрузки на сервер.">
+  <meta name="description" content="Сжимайте JPG, PNG, WebP, AVIF, HEIC/HEIF, SVG и BMP прямо в браузере без загрузки на сервер.">
   <link rel="canonical" href="https://image.akdworks.com/compress">
   <link rel="icon" href="/assets/icons/favicon.svg" type="image/svg+xml">
   <link rel="preload" href="/fonts/Inter-400.woff2" as="font" type="font/woff2" crossorigin>
@@ -16,7 +16,7 @@
 <link rel="stylesheet" href="/css/main.css?v=69">
 </head>
 <body>
-<script src="/js/layout.js?v=21"></script>
+<script src="/js/layout.js?v=22"></script>
 
 <main>
   <div class="container container--narrow tool-page">
@@ -28,7 +28,7 @@
       <p class="tool-page__subtitle">Уменьшайте размер изображений, сохраняя подходящий баланс между весом файла и качеством.</p>
     </div>
     <div class="dropzone" id="dropzone">
-      <input type="file" accept="image/jpeg,image/png,image/webp,image/avif,image/heic,image/heif,image/svg+xml,image/bmp,image/gif" multiple>
+      <input type="file" accept="image/jpeg,image/png,image/webp,image/avif,image/heic,image/heif,image/svg+xml,image/bmp" multiple>
       <p class="dropzone__title">Добавьте изображения</p>
       <p class="dropzone__hint">Выберите файлы, вставьте из буфера или перетащите сюда</p>
       <div class="dropzone__formats">
@@ -39,7 +39,6 @@
         <span class="fmt-badge">HEIC</span>
         <span class="fmt-badge">SVG</span>
         <span class="fmt-badge">BMP</span>
-        <span class="fmt-badge">GIF</span>
       </div>
     </div>
     <div class="tool-panel hidden" id="settings-panel">
@@ -53,7 +52,7 @@
       <div class="tool-panel__body">
         <div class="form-row compress-settings-row">
           <div class="form-group">
-            <label>Качество / количество цветов GIF</label>
+            <label>Качество</label>
             <div class="range-row">
               <input type="range" id="quality" min="10" max="100" value="82">
               <span id="quality-val">82%</span>
@@ -70,7 +69,6 @@
               <option value="image/avif">AVIF</option>
               <option value="image/heic">HEIC</option>
               <option value="image/bmp">BMP</option>
-              <option value="image/gif">GIF</option>
             </select>
             <p class="text-muted text-sm mt-8" id="format-hint">Для статичных изображений будет выбран WebP: обычно он заметно уменьшает размер файла.</p>
           </div>
@@ -99,7 +97,7 @@
   </div>
 </main>
 
-<script src="/js/core.js?v=28"></script>
+<script src="/js/core.js?v=35"></script>
 <script>
 (function () {
   const dropzoneEl   = document.getElementById('dropzone');
@@ -138,7 +136,7 @@
   });
 
   new Dropzone(dropzoneEl, {
-    accept: ['image/jpeg','image/png','image/webp','image/avif','image/heic','image/heif','image/svg+xml','image/bmp','image/gif'],
+    accept: ['image/jpeg','image/png','image/webp','image/avif','image/heic','image/heif','image/svg+xml','image/bmp'],
     multiple: true,
     onFiles(newFiles) {
       newFiles.forEach(f => {
@@ -155,7 +153,6 @@
     previewCanvas.classList.add('hidden');
     previewMeta.classList.add('hidden');
     previewMeta.textContent = '';
-    UIUtils.syncGifOutput(outputFmt, files);
     updateFormatHint();
     results = [];
     if (hasFiles) previewScheduler.refresh();
@@ -164,16 +161,11 @@
   fileListEl.addEventListener('file-selected', () => previewScheduler.refresh());
 
   function getCompressionMime(file) {
-    if (FileUtils.isGif(file)) return 'image/gif';
     if (outputFmt.value === 'auto') return 'image/webp';
     return FileUtils.resolveOutputMime(file, outputFmt.value);
   }
 
   function updateFormatHint() {
-    if (outputFmt.disabled) {
-      formatHint.textContent = 'Анимация сохраняется в GIF, чтобы не потерять кадры.';
-      return;
-    }
     if (outputFmt.value === 'auto') {
       formatHint.textContent = 'Для статичных изображений будет выбран WebP: обычно он заметно уменьшает размер файла.';
       return;
@@ -215,7 +207,7 @@
     });
     if (!isCurrent()) return;
 
-    const useOriginal = (outputFmt.value === 'auto' || FileUtils.isGif(file))
+    const useOriginal = outputFmt.value === 'auto'
       && processed.blob.size >= file.size;
     const blob = useOriginal ? file : processed.blob;
 
@@ -230,9 +222,8 @@
     previewCanvas.classList.remove('hidden');
 
     const change = useOriginal ? '0%' : FileUtils.formatPct(file.size, blob.size);
-    const frameHint = FileUtils.isGif(file) ? ' · показан первый кадр' : '';
     const fallbackHint = useOriginal ? ' · оставлен оригинал: новая версия тяжелее' : '';
-    previewMeta.textContent = `Предпросмотр: ${FileUtils.formatSize(file.size)} → ${FileUtils.formatSize(blob.size)} (${change})${frameHint}${fallbackHint}`;
+    previewMeta.textContent = `Предпросмотр: ${FileUtils.formatSize(file.size)} → ${FileUtils.formatSize(blob.size)} (${change})${fallbackHint}`;
   });
 
   function plural(n, a, b, c) {
@@ -274,7 +265,7 @@
           onProgress: progress => manager.setProgress(item.id, progress),
         });
 
-        const useOriginal = (outputFmt.value === 'auto' || FileUtils.isGif(file))
+        const useOriginal = outputFmt.value === 'auto'
           && processed.blob.size >= file.size;
         const blob = useOriginal ? file : processed.blob;
         if (useOriginal) mime = FileUtils.getFileMime(file);
@@ -296,7 +287,7 @@
       } catch (err) {
         errors++;
         manager.setStatus(item.id, 'Ошибка', 'status-error');
-        manager.setMeta(item.id, err.message || 'Не удалось обработать GIF');
+        manager.setMeta(item.id, err.message || 'Не удалось обработать изображение');
         console.error(err);
       }
     }

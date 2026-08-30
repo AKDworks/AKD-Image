@@ -491,6 +491,7 @@ const ResultFlow = (() => {
   const PREVIEW_HISTORY_KEY = 'akdResultPreview';
   const PREVIEW_MODES = {
     compress: 'compare',
+    'gif-optimize': 'compare',
     convert: 'single',
     watermark: 'compare',
     effects: 'compare',
@@ -513,6 +514,7 @@ const ResultFlow = (() => {
 
   const TOOL_CATALOG = {
     compress: { href: '/compress', label: 'Сжать изображение', iconClass: 'ic-green', iconPath: 'M160-400v-80h640v80H160Zm0-120v-80h640v80H160ZM440-80v-128l-64 64-56-56 160-160 160 160-56 56-64-62v126h-80Zm40-560L320-800l56-56 64 64v-128h80v128l64-64 56 56-160 160Z' },
+    'gif-optimize': { href: '/gif-optimize', label: 'Оптимизировать GIF', iconClass: 'ic-green', iconPath: 'M200-120q-33 0-56.5-23.5T120-200v-560q0-33 23.5-56.5T200-840h560q33 0 56.5 23.5T840-760v560q0 33-23.5 56.5T760-120H200Zm0-80h560v-560H200v560Zm240-160h60v-240h-60v240Zm-160 0h80q17 0 28.5-11.5T400-400v-80h-60v60h-40v-120h100v-20q0-17-11.5-28.5T360-600h-80q-17 0-28.5 11.5T240-560v160q0 17 11.5 28.5T280-360Zm280 0h60v-80h80v-60h-80v-40h120v-60H560v240ZM200-200v-560 560Z' },
     resize: { href: '/resize', label: 'Изменить размер', iconClass: 'ic-blue', iconPath: 'M560-280h200v-200h-80v120H560v80ZM200-480h80v-120h120v-80H200v200Zm-40 320q-33 0-56.5-23.5T80-240v-480q0-33 23.5-56.5T160-800h640q33 0 56.5 23.5T880-720v480q0 33-23.5 56.5T800-160H160Zm0-80h640v-480H160v480Zm0 0v-480 480Z' },
     watermark: { href: '/watermark', label: 'Водяной знак', iconClass: 'ic-orange', iconPath: 'M400-280h360v-240H400v240ZM160-160q-33 0-56.5-23.5T80-240v-480q0-33 23.5-56.5T160-800h640q33 0 56.5 23.5T880-720v480q0 33-23.5 56.5T800-160H160Zm0-80h640v-480H160v480Zm0 0v-480 480Z' },
     crop: { href: '/crop', label: 'Обрезать изображение', iconClass: 'ic-blue', iconPath: 'M680-40v-160H280q-33 0-56.5-23.5T200-280v-400H40v-80h160v-160h80v640h640v80H760v160h-80Zm0-320v-320H360v-80h320q33 0 56.5 23.5T760-680v320h-80Z' },
@@ -539,6 +541,7 @@ const ResultFlow = (() => {
 
   const CONTINUATION_MAP = {
     compress: ['resize', 'convert', 'crop', 'exif'],
+    'gif-optimize': ['gif-trim', 'gif-frames', 'video-gif', 'resize'],
     resize: ['compress', 'crop', 'convert', 'watermark'],
     convert: ['compress', 'resize', 'exif', 'pdf'],
     watermark: ['compress', 'resize', 'convert', 'pdf'],
@@ -552,8 +555,8 @@ const ResultFlow = (() => {
     pdf: ['compress', 'resize', 'convert', 'collage'],
     collage: ['compress', 'resize', 'watermark', 'pdf'],
     annotate: ['compress', 'resize', 'watermark', 'pdf'],
-    'gif-trim': ['video-gif', 'gif-frames', 'compress', 'resize'],
-    'video-gif': ['gif-trim', 'gif-frames', 'compress', 'resize'],
+    'gif-trim': ['gif-optimize', 'video-gif', 'gif-frames', 'resize'],
+    'video-gif': ['gif-optimize', 'gif-trim', 'gif-frames', 'resize'],
     'gif-frames': ['video-gif', 'gif-trim', 'collage', 'pdf'],
     round: ['compress', 'resize', 'watermark', 'convert'],
     pixelate: ['compress', 'resize', 'effects', 'meme'],
@@ -966,7 +969,15 @@ const ResultFlow = (() => {
     screen.classList.add('hidden');
     toolPage.classList.remove('hidden');
     document.body.classList.remove('result-flow-open');
-    if (clearLegacy && legacyArea) legacyArea.classList.remove('visible');
+    if (clearLegacy) {
+      if (legacyArea) legacyArea.classList.remove('visible');
+
+      toolPage.querySelectorAll('.file-list .dl-btn').forEach((button) => button.remove());
+      toolPage.querySelectorAll('.file-list .file-item').forEach((row) => {
+        delete row._resultBlob;
+        delete row._resultFilename;
+      });
+    }
     window.scrollTo({ top: 0, behavior: 'auto' });
   }
 
@@ -988,6 +999,10 @@ const ResultFlow = (() => {
       preview = null,
     } = options;
 
+    // Some tools render their own result details and then call ResultFlow directly.
+    // Do not let the legacy observer reopen the screen with a hidden batch-download
+    // button from that source area.
+    if (sourceArea) sourceArea.dataset.resultFlow = 'manual';
     legacyArea = sourceArea;
     const titleElement = screen.querySelector('.result-flow__title');
     const descriptionElement = screen.querySelector('.result-flow__description');
@@ -1069,6 +1084,7 @@ const ResultFlow = (() => {
   }
 
   function showLegacy(area) {
+    if (area.dataset.resultFlow === 'manual') return;
     if (!area.classList.contains('visible')) return;
     if (!ensureScreen()) return;
     const target = legacyDownloadTarget(area);
@@ -1105,6 +1121,7 @@ const ResultFlow = (() => {
     if (!area || area.dataset.resultFlow === 'manual') return;
     legacyObserver?.disconnect();
     legacyObserver = new MutationObserver(() => {
+      if (area.dataset.resultFlow === 'manual') return;
       if (area.classList.contains('visible')) scheduleLegacy(area);
       else if (screen && !screen.classList.contains('hidden') && legacyArea === area) hide();
     });
@@ -1706,6 +1723,22 @@ const GifProcessor = (() => {
     return Math.min(255, Math.max(32, Math.round(16 + normalizeQuality(quality) * 239)));
   }
 
+  function qualityToPaletteSize(quality) {
+    const value = normalizeQuality(quality);
+    if (value >= 0.9) return 256;
+    if (value >= 0.7) return 128;
+    if (value >= 0.5) return 64;
+    if (value >= 0.3) return 32;
+    if (value >= 0.15) return 16;
+    return 8;
+  }
+
+  function optimizationPaletteSizes(quality) {
+    const first = qualityToPaletteSize(quality);
+    const fallback = Math.max(8, first / 2);
+    return first === fallback ? [first] : [first, fallback];
+  }
+
   function workerUrl() {
     return typeof Worker === 'undefined' ? undefined : WORKER_URL;
   }
@@ -1809,12 +1842,19 @@ const GifProcessor = (() => {
 
   async function encodeFrames(library, config, frames, transformFrame, onProgress) {
     const quality = normalizeQuality(config.quality);
+    const paletteSize = Number(config.paletteSize) || 0;
+    const dither = config.dither === undefined ? quality < 0.98 : Boolean(config.dither);
     const encoder = new library.Encoder({
       width: config.width,
       height: config.height,
       workerUrl: workerUrl(),
-      maxColors: qualityToColors(quality),
-      dither: quality < 0.98 ? 'floyd-steinberg' : undefined,
+      ...(paletteSize ? {
+        colorTableSize: paletteSize,
+        maxColors: paletteSize - 1,
+      } : {
+        maxColors: qualityToColors(quality),
+      }),
+      dither: dither ? 'floyd-steinberg' : undefined,
       ditherTransparency: 'floyd-steinberg',
       looped: config.looped,
       loopCount: config.loopCount,
@@ -1823,7 +1863,7 @@ const GifProcessor = (() => {
     for (let index = 0; index < frames.length; index++) {
       const frame = frames[index];
       const sourceCanvas = frameCanvas(frame);
-      frame.data = null;
+      if (config.releaseFrameData) frame.data = null;
       const outputCanvas = await transformFrame({
         sourceCanvas,
         frame,
@@ -1881,6 +1921,7 @@ const GifProcessor = (() => {
       width,
       height,
       quality: options.quality,
+      releaseFrameData: true,
       looped: decoded.gif.looped === true,
       loopCount: decoded.gif.loopCount || 0,
     }, decoded.frames, transformFrame, onProgress);
@@ -1890,6 +1931,59 @@ const GifProcessor = (() => {
       blob,
       width,
       height,
+      originalWidth: decoded.gif.width,
+      originalHeight: decoded.gif.height,
+      frameCount: decoded.frameCount,
+      duration: decoded.duration,
+    };
+  }
+
+  async function optimize(file, options = {}) {
+    const onProgress = typeof options.onProgress === 'function'
+      ? options.onProgress
+      : () => {};
+    onProgress(5);
+
+    const decoded = await decode(file);
+    onProgress(25);
+
+    const paletteSizes = optimizationPaletteSizes(options.quality);
+    const requestedQuality = normalizeQuality(options.quality);
+    const targetSaving = requestedQuality >= 0.9 ? 0.02 : requestedQuality >= 0.7 ? 0.08 : 0.15;
+    let best = {
+      blob: file,
+      paletteSize: 256,
+      optimized: false,
+    };
+
+    for (let attempt = 0; attempt < paletteSizes.length; attempt++) {
+      const paletteSize = paletteSizes[attempt];
+      const blob = await encodeFrames(decoded.library, {
+        width: decoded.gif.width,
+        height: decoded.gif.height,
+        quality: options.quality,
+        paletteSize,
+        dither: false,
+        looped: decoded.gif.looped === true,
+        loopCount: decoded.gif.loopCount || 0,
+      }, decoded.frames, ({ sourceCanvas }) => sourceCanvas, progress => {
+        const start = 25 + Math.round((attempt / paletteSizes.length) * 70);
+        const span = Math.ceil(70 / paletteSizes.length);
+        onProgress(Math.min(95, start + Math.round((progress / 100) * span)));
+      });
+
+      if (blob.size < best.blob.size) {
+        best = { blob, paletteSize, optimized: true };
+      }
+      if (blob.size <= file.size * (1 - targetSaving)) break;
+    }
+
+    decoded.frames.forEach(frame => { frame.data = null; });
+    onProgress(100);
+    return {
+      ...best,
+      width: decoded.gif.width,
+      height: decoded.gif.height,
       originalWidth: decoded.gif.width,
       originalHeight: decoded.gif.height,
       frameCount: decoded.frameCount,
@@ -2101,11 +2195,13 @@ const GifProcessor = (() => {
     limits,
     inspect,
     process,
+    optimize,
     trim,
     extractFrames,
     createTimelinePreview,
     encodeCanvas,
     qualityToColors,
+    qualityToPaletteSize,
   };
 })();
 

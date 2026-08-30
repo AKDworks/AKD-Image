@@ -41,7 +41,7 @@ const downloadBtn = document.getElementById('download-btn');
 
 const STAGE_TEXT = {
   'detecting-device': 'Проверка возможностей браузера...',
-  'loading-model': 'Загрузка AI-модели...',
+  'loading-model': 'Загрузка ИИ-модели...',
   decoding: 'Чтение изображения...',
   preprocessing: 'Подготовка изображения...',
   inference: 'Определение объекта...',
