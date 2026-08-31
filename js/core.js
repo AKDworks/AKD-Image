@@ -2530,7 +2530,7 @@ const ImageProcessor = (() => {
 /* Dropbox file chooser */
 const DropboxChooser = (() => {
   const APP_KEY = '15uli8qpuutiafj';
-  const SCRIPT_ID = 'akd-dropbox-chooser';
+  const SCRIPT_ID = 'dropboxjs';
   const SCRIPT_URL = 'https://www.dropbox.com/static/api/2/dropins.js';
   let loader = null;
 
@@ -2551,10 +2551,14 @@ const DropboxChooser = (() => {
       script.src = SCRIPT_URL;
       script.async = true;
       script.dataset.appKey = APP_KEY;
+      const rejectUnavailable = () => {
+        script.remove();
+        reject(new Error('Dropbox недоступен'));
+      };
       script.onload = () => window.Dropbox
         ? resolve(window.Dropbox)
-        : reject(new Error('Dropbox недоступен'));
-      script.onerror = () => reject(new Error('Dropbox недоступен'));
+        : rejectUnavailable();
+      script.onerror = rejectUnavailable;
       document.head.appendChild(script);
     }).catch(error => {
       loader = null;
@@ -2589,6 +2593,7 @@ class Dropzone {
     const sources = this._createUploadSources();
     const dropboxButton = sources.querySelector('.upload-source__button--dropbox');
     el.insertAdjacentElement('afterend', sources);
+    DropboxChooser.load().catch(() => {});
 
     el.addEventListener('dragover', e => {
       e.preventDefault();
@@ -2685,7 +2690,12 @@ class Dropzone {
 
     try {
       const Dropbox = await DropboxChooser.load();
-      if (!Dropbox?.isBrowserSupported?.()) throw new Error('Dropbox недоступен');
+      if (!Dropbox || typeof Dropbox.choose !== 'function') {
+        throw new Error('Dropbox недоступен');
+      }
+      if (typeof Dropbox.isBrowserSupported === 'function' && !Dropbox.isBrowserSupported()) {
+        throw new Error('Dropbox недоступен');
+      }
 
       await new Promise((resolve, reject) => {
         Dropbox.choose({
