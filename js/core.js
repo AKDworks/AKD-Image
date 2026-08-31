@@ -996,13 +996,13 @@ const ResultFlow = (() => {
       onBack,
       suggestions,
       sourceArea = null,
+      manualSource = true,
       preview = null,
     } = options;
 
-    // Some tools render their own result details and then call ResultFlow directly.
-    // Do not let the legacy observer reopen the screen with a hidden batch-download
-    // button from that source area.
-    if (sourceArea) sourceArea.dataset.resultFlow = 'manual';
+    // Tools that call ResultFlow directly own their result area. Legacy tools pass
+    // manualSource: false so the observer remains available for later processing runs.
+    if (sourceArea && manualSource) sourceArea.dataset.resultFlow = 'manual';
     legacyArea = sourceArea;
     const titleElement = screen.querySelector('.result-flow__title');
     const descriptionElement = screen.querySelector('.result-flow__description');
@@ -1103,6 +1103,7 @@ const ResultFlow = (() => {
       onDownload: () => triggerLegacyDownload(target),
       stats: readStats(area.querySelector('#result-stats, .result-stats')),
       sourceArea: area,
+      manualSource: false,
       preview: resolveLegacyPreview(area),
     });
   }
@@ -2526,6 +2527,55 @@ const ImageProcessor = (() => {
 })();
 
 
+/* Dropbox file chooser */
+const DropboxChooser = (() => {
+  const APP_KEY = '15uli8qpuutiafj';
+  const SCRIPT_ID = 'akd-dropbox-chooser';
+  const SCRIPT_URL = 'https://www.dropbox.com/static/api/2/dropins.js';
+  let loader = null;
+
+  function load() {
+    if (window.Dropbox) return Promise.resolve(window.Dropbox);
+    if (loader) return loader;
+
+    loader = new Promise((resolve, reject) => {
+      const existing = document.getElementById(SCRIPT_ID);
+      if (existing) {
+        existing.addEventListener('load', () => resolve(window.Dropbox), { once: true });
+        existing.addEventListener('error', () => reject(new Error('Dropbox недоступен')), { once: true });
+        return;
+      }
+
+      const script = document.createElement('script');
+      script.id = SCRIPT_ID;
+      script.src = SCRIPT_URL;
+      script.async = true;
+      script.dataset.appKey = APP_KEY;
+      script.onload = () => window.Dropbox
+        ? resolve(window.Dropbox)
+        : reject(new Error('Dropbox недоступен'));
+      script.onerror = () => reject(new Error('Dropbox недоступен'));
+      document.head.appendChild(script);
+    }).catch(error => {
+      loader = null;
+      throw error;
+    });
+
+    return loader;
+  }
+
+  return { load };
+})();
+
+let uploadSourceIconIndex = 0;
+
+window.addEventListener('akd-languagechange', () => {
+  const label = window.AKDI18n?.t?.('Скоро') || 'Скоро';
+  document.querySelectorAll('.upload-source-tooltip').forEach(tooltip => {
+    tooltip.dataset.tooltip = label;
+  });
+});
+
 /* Dropzone */
 class Dropzone {
   constructor(el, opts = {}) {
@@ -2536,6 +2586,9 @@ class Dropzone {
 
   _bind() {
     const el = this.el;
+    const sources = this._createUploadSources();
+    const dropboxButton = sources.querySelector('.upload-source__button--dropbox');
+    el.insertAdjacentElement('afterend', sources);
 
     el.addEventListener('dragover', e => {
       e.preventDefault();
@@ -2574,6 +2627,101 @@ class Dropzone {
         input && input.click();
       }
     });
+
+    dropboxButton.addEventListener('click', async event => {
+      event.preventDefault();
+      event.stopPropagation();
+      await this._chooseDropbox(dropboxButton);
+    });
+  }
+
+  _createUploadSources() {
+    const wrapper = document.createElement('div');
+    wrapper.className = 'upload-sources';
+
+    const iconId = `google-drive-icon-${++uploadSourceIconIndex}`;
+    wrapper.innerHTML = `
+      <button class="upload-source__button upload-source__button--dropbox" type="button" aria-label="Открыть Dropbox">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 1.807 0 5.629l6 3.822 6.001-3.822L6 1.807Zm12 0-6 3.822 6 3.822 6-3.822-6-3.822ZM0 13.274l6 3.822 6.001-3.822L6 9.452 0 13.274ZM18 9.452l-6 3.822 6 3.822 6-3.822-6-3.822ZM6 18.371l6.001 3.822 6-3.822-6-3.822L6 18.371Z"/></svg>
+        <span>Dropbox</span>
+      </button>
+      <span class="upload-source-tooltip" data-tooltip="${window.AKDI18n?.t?.('Скоро') || 'Скоро'}">
+        <button class="upload-source__button upload-source__button--coming" type="button" disabled aria-label="Google Drive">
+          <svg viewBox="0 0 192 192" fill="none" aria-hidden="true">
+            <mask id="${iconId}-a" width="168" height="154" x="12" y="18" maskUnits="userSpaceOnUse" style="mask-type:alpha"><path fill="#b43333" d="M63.09 37c14.626-25.333 51.193-25.334 65.819 0l45.033 78c14.626 25.334-3.657 57.001-32.91 57.001H50.967c-29.253 0-47.536-31.667-32.91-57.001z"/></mask>
+            <g mask="url(#${iconId}-a)"><path fill="url(#${iconId}-b)" d="M206.905 172.02h-91.888l-19.015-32.934 45.944-79.578z"/><path fill="url(#${iconId}-c)" d="M-14.919 172.006 50.04 59.494v.002L31.032 92.422h38.02L115 172.004l-129.918.001z"/><path fill="url(#${iconId}-d)" d="M96.007-20.085 141.954 59.5l-19.011 32.928H31.048z"/></g>
+            <defs><linearGradient id="${iconId}-b" x1="193.6" x2="103.09" y1="165.6" y2="111.21" gradientUnits="userSpaceOnUse"><stop offset=".09" stop-color="#ffe921"/><stop offset="1" stop-color="#fec700"/></linearGradient><linearGradient id="${iconId}-c" x1="114.4" x2="15.53" y1="181.61" y2="121.8" gradientUnits="userSpaceOnUse"><stop offset=".15" stop-color="#a9a8ff"/><stop offset=".33" stop-color="#6d97ff"/><stop offset=".48" stop-color="#3186ff"/></linearGradient><linearGradient id="${iconId}-d" x1="128.88" x2="28.7" y1="37.88" y2="84.64" gradientUnits="userSpaceOnUse"><stop offset=".55" stop-color="#0ebc5f"/><stop offset=".85" stop-color="#78c9ff"/></linearGradient></defs>
+          </svg>
+          <span>Google Drive</span>
+        </button>
+      </span>
+    `;
+    return wrapper;
+  }
+
+  _dropboxExtensions() {
+    const mimeExtensions = {
+      'image/jpeg': ['.jpg', '.jpeg'],
+      'image/png': ['.png'],
+      'image/webp': ['.webp'],
+      'image/avif': ['.avif'],
+      'image/gif': ['.gif'],
+      'image/heic': ['.heic'],
+      'image/heif': ['.heif'],
+      'image/svg+xml': ['.svg'],
+      'image/bmp': ['.bmp'],
+    };
+    const extensions = this.opts.accept.flatMap(type => {
+      if (type === 'image/*') return ['images'];
+      return mimeExtensions[type] || [];
+    });
+    return extensions.length ? [...new Set(extensions)] : ['images'];
+  }
+
+  async _chooseDropbox(button) {
+    if (button.disabled) return;
+    button.disabled = true;
+    button.classList.add('is-loading');
+
+    try {
+      const Dropbox = await DropboxChooser.load();
+      if (!Dropbox?.isBrowserSupported?.()) throw new Error('Dropbox недоступен');
+
+      await new Promise((resolve, reject) => {
+        Dropbox.choose({
+          linkType: 'direct',
+          multiselect: this.opts.multiple,
+          extensions: this._dropboxExtensions(),
+          success: async entries => {
+            try {
+              const selected = this.opts.multiple ? entries : entries.slice(0, 1);
+              const files = await Promise.all(selected.map(entry => this._downloadDropboxFile(entry)));
+              await this._handle(files);
+              resolve();
+            } catch (error) {
+              reject(error);
+            }
+          },
+          cancel: resolve,
+        });
+      });
+    } catch (error) {
+      console.error(error);
+      Toast.error(error.message === 'Dropbox недоступен'
+        ? 'Dropbox пока недоступен. Попробуйте ещё раз.'
+        : 'Не удалось получить файлы из Dropbox.');
+    } finally {
+      button.disabled = false;
+      button.classList.remove('is-loading');
+    }
+  }
+
+  async _downloadDropboxFile(entry) {
+    const response = await fetch(entry.link, { credentials: 'omit' });
+    if (!response.ok) throw new Error('Не удалось получить файл из Dropbox');
+    const blob = await response.blob();
+    const name = entry.name || 'dropbox-file';
+    return new File([blob], name, { type: blob.type });
   }
 
   _isTextTarget(target) {
@@ -2642,7 +2790,7 @@ class Dropzone {
         Toast.error(error.message || 'Не удалось проверить GIF.');
       }
     }
-    if (accepted.length) this.opts.onFiles(accepted);
+    if (accepted.length) await this.opts.onFiles(accepted);
   }
 }
 
