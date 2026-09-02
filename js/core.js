@@ -2593,7 +2593,7 @@ class Dropzone {
     const sources = this._createUploadSources();
     const dropboxButton = sources.querySelector('.upload-source__button--dropbox');
     el.insertAdjacentElement('afterend', sources);
-    DropboxChooser.load().catch(() => {});
+    if (navigator.onLine !== false) DropboxChooser.load().catch(() => {});
 
     el.addEventListener('dragover', e => {
       e.preventDefault();
@@ -2685,6 +2685,10 @@ class Dropzone {
 
   async _chooseDropbox(button) {
     if (button.disabled) return;
+    if (navigator.onLine === false) {
+      Toast.error(window.AKDI18n?.t?.('Для Dropbox требуется подключение к интернету.') || 'Для Dropbox требуется подключение к интернету.');
+      return;
+    }
     button.disabled = true;
     button.classList.add('is-loading');
 

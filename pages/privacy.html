@@ -1,22 +1,28 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-  <script src="/js/i18n.js?v=18"></script>
+  <script src="/js/i18n.js?v=23"></script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Конфиденциальность – AKD Image</title>
   <meta name="description" content="Как AKD Image обрабатывает изображения локально в браузере, хранит настройки и загружает компоненты для отдельных инструментов.">
   <link rel="canonical" href="https://image.akdworks.com/privacy">
   <link rel="icon" href="/assets/icons/favicon.svg" type="image/svg+xml">
+  <link rel="manifest" href="/manifest.webmanifest">
+  <link rel="apple-touch-icon" href="/assets/icons/apple-touch-icon.png">
+  <meta name="theme-color" content="#181A20">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="AKD Image">
   <link rel="preload" href="/fonts/Inter-400.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="preload" href="/fonts/Inter-500.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="preload" href="/fonts/Inter-600.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="preload" href="/fonts/Inter-700.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="preload" href="/fonts/Inter-800.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="stylesheet" href="/css/main.css?v=75">
+<link rel="stylesheet" href="/css/main.css?v=94">
 </head>
 <body>
-<script src="/js/layout.js?v=22"></script>
+<script src="/js/layout.js?v=28"></script>
 
 <main>
   <section class="hero hero--compact">
@@ -48,10 +54,13 @@
       <h3>6. Локальное хранение настроек</h3>
       <p>AKD Image использует localStorage для выбранного языка и режима темы, а также списка избранных инструментов. Эти данные остаются в вашем браузере и могут быть удалены через настройки сайта или очистку данных браузера.</p>
 
-      <h3>7. Cookies, статистика и хостинг</h3>
+      <h3>7. Установка приложения и офлайн-кэш</h3>
+      <p>Если браузер поддерживает установку веб-приложений, AKD Image может сохранить в Cache Storage страницы, стили, скрипты, шрифты, иконки и локальные библиотеки проекта. Это необходимо для запуска приложения и работы основных инструментов без интернета. Выбранные изображения и готовые результаты в офлайн-кэш не добавляются. Кэш приложения можно удалить через настройки сайта, браузера или вместе с установленным приложением.</p>
+
+      <h3>8. Cookies, статистика и хостинг</h3>
       <p>Сам проект не требует cookies для обработки изображений и не содержит рекламных трекеров или аналитических счетчиков. Сайт размещен на Vercel: хостинг может обрабатывать стандартные технические данные запросов для работы и диагностики сайта. Загруженные для обработки изображения в эти данные не попадают, так как не отправляются с устройства.</p>
 
-      <h3>8. Изменения в политике</h3>
+      <h3>9. Изменения в политике</h3>
       <p class="policy-card__spaced">Политика может обновляться по мере развития проекта и добавления новых инструментов. Основной принцип остаётся прежним: пользовательские изображения, GIF и видео обрабатываются локально в браузере, даже если отдельному инструменту сначала требуется загрузить модель или среду выполнения.</p>
 
       <p>Если у вас есть вопросы по поводу безопасности данных или работы сайта, проверьте исходный код проекта или свяжитесь с автором через доступные каналы связи.</p>

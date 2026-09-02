@@ -21,6 +21,10 @@ Processing is performed locally by the browser. Images and GIF animations are no
 3. Adjust the processing settings.
 4. Prepare and download the result as an individual file or a ZIP archive when batch processing is supported.
 
+## Installable app and offline mode
+
+AKD Image can be installed as a PWA on a computer or phone from the [App page](https://image.akdworks.com/app). The installed version opens in its own window, receives controlled updates, and stores core pages and resources for offline use. Dropbox, other cloud sources, the initial download of certain AI and video components, and app updates require an internet connection. User images and results are never added to the offline cache.
+
 ## Features
 
 ### Optimization and conversion
@@ -103,6 +107,8 @@ When exporting to JPG, transparent areas receive a white background. PNG, WebP a
 - category filters and tool sorting;
 - a local favorites list for quick access;
 - short page URLs;
+- PWA installation on computers and phones;
+- offline access to core local tools;
 - no registration;
 - background processing for large images in supported browsers;
 - clear processing states and result previews.

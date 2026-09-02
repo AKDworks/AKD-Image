@@ -685,6 +685,169 @@
   margin-bottom: 32px;
 }
 
+/* PWA application page */
+.app-page-section { padding-top: 0; }
+.app-page {
+  display: grid;
+  gap: 20px;
+  padding-bottom: 72px;
+}
+.app-install-card {
+  display: flex;
+  align-items: center;
+  gap: clamp(20px, 5vw, 38px);
+  width: 100%;
+  padding: clamp(22px, 4vw, 36px) clamp(24px, 5vw, 40px);
+  border: 1px solid var(--border);
+  border-radius: var(--r-xl);
+  background: var(--surface);
+}
+.app-install-card__icon {
+  width: clamp(88px, 16vw, 126px);
+  height: clamp(88px, 16vw, 126px);
+  border-radius: 28%;
+  box-shadow: var(--shadow-md);
+  flex: 0 0 auto;
+}
+.app-install-card__content { min-width: 0; }
+.app-install-card__eyebrow {
+  display: block;
+  margin-bottom: 7px;
+  color: var(--accent);
+  font-size: .75rem;
+  font-weight: 750;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+.app-install-card h2 {
+  margin-bottom: 8px;
+  font-size: clamp(1.25rem, 3vw, 1.7rem);
+}
+.app-install-card__actions {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-top: 16px;
+}
+.app-install-card__actions .app-uninstall-btn {
+  padding-right: 18px;
+  padding-left: 18px;
+}
+.app-feature-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+.app-feature-card {
+  padding: 20px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  background: var(--surface);
+}
+.app-feature-card__icon-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  margin-bottom: 13px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--bg);
+  color: var(--accent);
+  flex: 0 0 auto;
+}
+.app-feature-card__icon-wrap svg {
+  display: block;
+  width: 24px;
+  height: 24px;
+}
+.app-feature-card .app-feature-card__update-icon--mobile { display: none; }
+.app-feature-card h3 {
+  margin-bottom: 6px;
+  font-size: .95rem;
+}
+.app-feature-card p {
+  color: var(--muted);
+  font-size: .8rem;
+  line-height: 1.5;
+}
+.app-details-card > h3:first-child {
+  margin-top: 0;
+}
+.app-details-card ul {
+  display: grid;
+  gap: 7px;
+  padding-left: 21px;
+}
+.app-platform-list {
+  display: grid;
+  gap: 12px;
+  margin-top: 16px;
+}
+.app-platform-list > div {
+  padding: 14px 16px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--bg);
+}
+.app-platform-list strong {
+  display: block;
+  margin-bottom: 4px;
+  font-size: .88rem;
+}
+.app-platform-list p {
+  margin: 0;
+  color: var(--muted);
+  font-size: .82rem;
+}
+
+@media (max-width: 640px) {
+  .app-install-card {
+    display: grid;
+    grid-template-columns: 88px minmax(0, 1fr);
+    align-items: start;
+    column-gap: 18px;
+    row-gap: 0;
+    padding: 22px;
+  }
+  .app-install-card__icon {
+    grid-column: 1;
+    grid-row: 1 / span 2;
+    width: 88px;
+    height: 88px;
+  }
+  .app-install-card__content { display: contents; }
+  .app-install-card__eyebrow {
+    grid-column: 2;
+    grid-row: 1;
+    align-self: end;
+  }
+  .app-install-card h2 {
+    grid-column: 2;
+    grid-row: 2;
+    align-self: start;
+    font-size: clamp(1.05rem, 4.8vw, 1.25rem);
+    line-height: 1.25;
+  }
+  .app-install-card__actions {
+    grid-column: 1 / -1;
+    grid-row: 3;
+    align-items: stretch;
+    flex-direction: column;
+    margin-top: 16px;
+  }
+  .app-install-card__actions .btn {
+    width: 100%;
+    padding-right: 14px;
+    padding-left: 14px;
+    font-size: .9rem;
+  }
+  .app-feature-grid { grid-template-columns: 1fr; }
+  .app-feature-card .app-feature-card__update-icon--desktop { display: none; }
+  .app-feature-card .app-feature-card__update-icon--mobile { display: block; }
+}
+
 .licenses-page {
   display: grid;
   gap: 20px;

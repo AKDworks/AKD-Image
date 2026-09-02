@@ -31,6 +31,7 @@
     '/gif-frames': '/pages/gif-frames.html',
     '/remove-background': '/pages/remove-background.html',
     '/favorites': '/pages/favorites.html',
+    '/app': '/pages/app.html',
     '/privacy': '/pages/privacy.html',
     '/about': '/pages/about.html',
     '/licenses': '/pages/licenses.html'
@@ -66,7 +67,10 @@
   }
 
   function applyTheme(theme) {
-    document.documentElement.dataset.theme = theme === 'dark' ? 'dark' : 'light';
+    const resolved = theme === 'dark' ? 'dark' : 'light';
+    document.documentElement.dataset.theme = resolved;
+    const themeColor = document.querySelector('meta[name="theme-color"]');
+    if (themeColor) themeColor.setAttribute('content', resolved === 'dark' ? '#181A20' : '#FFFFFF');
   }
 
   function applyThemeMode(mode) {
@@ -95,6 +99,12 @@
           </a>
         </div>
         <div class="header-side header-side--end">
+          <button class="header-install-btn hidden" type="button" data-pwa-install aria-label="Установить AKD Image" title="Установить AKD Image">
+            <svg viewBox="0 -960 960 960" aria-hidden="true" focusable="false">
+              <path fill="currentColor" d="M480-320 280-520l56-58 104 104v-326h80v326l104-104 56 58-200 200ZM240-160q-33 0-56.5-23.5T160-240v-120h80v120h480v-120h80v120q0 33-23.5 56.5T720-160H240Z"/>
+            </svg>
+            <span>Установить</span>
+          </button>
           <div class="theme-control" id="theme-control" role="group" aria-label="Выбор темы">
             <button class="theme-option" type="button" data-theme-mode="system" aria-label="Системная тема" title="Системная тема">
               <svg class="theme-icon theme-icon--desktop" viewBox="0 -960 960 960" aria-hidden="true" focusable="false">
@@ -115,6 +125,7 @@
               </svg>
             </button>
           </div>
+          <span class="header-install-divider hidden" data-pwa-install-divider aria-hidden="true"></span>
           <a href="${homeHref}" class="header-btn">Главная</a>
         </div>
       </div>
@@ -126,9 +137,10 @@
       <div class="container inner">
         <p class="footer-copy">© 2026 AKD Image – Бесплатные инструменты для работы с изображениями. Все права защищены.</p>
         <ul class="footer-links">
-          <li><a href="${routeHref('/about', '/pages/about.html')}">О проекте</a></li>
-          <li><a href="${routeHref('/privacy', '/pages/privacy.html')}">Конфиденциальность</a></li>
-          <li><a href="${routeHref('/licenses', '/pages/licenses.html')}">Лицензии</a></li>
+          <li class="footer-links__about"><a href="${routeHref('/about', '/pages/about.html')}">О проекте</a></li>
+          <li class="footer-links__app"><a href="${routeHref('/app', '/pages/app.html')}">Приложение</a></li>
+          <li class="footer-links__privacy"><a href="${routeHref('/privacy', '/pages/privacy.html')}">Конфиденциальность</a></li>
+          <li class="footer-links__licenses"><a href="${routeHref('/licenses', '/pages/licenses.html')}">Лицензии</a></li>
         </ul>
       </div>
       <div class="container footer-bottom">
@@ -257,6 +269,15 @@
     syncButtons();
   }
 
+  function loadPwaController() {
+    if (document.querySelector('script[data-pwa-controller]')) return;
+    const script = document.createElement('script');
+    script.src = '/js/pwa.js?v=4';
+    script.defer = true;
+    script.dataset.pwaController = '';
+    document.body.appendChild(script);
+  }
+
   document.addEventListener('DOMContentLoaded', () => {
     document.body.insertAdjacentHTML('afterbegin', headerHTML);
     document.body.insertAdjacentHTML('beforeend', footerHTML);
@@ -264,6 +285,7 @@
 
     initThemeControl();
     initLanguageControl();
+    loadPwaController();
 
     if (isLocalStaticHost) {
       document.querySelectorAll('a[href^="/"]').forEach(link => {

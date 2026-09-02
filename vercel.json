@@ -131,6 +131,11 @@
       "permanent": true
     },
     {
+      "source": "/pages/app.html",
+      "destination": "/app",
+      "permanent": true
+    },
+    {
       "source": "/pages/privacy.html",
       "destination": "/privacy",
       "permanent": true
@@ -248,6 +253,10 @@
       "destination": "/pages/favorites.html"
     },
     {
+      "source": "/app",
+      "destination": "/pages/app.html"
+    },
+    {
       "source": "/privacy",
       "destination": "/pages/privacy.html"
     },
@@ -261,6 +270,32 @@
     }
   ],
   "headers": [
+    {
+      "source": "/service-worker.js",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=0, must-revalidate"
+        },
+        {
+          "key": "Service-Worker-Allowed",
+          "value": "/"
+        }
+      ]
+    },
+    {
+      "source": "/manifest.webmanifest",
+      "headers": [
+        {
+          "key": "Content-Type",
+          "value": "application/manifest+json; charset=utf-8"
+        },
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=3600"
+        }
+      ]
+    },
     {
       "source": "/fonts/(.*)",
       "headers": [

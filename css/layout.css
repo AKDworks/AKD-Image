@@ -80,6 +80,40 @@ main {
 }
 .header-btn:hover { background: var(--accent-soft); }
 
+.header-install-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-height: 34px;
+  padding: 7px 12px;
+  border: 1px solid var(--border-accent-soft);
+  border-radius: var(--r-sm);
+  color: var(--accent);
+  background: var(--accent-light);
+  font-size: .8rem;
+  font-weight: 650;
+  line-height: 1;
+  white-space: nowrap;
+  transition: color var(--t), background var(--t), border-color var(--t);
+}
+.header-install-btn:hover {
+  color: var(--accent-hover);
+  background: var(--accent-soft);
+  border-color: var(--border-accent-muted);
+}
+.header-install-btn svg {
+  width: 17px;
+  height: 17px;
+  flex: 0 0 17px;
+}
+.header-install-divider {
+  width: 1px;
+  height: 24px;
+  background: var(--border);
+  flex: 0 0 1px;
+}
+
 .theme-control {
   display: inline-flex;
   align-items: center;
@@ -127,22 +161,39 @@ main {
 }
 .site-footer .inner {
   display: flex;
-  align-items: center;
+  align-items: baseline;
   justify-content: space-between;
   flex-wrap: wrap;
   gap: 16px;
 }
 .footer-copy {
   font-size: .8rem;
+  line-height: 1.5;
   color: var(--muted);
 }
+
+@media (min-width: 769px) {
+  .header-side--end .theme-control { order: 1; }
+  .header-side--end .header-install-btn { order: 2; }
+  .header-side--end .header-install-divider { order: 3; }
+  .header-side--end .header-btn { order: 4; }
+}
 .footer-links {
+  position: relative;
   display: flex;
+  align-items: flex-start;
   gap: 20px;
+  padding-bottom: 26px;
   list-style: none;
+}
+.footer-links__app {
+  position: absolute;
+  left: 0;
+  bottom: 0;
 }
 .footer-links a {
   font-size: .8rem;
+  line-height: 1.5;
   color: var(--muted);
   text-decoration: none;
   transition: color var(--t);
@@ -292,11 +343,22 @@ main {
 @media (max-width: 768px) {
   .container { padding-left: 24px; padding-right: 24px; }
   .header-btn { display: none; }
+  .header-side--end { gap: 7px; }
+  .header-install-divider { display: none; }
+  .header-install-btn {
+    width: 34px;
+    padding: 0;
+    border-radius: 999px;
+  }
+  .header-install-btn span { display: none; }
   .theme-option { width: 27px; height: 27px; }
   .theme-icon--desktop { display: none; }
   .theme-icon--mobile { display: block; }
   .site-footer .inner {
     align-items: flex-start;
+  }
+  .footer-links {
+    gap: 12px;
   }
   .footer-bottom {
     align-items: center;
