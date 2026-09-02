@@ -4,6 +4,7 @@
   const isLocalStaticHost = localHosts.includes(location.hostname);
   const homeHref = '/';
   const themeStorageKey = 'akd-image-theme';
+  const installAvailableStorageKey = 'akd-image-pwa-install-available';
   const systemDarkQuery = '(prefers-color-scheme: dark)';
   const localRoutes = {
     '/compress': '/pages/compress.html',
@@ -39,6 +40,23 @@
 
   function routeHref(href, page) {
     return isLocalStaticHost ? page : href;
+  }
+
+  function initialInstallControlsVisible() {
+    const standalone = window.matchMedia?.('(display-mode: standalone)').matches ||
+      window.navigator.standalone === true;
+    if (standalone) return false;
+
+    const ios = /iphone|ipad|ipod/i.test(navigator.userAgent) ||
+      (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+    const desktopSafari = /^((?!chrome|android|crios|edg).)*safari/i.test(navigator.userAgent) && !ios;
+    if (ios || desktopSafari) return true;
+
+    try {
+      return sessionStorage.getItem(installAvailableStorageKey) === 'true';
+    } catch {
+      return false;
+    }
   }
 
   function storedTheme() {
@@ -89,17 +107,19 @@
 
   applyThemeMode(currentThemeMode());
 
+  const initialInstallHiddenClass = initialInstallControlsVisible() ? '' : ' hidden';
+
   const headerHTML = `
     <header class="site-header">
       <div class="container inner">
         <div class="header-side header-side--start">
           <a href="${homeHref}" class="logo" aria-label="AKD Image">
-            <img class="logo-mark" src="/assets/icons/favicon.svg" alt="" aria-hidden="true">
+            <img class="logo-mark" src="/assets/icons/favicon.svg?v=2" alt="" aria-hidden="true">
             <span>AKD Image</span>
           </a>
         </div>
         <div class="header-side header-side--end">
-          <button class="header-install-btn hidden" type="button" data-pwa-install aria-label="Установить AKD Image" title="Установить AKD Image">
+          <button class="header-install-btn${initialInstallHiddenClass}" type="button" data-pwa-install aria-label="Установить AKD Image" title="Установить AKD Image">
             <svg viewBox="0 -960 960 960" aria-hidden="true" focusable="false">
               <path fill="currentColor" d="M480-320 280-520l56-58 104 104v-326h80v326l104-104 56 58-200 200ZM240-160q-33 0-56.5-23.5T160-240v-120h80v120h480v-120h80v120q0 33-23.5 56.5T720-160H240Z"/>
             </svg>
@@ -125,7 +145,7 @@
               </svg>
             </button>
           </div>
-          <span class="header-install-divider hidden" data-pwa-install-divider aria-hidden="true"></span>
+          <span class="header-install-divider${initialInstallHiddenClass}" data-pwa-install-divider aria-hidden="true"></span>
           <a href="${homeHref}" class="header-btn">Главная</a>
         </div>
       </div>
@@ -272,7 +292,7 @@
   function loadPwaController() {
     if (document.querySelector('script[data-pwa-controller]')) return;
     const script = document.createElement('script');
-    script.src = '/js/pwa.js?v=4';
+    script.src = '/js/pwa.js?v=5';
     script.defer = true;
     script.dataset.pwaController = '';
     document.body.appendChild(script);

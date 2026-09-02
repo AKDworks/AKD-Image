@@ -1,5 +1,6 @@
 /* PWA installation, updates and platform guidance */
 (function () {
+  const installAvailableStorageKey = 'akd-image-pwa-install-available';
   const installButtons = Array.from(document.querySelectorAll('[data-pwa-install]'));
   const installDivider = document.querySelector('[data-pwa-install-divider]');
   const pageButtons = Array.from(document.querySelectorAll('[data-pwa-install-page]'));
@@ -34,9 +35,27 @@
     return ['localhost', '127.0.0.1'].includes(location.hostname) ? '/pages/app.html' : '/app';
   }
 
+  function rememberedInstallAvailability() {
+    try {
+      return sessionStorage.getItem(installAvailableStorageKey) === 'true';
+    } catch {
+      return false;
+    }
+  }
+
+  function rememberInstallAvailability(available) {
+    try {
+      if (available) sessionStorage.setItem(installAvailableStorageKey, 'true');
+      else sessionStorage.removeItem(installAvailableStorageKey);
+    } catch {
+      /* Installation still works when session storage is unavailable. */
+    }
+  }
+
   function syncInstallControls() {
     const installed = isStandalone();
-    const canOfferFromHeader = Boolean(deferredInstallPrompt) || isIOS() || isDesktopSafari();
+    const canOfferFromHeader = Boolean(deferredInstallPrompt) || rememberedInstallAvailability() ||
+      isIOS() || isDesktopSafari();
 
     installButtons.forEach(button => {
       button.classList.toggle('hidden', installed || !canOfferFromHeader);
@@ -155,7 +174,7 @@
       <section class="modal pwa-install-modal" role="dialog" aria-modal="true" aria-labelledby="pwa-install-title">
         <div class="modal__head">
           <div class="pwa-install-modal__title-wrap">
-            <img src="/assets/icons/favicon.svg" alt="" aria-hidden="true">
+            <img src="/assets/icons/favicon.svg?v=2" alt="" aria-hidden="true">
             <h3 id="pwa-install-title">Установить AKD Image</h3>
           </div>
           <button class="modal__close" type="button" data-pwa-close aria-label="Закрыть">×</button>
@@ -226,7 +245,7 @@
       <section class="modal pwa-install-modal" role="dialog" aria-modal="true" aria-labelledby="pwa-remove-title">
         <div class="modal__head">
           <div class="pwa-install-modal__title-wrap">
-            <img src="/assets/icons/favicon.svg" alt="" aria-hidden="true">
+            <img src="/assets/icons/favicon.svg?v=2" alt="" aria-hidden="true">
             <h3 id="pwa-remove-title">${t('Удалить AKD Image')}</h3>
           </div>
           <button class="modal__close" type="button" data-pwa-close aria-label="${t('Закрыть')}">×</button>
@@ -322,11 +341,13 @@
   window.addEventListener('beforeinstallprompt', event => {
     event.preventDefault();
     deferredInstallPrompt = event;
+    rememberInstallAvailability(true);
     syncInstallControls();
   });
 
   window.addEventListener('appinstalled', () => {
     deferredInstallPrompt = null;
+    rememberInstallAvailability(false);
     closeInstallModal();
     syncInstallControls();
   });
