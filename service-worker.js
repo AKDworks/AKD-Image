@@ -1,38 +1,48 @@
 // Increment this value when the offline bundle changes materially.
-const CACHE_VERSION = 'akd-image-pwa-v22';
+const CACHE_VERSION = 'akd-image-pwa-v23';
 const STATIC_CACHE = `${CACHE_VERSION}-static`;
 const RUNTIME_CACHE = `${CACHE_VERSION}-runtime`;
 
+const LOCAL_STATIC_HOSTS = new Set(['localhost', '127.0.0.1']);
+const IS_LOCAL_STATIC_HOST = LOCAL_STATIC_HOSTS.has(self.location.hostname);
+const OFFLINE_ROUTE_PATHS = [
+  '/app',
+  '/about',
+  '/privacy',
+  '/licenses',
+  '/favorites',
+  '/compress',
+  '/gif-optimize',
+  '/resize',
+  '/watermark',
+  '/crop',
+  '/convert',
+  '/rotate',
+  '/effects',
+  '/blur',
+  '/meme',
+  '/split',
+  '/round',
+  '/pixelate',
+  '/exif',
+  '/base64',
+  '/favicon',
+  '/palette',
+  '/pdf',
+  '/collage',
+  '/annotate',
+  '/gif-trim',
+  '/gif-frames'
+];
+
+function offlineDocumentUrl(route) {
+  return IS_LOCAL_STATIC_HOST ? `/pages${route}.html` : route;
+}
+
 const PRECACHE_URLS = [
   '/',
-  '/index.html',
-  '/pages/app.html',
-  '/pages/about.html',
-  '/pages/privacy.html',
-  '/pages/licenses.html',
-  '/pages/favorites.html',
-  '/pages/compress.html',
-  '/pages/gif-optimize.html',
-  '/pages/resize.html',
-  '/pages/watermark.html',
-  '/pages/crop.html',
-  '/pages/convert.html',
-  '/pages/rotate.html',
-  '/pages/effects.html',
-  '/pages/blur.html',
-  '/pages/meme.html',
-  '/pages/split.html',
-  '/pages/round.html',
-  '/pages/pixelate.html',
-  '/pages/exif.html',
-  '/pages/base64.html',
-  '/pages/favicon.html',
-  '/pages/palette.html',
-  '/pages/pdf.html',
-  '/pages/collage.html',
-  '/pages/annotate.html',
-  '/pages/gif-trim.html',
-  '/pages/gif-frames.html',
+  ...(IS_LOCAL_STATIC_HOST ? ['/index.html'] : []),
+  ...OFFLINE_ROUTE_PATHS.map(offlineDocumentUrl),
   '/css/main.css?v=94',
   '/css/vars.css?v=2',
   '/css/base.css?v=4',
@@ -64,35 +74,9 @@ const PRECACHE_URLS = [
   '/fonts/Inter-800.woff2'
 ];
 
-const OFFLINE_ROUTES = {
-  '/app': '/pages/app.html',
-  '/about': '/pages/about.html',
-  '/privacy': '/pages/privacy.html',
-  '/licenses': '/pages/licenses.html',
-  '/favorites': '/pages/favorites.html',
-  '/compress': '/pages/compress.html',
-  '/gif-optimize': '/pages/gif-optimize.html',
-  '/resize': '/pages/resize.html',
-  '/watermark': '/pages/watermark.html',
-  '/crop': '/pages/crop.html',
-  '/convert': '/pages/convert.html',
-  '/rotate': '/pages/rotate.html',
-  '/effects': '/pages/effects.html',
-  '/blur': '/pages/blur.html',
-  '/meme': '/pages/meme.html',
-  '/split': '/pages/split.html',
-  '/round': '/pages/round.html',
-  '/pixelate': '/pages/pixelate.html',
-  '/exif': '/pages/exif.html',
-  '/base64': '/pages/base64.html',
-  '/favicon': '/pages/favicon.html',
-  '/palette': '/pages/palette.html',
-  '/pdf': '/pages/pdf.html',
-  '/collage': '/pages/collage.html',
-  '/annotate': '/pages/annotate.html',
-  '/gif-trim': '/pages/gif-trim.html',
-  '/gif-frames': '/pages/gif-frames.html'
-};
+const OFFLINE_ROUTES = Object.fromEntries(
+  OFFLINE_ROUTE_PATHS.map(route => [route, offlineDocumentUrl(route)])
+);
 
 async function precache() {
   const cache = await caches.open(STATIC_CACHE);
@@ -146,8 +130,11 @@ async function cacheFirstNavigation(request) {
     }
     return response;
   } catch {
-    const homeFallback = await caches.match('/index.html', { ignoreSearch: true });
-    return homeFallback || caches.match('/', { ignoreSearch: true });
+    const homeFallback = await caches.match('/', { ignoreSearch: true });
+    return homeFallback || new Response('AKD Image is unavailable offline.', {
+      status: 503,
+      headers: { 'Content-Type': 'text/plain; charset=utf-8' }
+    });
   }
 }
 
