@@ -1,0 +1,88 @@
+/* Light-only refinements. Shared layouts and the dark palette stay unchanged. */
+html:not([data-theme="dark"]) .hero:has(+ .tools-section .tool-filters) {
+  padding-top: 48px;
+}
+html:not([data-theme="dark"]) .hero:has(+ .tools-section .tool-filters) p {
+  margin-bottom: 24px;
+}
+html:not([data-theme="dark"]) .tools-grid-toolbar {
+  margin-top: 24px;
+}
+
+/* Filled selection means the same thing in navigation and tool mode switches. */
+html:not([data-theme="dark"]) .header-btn,
+html:not([data-theme="dark"]) .base64-tab.active {
+  background: var(--selection-bg);
+  color: var(--selection-text);
+}
+html:not([data-theme="dark"]) .header-btn:hover {
+  background: var(--accent-hover);
+}
+html:not([data-theme="dark"]) .base64-tabs.has-mode-indicator::before {
+  background: var(--selection-bg);
+}
+html:not([data-theme="dark"]) .base64-tabs.has-mode-indicator .base64-tab.active {
+  background: transparent;
+}
+
+/* Raised surfaces stay white; their contents use a softer neutral surface. */
+html:not([data-theme="dark"]) :is(.modal, .custom-select__menu, .tool-sort__menu, .language-menu) {
+  background: var(--surface);
+}
+html:not([data-theme="dark"]) .modal {
+  box-shadow: 0 16px 48px rgba(24, 32, 48, .2);
+}
+html:not([data-theme="dark"]) :is(.contact-notice, .contact-captcha-panel, .contact-status) {
+  background: var(--md-sys-color-surface-container);
+}
+html:not([data-theme="dark"]) .pwa-install-summary__section {
+  background: var(--md-sys-color-surface-container);
+}
+html:not([data-theme="dark"]) .contact-status[data-kind="success"] {
+  background: var(--status-done-bg);
+}
+html:not([data-theme="dark"]) .contact-status[data-kind="error"] {
+  background: var(--md-sys-color-error-container);
+}
+html:not([data-theme="dark"]) .modal .form-group :is(input:not([type="range"]):not([type="checkbox"]):not([type="radio"]), select, textarea),
+html:not([data-theme="dark"]) .modal .custom-select__trigger {
+  background: #F7F8FA;
+}
+html:not([data-theme="dark"]) input::placeholder,
+html:not([data-theme="dark"]) textarea::placeholder {
+  color: #626976;
+  opacity: 1;
+}
+
+/* Give interactive outlines enough definition without outlining catalog cards. */
+html:not([data-theme="dark"]) :is(.filter-btn:not(.active), .radio-option:not(:has(input:checked)), .tool-sort__trigger, .language-trigger) {
+  border-color: var(--md-sys-color-outline);
+}
+html:not([data-theme="dark"]) :is(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+html:not([data-theme="dark"]) :is(input, textarea)[aria-invalid="true"]:focus-visible {
+  outline-color: var(--md-sys-color-error);
+}
+html:not([data-theme="dark"]) .form-group :is(input, select, textarea):focus-visible {
+  outline: none;
+  box-shadow: inset 0 0 0 1px var(--accent);
+}
+html:not([data-theme="dark"]) .form-group :is(input, textarea)[aria-invalid="true"]:focus-visible {
+  box-shadow: inset 0 0 0 1px var(--md-sys-color-error);
+}
+html:not([data-theme="dark"]) .btn:disabled,
+html:not([data-theme="dark"]) .contact-form__actions .btn:disabled {
+  color: #747B86;
+  background: #E3E6EB;
+  border-color: transparent;
+  opacity: 1;
+  box-shadow: none;
+}
+html:not([data-theme="dark"]) .video-gif-preview :is(video, img) {
+  background: var(--workspace-bg);
+}
+@media (max-width: 768px) {
+  html:not([data-theme="dark"]) .hero:has(+ .tools-section .tool-filters) { padding-top: 36px; }
+}

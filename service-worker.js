@@ -1,12 +1,12 @@
 // Increment this value when the offline bundle changes materially.
-const CACHE_VERSION = 'akd-image-pwa-v23';
+const CACHE_VERSION = 'akd-image-pwa-3.0.1';
 const STATIC_CACHE = `${CACHE_VERSION}-static`;
 const RUNTIME_CACHE = `${CACHE_VERSION}-runtime`;
 
 const LOCAL_STATIC_HOSTS = new Set(['localhost', '127.0.0.1']);
 const IS_LOCAL_STATIC_HOST = LOCAL_STATIC_HOSTS.has(self.location.hostname);
 const OFFLINE_ROUTE_PATHS = [
-  '/app',
+  '/faq',
   '/about',
   '/privacy',
   '/licenses',
@@ -40,29 +40,32 @@ function offlineDocumentUrl(route) {
 }
 
 const PRECACHE_URLS = [
+  '/css/light-theme.css?v=3.0.0',
+  '/LICENSE.MaterialSymbols.txt',
   '/',
   ...(IS_LOCAL_STATIC_HOST ? ['/index.html'] : []),
   ...OFFLINE_ROUTE_PATHS.map(offlineDocumentUrl),
-  '/css/main.css?v=94',
-  '/css/vars.css?v=2',
-  '/css/base.css?v=4',
-  '/css/layout.css?v=13',
-  '/css/components.css?v=24',
-  '/css/pages.css?v=44',
-  '/js/i18n.js?v=23',
-  '/js/layout.js?v=29',
-  '/js/pwa.js?v=5',
-  '/js/core.js?v=42',
-  '/js/favorites.js?v=3',
-  '/js/image-worker.js?v=3',
-  '/js/image-formats.js?v=1',
-  '/js/gif-optimize.js?v=4',
-  '/js/gif-frames.js?v=2',
+  '/css/main.css?v=3.0.1',
+  '/css/vars.css?v=3.0.0',
+  '/css/base.css?v=3.0.0',
+  '/css/layout.css?v=3.0.0',
+  '/css/components.css?v=3.0.0',
+  '/css/pages.css?v=3.0.1',
+  '/css/remove-background.css?v=3.0.0',
+  '/js/i18n.js?v=3.0.0',
+  '/js/layout.js?v=3.0.0',
+  '/js/pwa.js?v=3.0.0',
+  '/js/core.js?v=3.0.0',
+  '/js/favorites.js?v=3.0.1',
+  '/js/image-worker.js?v=3.0.0',
+  '/js/image-formats.js?v=3.0.0',
+  '/js/gif-optimize.js?v=3.0.0',
+  '/js/gif-frames.js?v=3.0.0',
   '/js/vendor/jszip.min.js',
   '/js/vendor/jspdf.umd.min.js',
   '/js/vendor/modern-gif/index.js?v=2.1.0',
   '/js/vendor/modern-gif/worker.js?v=2.1.0',
-  '/assets/icons/favicon.svg?v=2',
+  '/assets/icons/favicon.svg?v=3.0.0',
   '/assets/icons/app-icon-192.png',
   '/assets/icons/app-icon-512.png',
   '/assets/icons/app-icon-maskable-512.png',
@@ -111,17 +114,7 @@ self.addEventListener('message', event => {
   if (event.data?.type === 'SKIP_WAITING') self.skipWaiting();
 });
 
-async function cacheFirstNavigation(request) {
-  const cached = await caches.match(request, { ignoreSearch: true });
-  if (cached) return cached;
-
-  const url = new URL(request.url);
-  const fallbackPath = OFFLINE_ROUTES[url.pathname];
-  if (fallbackPath) {
-    const fallback = await caches.match(fallbackPath, { ignoreSearch: true });
-    if (fallback) return fallback;
-  }
-
+async function networkFirstNavigation(request) {
   try {
     const response = await fetch(request);
     if (response.ok) {
@@ -130,6 +123,16 @@ async function cacheFirstNavigation(request) {
     }
     return response;
   } catch {
+    const cached = await caches.match(request, { ignoreSearch: true });
+    if (cached) return cached;
+
+    const url = new URL(request.url);
+    const fallbackPath = OFFLINE_ROUTES[url.pathname];
+    if (fallbackPath) {
+      const fallback = await caches.match(fallbackPath, { ignoreSearch: true });
+      if (fallback) return fallback;
+    }
+
     const homeFallback = await caches.match('/', { ignoreSearch: true });
     return homeFallback || new Response('AKD Image is unavailable offline.', {
       status: 503,
@@ -139,7 +142,7 @@ async function cacheFirstNavigation(request) {
 }
 
 async function cacheFirst(request) {
-  const cached = await caches.match(request, { ignoreSearch: true });
+  const cached = await caches.match(request);
   if (cached) return cached;
 
   const response = await fetch(request);
@@ -158,7 +161,7 @@ self.addEventListener('fetch', event => {
   if (url.origin !== self.location.origin) return;
 
   if (request.mode === 'navigate') {
-    event.respondWith(cacheFirstNavigation(request));
+    event.respondWith(networkFirstNavigation(request));
     return;
   }
 

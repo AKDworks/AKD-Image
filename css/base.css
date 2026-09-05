@@ -2,6 +2,8 @@
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 html {
   color-scheme: light;
+  /* Use our rounded pressed states instead of the browser's tap overlay. */
+  -webkit-tap-highlight-color: transparent;
   font-size: 16px;
   scroll-behavior: smooth;
 }
@@ -23,6 +25,44 @@ img, svg { display: block; max-width: 100%; }
 a { color: var(--accent); text-decoration: none; }
 button { cursor: pointer; font-family: inherit; }
 input, select, textarea { font-family: inherit; }
+
+@keyframes md3-dialog-enter {
+  from {
+    opacity: .72;
+    transform: translateY(8px) scale(.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes md3-menu-enter {
+  from {
+    opacity: 0;
+    transform: translateY(-4px) scale(.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+:where(a, button, input, select, textarea, [tabindex]):focus-visible {
+  outline: none;
+  box-shadow: inset 0 0 0 2px var(--focus-ring-strong);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after {
+    animation-duration: .01ms !important;
+    animation-delay: 0s !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .01ms !important;
+    transition-delay: 0s !important;
+  }
+}
 
 /* Utilities */
 [hidden]  { display: none !important; }

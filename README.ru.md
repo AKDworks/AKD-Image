@@ -4,7 +4,7 @@ AKD Image – бесплатный веб-сервис для локальной
 
 Сайт: [image.akdworks.com](https://image.akdworks.com/)
 
-![Главная страница AKD Image](assets/screenshots/akd-image-homepage.png)
+![Главная страница AKD Image](assets/screenshots/akd-image-homepage-new.png)
 
 ## О проекте
 

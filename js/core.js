@@ -1,3 +1,17 @@
+/* Shared localization bridge for dynamically created accessibility text. */
+const I18nBridge = {
+  sourceText(element) {
+    return window.AKDI18n?.sourceText?.(element) || element?.textContent?.trim() || '';
+  },
+  setAttribute(element, name, sourceValue) {
+    if (window.AKDI18n?.setAttribute) {
+      window.AKDI18n.setAttribute(element, name, sourceValue);
+      return;
+    }
+    element?.setAttribute(name, sourceValue);
+  },
+};
+
 /* Toasts */
 const Toast = (() => {
   let container = null;
@@ -59,6 +73,7 @@ const CustomSelect = (() => {
     trigger.innerHTML = '<span class="custom-select__value"></span><svg class="custom-select__chevron" viewBox="0 0 20 20" aria-hidden="true"><path d="m6 8 4 4 4-4"/></svg>';
 
     const label = select.labels?.[0] || select.closest('.form-group')?.querySelector('label');
+    const labelSource = I18nBridge.sourceText(label);
 
     const menu = document.createElement('div');
     menu.className = 'custom-select__menu';
@@ -103,9 +118,10 @@ const CustomSelect = (() => {
       const value = trigger.querySelector('.custom-select__value');
       value.textContent = selected ? selected.textContent : '';
       value.style.fontFamily = selected?.dataset.previewFont || '';
-      trigger.setAttribute('aria-label', label
-        ? `${label.textContent.trim()}: ${selected?.textContent || ''}`
-        : selected?.textContent || 'Выбрать формат');
+      const selectedSource = I18nBridge.sourceText(selected);
+      I18nBridge.setAttribute(trigger, 'aria-label', labelSource
+        ? `${labelSource}: ${selectedSource}`
+        : selectedSource || 'Выбрать формат');
       trigger.disabled = select.disabled;
       trigger.title = select.title;
       instance.options.forEach((button, index) => {
@@ -322,6 +338,7 @@ const CustomColorPicker = (() => {
     wrapper.append(trigger, panel);
 
     const label = input.labels?.[0] || input.closest('.form-group')?.querySelector('label');
+    const labelSource = I18nBridge.sourceText(label);
     const swatch = trigger.querySelector('.custom-color__swatch');
     const valueLabel = trigger.querySelector('.custom-color__value');
     const saturation = panel.querySelector('.custom-color__saturation');
@@ -350,9 +367,9 @@ const CustomColorPicker = (() => {
       rgbInputs.b.value = String(rgb.b);
       cursor.style.left = `${state.s}%`;
       cursor.style.top = `${100 - state.v}%`;
-      saturation.setAttribute('aria-valuetext', `Насыщенность ${Math.round(state.s)}%, яркость ${Math.round(state.v)}%`);
-      trigger.setAttribute('aria-label', label
-        ? `${label.textContent.trim()}: ${hex}`
+      I18nBridge.setAttribute(saturation, 'aria-valuetext', `Насыщенность ${Math.round(state.s)}%, яркость ${Math.round(state.v)}%`);
+      I18nBridge.setAttribute(trigger, 'aria-label', labelSource
+        ? `${labelSource}: ${hex}`
         : `Цвет: ${hex}`);
     }
 
@@ -684,7 +701,7 @@ const ResultFlow = (() => {
           </div>
           <div class="result-preview-modal__labels hidden" aria-hidden="true"><span>До</span><span>После</span></div>
           <div class="result-preview-modal__navigation hidden">
-            <button class="btn btn-secondary result-preview-modal__previous" type="button">Назад</button>
+            <button class="btn btn-secondary result-preview-modal__previous" type="button">Предыдущее</button>
             <span class="result-preview-modal__filename"></span>
             <button class="btn btn-secondary result-preview-modal__next" type="button">Далее</button>
           </div>
@@ -1504,7 +1521,7 @@ const FileUtils = {
     this.validateFile(file);
     const mime = this.getFileMime(file);
     if (!this.isHeic(file) && mime !== 'image/svg+xml') return file;
-    const formats = await import('/js/image-formats.js?v=1');
+    const formats = await import('/js/image-formats.js?v=3.0.0');
     return formats.prepareInput(file, mime);
   },
 
@@ -1564,7 +1581,7 @@ const FileUtils = {
 
     if (['image/heic', 'image/heif', 'image/bmp'].includes(mimeType)) {
       try {
-        const formats = await import('/js/image-formats.js?v=1');
+        const formats = await import('/js/image-formats.js?v=3.0.0');
         return await formats.encodeCanvas(canvas, mimeType, quality);
       } catch (err) {
         console.error(err);
@@ -2236,7 +2253,7 @@ const ImageProcessor = (() => {
   function getWorker() {
     if (worker) return worker;
 
-    worker = new Worker('/js/image-worker.js?v=3', { type: 'module' });
+    worker = new Worker('/js/image-worker.js?v=3.0.0', { type: 'module' });
     worker.addEventListener('message', event => {
       const task = pending.get(event.data.id);
       if (!task) return;
@@ -2573,13 +2590,6 @@ const DropboxChooser = (() => {
 
 let uploadSourceIconIndex = 0;
 
-window.addEventListener('akd-languagechange', () => {
-  const label = window.AKDI18n?.t?.('Скоро') || 'Скоро';
-  document.querySelectorAll('.upload-source-tooltip').forEach(tooltip => {
-    tooltip.dataset.tooltip = label;
-  });
-});
-
 /* Dropzone */
 class Dropzone {
   constructor(el, opts = {}) {
@@ -2593,8 +2603,6 @@ class Dropzone {
     const sources = this._createUploadSources();
     const dropboxButton = sources.querySelector('.upload-source__button--dropbox');
     el.insertAdjacentElement('afterend', sources);
-    if (navigator.onLine !== false) DropboxChooser.load().catch(() => {});
-
     el.addEventListener('dragover', e => {
       e.preventDefault();
       el.classList.add('drag-over');
@@ -2621,6 +2629,9 @@ class Dropzone {
     if (input) {
       input.multiple = this.opts.multiple;
       if (this.opts.accept.length) input.accept = this.opts.accept.join(',');
+      if (!input.hasAttribute('aria-label') && !input.hasAttribute('aria-labelledby')) {
+        I18nBridge.setAttribute(input, 'aria-label', this.opts.multiple ? 'Выбрать файлы' : 'Выбрать файл');
+      }
       input.addEventListener('change', () => {
         if (input.files.length) this._handle(input.files);
         input.value = '';
@@ -2650,7 +2661,7 @@ class Dropzone {
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 1.807 0 5.629l6 3.822 6.001-3.822L6 1.807Zm12 0-6 3.822 6 3.822 6-3.822-6-3.822ZM0 13.274l6 3.822 6.001-3.822L6 9.452 0 13.274ZM18 9.452l-6 3.822 6 3.822 6-3.822-6-3.822ZM6 18.371l6.001 3.822 6-3.822-6-3.822L6 18.371Z"/></svg>
         <span>Dropbox</span>
       </button>
-      <span class="upload-source-tooltip" data-tooltip="${window.AKDI18n?.t?.('Скоро') || 'Скоро'}">
+      <span class="upload-source-unavailable" title="Скоро">
         <button class="upload-source__button upload-source__button--coming" type="button" disabled aria-label="Google Drive">
           <svg viewBox="0 0 192 192" fill="none" aria-hidden="true">
             <mask id="${iconId}-a" width="168" height="154" x="12" y="18" maskUnits="userSpaceOnUse" style="mask-type:alpha"><path fill="#b43333" d="M63.09 37c14.626-25.333 51.193-25.334 65.819 0l45.033 78c14.626 25.334-3.657 57.001-32.91 57.001H50.967c-29.253 0-47.536-31.667-32.91-57.001z"/></mask>
@@ -2828,7 +2839,7 @@ class FileListManager {
     this.selectedId = null;
     this.locked = false;
     this.container.setAttribute('role', 'listbox');
-    this.container.setAttribute('aria-label', 'Загруженные изображения');
+    I18nBridge.setAttribute(this.container, 'aria-label', 'Загруженные изображения');
   }
 
   clear() {

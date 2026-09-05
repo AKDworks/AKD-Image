@@ -1,17 +1,17 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-  <script src="/js/i18n.js?v=23"></script>
+  <script src="/js/i18n.js?v=3.0.0"></script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Настройка избранного – AKD Image</title>
   <meta name="description" content="Настройте список избранных инструментов AKD Image для быстрого доступа на главной странице.">
   <meta name="robots" content="noindex, nofollow">
   <link rel="canonical" href="https://image.akdworks.com/favorites">
-  <link rel="icon" href="/assets/icons/favicon.svg?v=2" type="image/svg+xml">
+  <link rel="icon" href="/assets/icons/favicon.svg?v=3.0.0" type="image/svg+xml">
   <link rel="manifest" href="/manifest.webmanifest">
   <link rel="apple-touch-icon" href="/assets/icons/apple-touch-icon.png">
-  <meta name="theme-color" content="#181A20">
+  <meta name="theme-color" content="#191C20">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-title" content="AKD Image">
@@ -20,10 +20,10 @@
   <link rel="preload" href="/fonts/Inter-600.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="preload" href="/fonts/Inter-700.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="preload" href="/fonts/Inter-800.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="stylesheet" href="/css/main.css?v=94">
+<link rel="stylesheet" href="/css/main.css?v=3.0.1">
 </head>
 <body>
-<script src="/js/layout.js?v=29"></script>
+<script src="/js/layout.js?v=3.0.0"></script>
 
 <main>
   <section class="hero hero--compact">
@@ -35,18 +35,57 @@
     <div class="container">
       <div class="favorites-page-toolbar">
         <p class="section-title">Все инструменты</p>
-          <div class="favorites-page-actions">
+        <div class="favorites-page-actions">
+          <div class="tool-search favorites-page-search" id="favorites-search">
+            <button
+              class="tool-sort__trigger tool-search__trigger"
+              id="favorites-search-trigger"
+              type="button"
+              aria-expanded="false"
+              aria-controls="favorites-search-panel"
+              aria-label="Открыть поиск инструментов"
+              title="Поиск инструментов"
+            >
+              <svg class="tool-sort__icon" viewBox="0 -960 960 960" aria-hidden="true">
+                <path d="M784-120 532-372q-30 24-69 38t-83 14q-109 0-184.5-75.5T120-580q0-109 75.5-184.5T380-840q109 0 184.5 75.5T640-580q0 44-14 83t-38 69l252 252-56 56ZM380-400q75 0 127.5-52.5T560-580q0-75-52.5-127.5T380-760q-75 0-127.5 52.5T200-580q0 75 52.5 127.5T380-400Z"/>
+              </svg>
+            </button>
+            <div class="tool-search-panel" id="favorites-search-panel" hidden>
+              <div class="tool-search-field">
+                <svg class="tool-search-field__icon" viewBox="0 -960 960 960" aria-hidden="true">
+                  <path d="M784-120 532-372q-30 24-69 38t-83 14q-109 0-184.5-75.5T120-580q0-109 75.5-184.5T380-840q109 0 184.5 75.5T640-580q0 44-14 83t-38 69l252 252-56 56ZM380-400q75 0 127.5-52.5T560-580q0-75-52.5-127.5T380-760q-75 0-127.5 52.5T200-580q0 75 52.5 127.5T380-400Z"/>
+                </svg>
+                <input
+                  class="tool-search-field__input"
+                  id="favorites-search-input"
+                  type="search"
+                  placeholder="Найти инструмент"
+                  aria-label="Поиск по названию и описанию инструмента"
+                  autocomplete="off"
+                  spellcheck="false"
+                >
+                <button class="tool-search-field__clear" id="favorites-search-clear" type="button" aria-label="Закрыть поиск" title="Закрыть поиск">
+                  <svg viewBox="0 -960 960 960" aria-hidden="true">
+                    <path d="m256-200-56-56 224-224-224-224 56-56 224 224 224-224 56 56-224 224 224 224-56 56-224-224-224 224Z"/>
+                  </svg>
+                </button>
+              </div>
+            </div>
+          </div>
           <button class="btn btn-secondary btn-sm" id="favorites-back" type="button">Назад</button>
           <button class="btn btn-primary btn-sm" id="favorites-confirm" type="button">Подтвердить</button>
         </div>
       </div>
       <div class="tools-grid favorite-picker" id="favorite-picker" aria-live="polite"></div>
+      <div class="favorites-empty favorites-search-empty" id="favorites-search-empty" role="status" aria-live="polite" hidden>
+        <p id="favorites-search-empty-message"></p>
+      </div>
       <p class="favorites-page-status text-muted" id="favorites-page-status" hidden></p>
     </div>
   </section>
 </main>
 
-<script src="/js/core.js?v=42"></script>
-<script src="/js/favorites.js?v=3"></script>
+<script src="/js/core.js?v=3.0.0"></script>
+<script src="/js/favorites.js?v=3.0.1"></script>
 </body>
 </html>

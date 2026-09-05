@@ -3,12 +3,12 @@
   const installAvailableStorageKey = 'akd-image-pwa-install-available';
   const installButtons = Array.from(document.querySelectorAll('[data-pwa-install]'));
   const installDivider = document.querySelector('[data-pwa-install-divider]');
-  const pageButtons = Array.from(document.querySelectorAll('[data-pwa-install-page]'));
-  const pageStatus = document.querySelector('[data-pwa-status]');
+  const infoButtons = Array.from(document.querySelectorAll('[data-pwa-install-info]'));
   let deferredInstallPrompt = null;
   let activeModal = null;
   let lastFocusedElement = null;
   let refreshing = false;
+  let updateReloadTimer = null;
 
   function t(value) {
     return window.AKDI18n?.t(value) || value;
@@ -29,10 +29,6 @@
 
   function isDesktopFirefox() {
     return /firefox/i.test(navigator.userAgent) && !/android/i.test(navigator.userAgent);
-  }
-
-  function appPageHref() {
-    return ['localhost', '127.0.0.1'].includes(location.hostname) ? '/pages/app.html' : '/app';
   }
 
   function rememberedInstallAvailability() {
@@ -62,22 +58,12 @@
     });
     installDivider?.classList.toggle('hidden', installed || !canOfferFromHeader);
 
-    pageButtons.forEach(button => {
-      const label = t(installed ? 'Как удалить AKD Image' : 'Установить AKD Image');
-      button.classList.remove('hidden');
-      button.classList.toggle('btn-primary', !installed);
-      button.classList.toggle('btn-secondary', installed);
-      button.classList.toggle('app-uninstall-btn', installed);
+    infoButtons.forEach(button => {
+      const label = t(installed ? 'Как удалить AKD Image' : 'Установить приложение');
       button.textContent = label;
       button.setAttribute('aria-label', label);
     });
 
-    if (pageStatus) {
-      pageStatus.textContent = installed
-        ? 'AKD Image уже установлен на этом устройстве.'
-        : 'Установка занимает несколько секунд и не требует регистрации.';
-      pageStatus.classList.toggle('is-installed', installed);
-    }
   }
 
   function platformInstruction() {
@@ -174,7 +160,7 @@
       <section class="modal pwa-install-modal" role="dialog" aria-modal="true" aria-labelledby="pwa-install-title">
         <div class="modal__head">
           <div class="pwa-install-modal__title-wrap">
-            <img src="/assets/icons/favicon.svg?v=2" alt="" aria-hidden="true">
+            <img src="/assets/icons/favicon.svg?v=3.0.0" alt="" aria-hidden="true">
             <h3 id="pwa-install-title">Установить AKD Image</h3>
           </div>
           <button class="modal__close" type="button" data-pwa-close aria-label="Закрыть">×</button>
@@ -207,8 +193,7 @@
             </section>
           </div>
           <p class="pwa-install-instructions hidden" data-pwa-instructions tabindex="-1"></p>
-          <div class="pwa-install-modal__actions">
-            <a class="btn btn-secondary" href="${appPageHref()}">Подробнее о приложении</a>
+          <div class="pwa-install-modal__actions pwa-install-modal__actions--end">
             <div class="pwa-install-modal__primary-actions">
               <button class="btn btn-secondary" type="button" data-pwa-close>Не сейчас</button>
               <button class="btn btn-primary" type="button" data-pwa-confirm>${deferredInstallPrompt ? 'Установить' : 'Как установить'}</button>
@@ -245,7 +230,7 @@
       <section class="modal pwa-install-modal" role="dialog" aria-modal="true" aria-labelledby="pwa-remove-title">
         <div class="modal__head">
           <div class="pwa-install-modal__title-wrap">
-            <img src="/assets/icons/favicon.svg?v=2" alt="" aria-hidden="true">
+            <img src="/assets/icons/favicon.svg?v=3.0.0" alt="" aria-hidden="true">
             <h3 id="pwa-remove-title">${t('Удалить AKD Image')}</h3>
           </div>
           <button class="modal__close" type="button" data-pwa-close aria-label="${t('Закрыть')}">×</button>
@@ -273,6 +258,83 @@
     overlay.querySelector('[data-pwa-close]').focus();
   }
 
+  function openUpdateProgressModal(trigger) {
+    closeInstallModal();
+    lastFocusedElement = trigger || document.activeElement;
+
+    const overlay = document.createElement('div');
+    overlay.className = 'modal-overlay pwa-install-overlay';
+    overlay.innerHTML = `
+      <section class="modal pwa-install-modal pwa-update-modal" role="dialog" aria-modal="true" aria-labelledby="pwa-update-title" tabindex="-1" data-pwa-update-modal>
+        <div class="modal__head">
+          <div class="pwa-install-modal__title-wrap">
+            <img src="/assets/icons/favicon.svg?v=3.0.0" alt="" aria-hidden="true">
+            <h3 id="pwa-update-title">${t('Обновление AKD Image')}</h3>
+          </div>
+        </div>
+        <div class="modal__body pwa-update-modal__body" aria-live="polite">
+          <div class="pwa-update-modal__status">
+            <span class="pwa-update-modal__status-icon" aria-hidden="true">
+              <span class="spinner"></span>
+              <svg viewBox="0 -960 960 960"><path fill="currentColor" d="m424-296 282-282-56-56-226 226-114-114-56 56 170 170Z"/></svg>
+            </span>
+            <div>
+              <h4 data-pwa-update-status>${t('Устанавливаем обновление')}</h4>
+              <p data-pwa-update-description>${t('Новая версия уже загружена. Сейчас приложение применит её и автоматически перезапустится.')}</p>
+            </div>
+          </div>
+          <div class="pwa-update-progress" role="progressbar" aria-label="${t('Установка обновления')}" aria-busy="true">
+            <span></span>
+          </div>
+        </div>
+      </section>
+    `;
+
+    activeModal = overlay;
+    document.body.appendChild(overlay);
+    document.body.classList.add('modal-open');
+    overlay.querySelector('[data-pwa-update-modal]').focus();
+  }
+
+  function finishUpdateAndReload() {
+    if (!refreshing) return;
+    refreshing = false;
+    window.clearTimeout(updateReloadTimer);
+    updateReloadTimer = null;
+
+    const modal = document.querySelector('[data-pwa-update-modal]');
+    if (modal) {
+      modal.classList.add('is-complete');
+      modal.querySelector('[data-pwa-update-status]').textContent = t('Обновление установлено');
+      modal.querySelector('[data-pwa-update-description]').textContent = t('Перезапускаем AKD Image…');
+      const progress = modal.querySelector('.pwa-update-progress');
+      progress.setAttribute('aria-busy', 'false');
+      progress.setAttribute('aria-valuenow', '100');
+    }
+
+    window.setTimeout(() => window.location.reload(), modal ? 700 : 0);
+  }
+
+  function startUpdate(registration, waitingWorker, trigger) {
+    const worker = waitingWorker || registration.waiting;
+    document.querySelector('[data-pwa-update-toast]')?.remove();
+    openUpdateProgressModal(trigger);
+    refreshing = true;
+
+    if (worker) {
+      worker.addEventListener('statechange', () => {
+        if (worker.state === 'activated') finishUpdateAndReload();
+      });
+      worker.postMessage({ type: 'SKIP_WAITING' });
+    } else {
+      registration.update().catch(() => {});
+    }
+
+    updateReloadTimer = window.setTimeout(() => {
+      if (refreshing) window.location.reload();
+    }, 12000);
+  }
+
   function showUpdateToast(registration, waitingWorker = registration.waiting) {
     if (!isStandalone()) return;
     if (document.querySelector('[data-pwa-update-toast]')) return;
@@ -286,9 +348,8 @@
       <span>Доступно обновление AKD Image.</span>
       <button type="button">Обновить</button>
     `;
-    toast.querySelector('button').addEventListener('click', () => {
-      refreshing = true;
-      waitingWorker?.postMessage({ type: 'SKIP_WAITING' });
+    toast.querySelector('button').addEventListener('click', event => {
+      startUpdate(registration, waitingWorker, event.currentTarget);
     });
     container.appendChild(toast);
   }
@@ -331,7 +392,7 @@
     button.addEventListener('click', openInstallModal);
   });
 
-  pageButtons.forEach(button => {
+  infoButtons.forEach(button => {
     button.addEventListener('click', event => {
       if (isStandalone()) openRemovalModal(event);
       else openInstallModal(event);
@@ -353,18 +414,27 @@
   });
 
   window.addEventListener('keydown', event => {
-    if (event.key === 'Escape') closeInstallModal();
+    if (event.key === 'Escape' && !activeModal?.querySelector('[data-pwa-update-modal]')) {
+      closeInstallModal();
+    }
   });
 
   navigator.serviceWorker?.addEventListener('controllerchange', () => {
-    if (!refreshing) return;
-    refreshing = false;
-    window.location.reload();
+    finishUpdateAndReload();
   });
 
   window.matchMedia?.('(display-mode: standalone)').addEventListener('change', syncInstallControls);
   window.addEventListener('akd-languagechange', syncInstallControls);
   syncInstallControls();
+
+  // Preserve old installation links without keeping a separate app page.
+  const entryUrl = new URL(location.href);
+  if (entryUrl.searchParams.get('install') === '1') {
+    if (isStandalone()) openRemovalModal();
+    else openInstallModal();
+    entryUrl.searchParams.delete('install');
+    history.replaceState(history.state, '', entryUrl.pathname + entryUrl.search + entryUrl.hash);
+  }
 
   if (document.readyState === 'complete') registerServiceWorker();
   else window.addEventListener('load', registerServiceWorker, { once: true });

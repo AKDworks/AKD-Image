@@ -1,16 +1,16 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-  <script src="/js/i18n.js?v=23"></script>
+  <script src="/js/i18n.js?v=3.0.0"></script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Конфиденциальность – AKD Image</title>
   <meta name="description" content="Как AKD Image обрабатывает изображения локально в браузере, хранит настройки и загружает компоненты для отдельных инструментов.">
   <link rel="canonical" href="https://image.akdworks.com/privacy">
-  <link rel="icon" href="/assets/icons/favicon.svg?v=2" type="image/svg+xml">
+  <link rel="icon" href="/assets/icons/favicon.svg?v=3.0.0" type="image/svg+xml">
   <link rel="manifest" href="/manifest.webmanifest">
   <link rel="apple-touch-icon" href="/assets/icons/apple-touch-icon.png">
-  <meta name="theme-color" content="#181A20">
+  <meta name="theme-color" content="#191C20">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-title" content="AKD Image">
@@ -19,10 +19,10 @@
   <link rel="preload" href="/fonts/Inter-600.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="preload" href="/fonts/Inter-700.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="preload" href="/fonts/Inter-800.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="stylesheet" href="/css/main.css?v=94">
+<link rel="stylesheet" href="/css/main.css?v=3.0.0">
 </head>
 <body>
-<script src="/js/layout.js?v=29"></script>
+<script src="/js/layout.js?v=3.0.0"></script>
 
 <main>
   <section class="hero hero--compact">
@@ -60,7 +60,12 @@
       <h3>8. Cookies, статистика и хостинг</h3>
       <p>Сам проект не требует cookies для обработки изображений и не содержит рекламных трекеров или аналитических счетчиков. Сайт размещен на Vercel: хостинг может обрабатывать стандартные технические данные запросов для работы и диагностики сайта. Загруженные для обработки изображения в эти данные не попадают, так как не отправляются с устройства.</p>
 
-      <h3>9. Изменения в политике</h3>
+      <h3>9. Обратная связь</h3>
+      <p>Форма «Написать разработчику» отправляет указанные вами имя или псевдоним, email, категорию, тему и сообщение через Web3Forms на почту разработчика для ответа на обращение. Изображения из инструментов к обращению не прикрепляются. Содержимое формы не сохраняется AKD Image в localStorage или офлайн-кэше.</p>
+      <p>Проверка hCaptcha загружается только после нажатия «Пройти капчу». При её использовании hCaptcha обрабатывает технические данные для защиты от автоматических отправок. При отправке обращения Web3Forms также получает технические данные сетевого запроса. Обработка данных этими сервисами описана в их политиках конфиденциальности.</p>
+      <p><a href="https://web3forms.com/privacy" target="_blank" rel="noopener noreferrer">Web3Forms</a> · <a href="https://www.hcaptcha.com/privacy" target="_blank" rel="noopener noreferrer">hCaptcha</a></p>
+
+      <h3>10. Изменения в политике</h3>
       <p class="policy-card__spaced">Политика может обновляться по мере развития проекта и добавления новых инструментов. Основной принцип остаётся прежним: пользовательские изображения, GIF и видео обрабатываются локально в браузере, даже если отдельному инструменту сначала требуется загрузить модель или среду выполнения.</p>
 
       <p>Если у вас есть вопросы по поводу безопасности данных или работы сайта, проверьте исходный код проекта или свяжитесь с автором через доступные каналы связи.</p>
@@ -71,6 +76,6 @@
 
 </main>
 
-<script src="/js/core.js?v=42"></script>
+<script src="/js/core.js?v=3.0.0"></script>
 </body>
 </html>

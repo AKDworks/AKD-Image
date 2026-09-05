@@ -6,6 +6,81 @@
   ]);
 
   const ENGLISH = {
+    'Локальная обработка': 'Local processing',
+    'Всё необходимое': 'Everything you need',
+    'Разные форматы': 'Multiple formats',
+    'На всех устройствах': 'On all devices',
+    'Контурные SVG-иконки интерфейса от Google.': 'Outlined interface SVG icons by Google.',
+"Пройти капчу": "Verify you’re human",
+"Проверка пройдена": "Verification complete",
+"Защита от спама": "Spam protection",
+"Заполните это поле.": "Please fill out this field.",
+"Укажите корректный email.": "Enter a valid email address.",
+"Сократите текст до допустимой длины.": "Shorten the text to the allowed length.",
+"Уберите переносы строк.": "Remove line breaks.",
+"Отметьте «Я человек» в блоке проверки.": "Select “I am human” in the verification panel.",
+"При отправке имя, email и текст обращения передаются через Web3Forms разработчику. Для защиты от спама используется hCaptcha. Не указывайте пароли и другие секретные данные.": "When you send this form, your name, email and message are sent to the developer through Web3Forms. hCaptcha provides spam protection. Do not include passwords or other secrets.",
+"Загрузить проверку от спама": "Load spam protection",
+"Загрузка проверки от спама…": "Loading spam protection…",
+"Не удалось загрузить проверку. Проверьте соединение и попробуйте ещё раз.": "Could not load the check. Check your connection and try again.",
+"Пройдите проверку от спама ещё раз.": "Please complete the spam check again.",
+"Не удалось выполнить проверку от спама. Попробуйте ещё раз.": "The spam check failed. Please try again.",
+"Подождите немного перед повторной отправкой.": "Please wait a little before sending again.",
+"Пройдите проверку от спама перед отправкой.": "Please complete the spam check before sending.",
+"Нет подключения к интернету. Сообщение не отправлено.": "You are offline. The message was not sent.",
+"Отправляется…": "Sending…",
+"Сообщение отправлено. Спасибо за обращение!": "Message sent. Thank you for getting in touch!",
+"Не удалось подтвердить отправку. Текст сохранён в форме. Проверьте соединение перед повторной попыткой.": "Could not confirm sending. Your text is still in the form. Check your connection before trying again.",
+"9. Обратная связь": "9. Contact form",
+"10. Изменения в политике": "10. Changes to this policy",
+"Форма «Написать разработчику» отправляет указанные вами имя или псевдоним, email, категорию, тему и сообщение через Web3Forms на почту разработчика для ответа на обращение. Изображения из инструментов к обращению не прикрепляются. Содержимое формы не сохраняется AKD Image в localStorage или офлайн-кэше.": "The contact form sends the name or nickname, email, category, subject and message you provide through Web3Forms to the developer’s inbox so they can respond. Images from the tools are not attached. AKD Image does not save form contents in localStorage or its offline cache.",
+"Проверка hCaptcha загружается только после нажатия «Пройти капчу». При её использовании hCaptcha обрабатывает технические данные для защиты от автоматических отправок. При отправке обращения Web3Forms также получает технические данные сетевого запроса. Обработка данных этими сервисами описана в их политиках конфиденциальности.": "hCaptcha loads only after you click Verify you’re human. It processes technical data to protect against automated submissions. When you send a message, Web3Forms also receives technical network request data. Their privacy policies describe how these services process data.",
+    'Официальный сайт': 'Official website',
+    'Перейти на сайт': 'Continue to website',
+    'Вы переходите на официальный сайт AKDworks. Это внешний сайт, он откроется в новой вкладке.': 'You are going to the official AKDworks website. This is an external website and will open in a new tab.',
+    'Переход на внешний сайт': 'Opening an external website',
+    'Вы переходите на Ko-fi, чтобы поддержать разработчика AKD Image. Это внешний сайт, он откроется в новой вкладке.': 'You are going to Ko-fi to support the developer of AKD Image. This is an external website and will open in a new tab.',
+    'Остаться': 'Stay here',
+    'Перейти на Ko-fi': 'Continue to Ko-fi',
+    "Навигация внизу страницы": "Footer navigation",
+    "Поддержка": "Support",
+    "Правовая информация": "Legal information",
+    "Установить приложение": "Install app",
+    "Частые вопросы": "FAQ",
+    "Написать разработчику": "Contact the developer",
+    "Поддержать разработчика": "Support the developer",
+    "© 2026 AKD Image – Бесплатные инструменты для работы с изображениями.": "© 2026 AKD Image – Free image tools.",
+    "Все права защищены.": "All rights reserved.",
+    "Имя или псевдоним": "Name or nickname",
+    "Ваш email": "Your email",
+    "Для ответа на ваше обращение.": "So we can reply to you.",
+    "Категория": "Category",
+    "Вопрос": "Question",
+    "Предложение": "Suggestion",
+    "Другое": "Other",
+    "Тема": "Subject",
+    "Сообщение": "Message",
+    "Отправить сообщение": "Send message",
+    "Отправка временно недоступна. Это предварительная версия формы: введённые данные никуда не отправляются.": "Sending is temporarily unavailable. This is a preview of the form: nothing you enter is sent.",
+    "Частые вопросы – AKD Image": "FAQ – AKD Image",
+    "Ответы на частые вопросы об AKD Image: файлы, работа офлайн, установка приложения и помощь.": "Answers to common questions about AKD Image: files, offline use, app installation, and help.",
+    "Коротко о файлах, установке и работе AKD Image.": "Quick answers about files, installation, and using AKD Image.",
+    "Нужны ли регистрация или оплата?": "Do I need an account or payment?",
+    "Нет. Инструменты AKD Image доступны бесплатно и без регистрации.": "No. AKD Image tools are free to use and do not require an account.",
+    "Куда отправляются мои изображения?": "Where are my images sent?",
+    "Обработка выполняется в браузере на вашем устройстве. Выбранные изображения не отправляются на сервер AKD Image.": "Processing runs in your browser on your device. Selected images are not sent to the AKD Image server.",
+    "Работает ли приложение без интернета?": "Does the app work offline?",
+    "После установки и первой загрузки основные инструменты доступны офлайн. Облачные источники, первая загрузка ИИ-компонентов и получение обновлений требуют интернета.": "After installation and the initial load, the main tools are available offline. Cloud sources, the first download of AI components, and updates require internet access.",
+    "Как установить приложение?": "How do I install the app?",
+    "Нажмите «Установить приложение» внизу страницы. Откроется окно установки с инструкциями для вашего браузера и устройства.": "Click Install app at the bottom of the page. An installation dialog will open with instructions for your browser and device.",
+    "Какие форматы и размеры файлов поддерживаются?": "Which file formats and sizes are supported?",
+    "Список форматов указан в области загрузки каждого инструмента. Ограничения зависят от операции, браузера и доступной памяти; для GIF и видео действуют отдельные лимиты.": "Supported formats are listed in each tool's upload area. Limits depend on the operation, browser, and available memory; GIF and video tools have separate limits.",
+    "Почему удаление фона запускается не сразу?": "Why does background removal take time to start?",
+    "При первом запуске браузер загружает ИИ-модель. Время загрузки и обработки зависит от соединения и устройства. Для первого запуска нужен интернет.": "On first use, the browser downloads an AI model. Download and processing time depend on your connection and device. Internet access is required for the first run.",
+    "Сохраняются ли загруженные файлы после закрытия вкладки?": "Are uploaded files saved after I close the tab?",
+    "Выбранные файлы и результаты не добавляются в офлайн-кэш приложения. Скачайте нужные результаты до закрытия вкладки.": "Selected files and results are not added to the app's offline cache. Download the results you need before closing the tab.",
+    "Что делать, если инструмент не работает?": "What should I do if a tool does not work?",
+    "Проверьте формат файла и попробуйте файл меньшего размера. Если ошибка повторяется, запишите название инструмента, браузер и шаги, после которых она возникает. Это поможет при обращении к разработчику.": "Check the file format and try a smaller file. If the error repeats, note the tool name, browser, and the steps that trigger it. This will help when contacting the developer.",
     /* Shared navigation and controls */
     'Выбор темы': 'Theme',
     'Системная тема': 'System theme',
@@ -31,6 +106,12 @@
     'Подробнее о приложении': 'Learn more about the app',
     'Доступно обновление AKD Image.': 'An AKD Image update is available.',
     'Обновить': 'Update',
+    'Обновление AKD Image': 'AKD Image update',
+    'Устанавливаем обновление': 'Installing update',
+    'Новая версия уже загружена. Сейчас приложение применит её и автоматически перезапустится.': 'The new version has been downloaded. The app will now apply it and restart automatically.',
+    'Установка обновления': 'Installing update',
+    'Обновление установлено': 'Update installed',
+    'Перезапускаем AKD Image…': 'Restarting AKD Image…',
     'Не удалось зарегистрировать офлайн-режим AKD Image.': 'Could not enable AKD Image offline mode.',
     'Будет доступно': 'Available after installation',
     'Потребуется интернет': 'Internet connection required',
@@ -60,6 +141,7 @@
     'Удалить': 'Remove',
     'Закрыть': 'Close',
     'Назад': 'Back',
+    'Предыдущее': 'Previous',
     'Подтвердить': 'Apply',
     'Добавить': 'Add',
     'Скачать': 'Download',
@@ -107,7 +189,9 @@
     'Заменить файл': 'Replace file',
     'Заменить файлы': 'Replace files',
     'Выбрать файл': 'Choose file',
+    'Выбрать файлы': 'Choose files',
     'Выбрать изображение': 'Choose image',
+    'Загруженные изображения': 'Uploaded images',
     'Выбрать другой файл': 'Choose another file',
     'Отменить': 'Cancel',
 
@@ -350,7 +434,6 @@
     'Y (сверху, px)': 'Y (top, px)',
     'Область обрезки': 'Crop area',
     'Редактируемое изображение': 'Image being edited',
-    'Обрезать изображение': 'Crop image',
     'Скачать результат': 'Download result',
     'Результат обрезки': 'Crop result',
 
@@ -467,11 +550,9 @@
     'Обрезать до квадрата': 'Crop to square',
     'Вписать целиком': 'Fit entire image',
     'Размеры': 'Sizes',
-    'Создать favicon': 'Create favicon',
     'PNG-иконки': 'PNG icons',
     'Предпросмотр favicon': 'Favicon preview',
     'Закрыть предпросмотр': 'Close preview',
-    'Скачать всё (ZIP)': 'Download all (ZIP)',
 
     /* Palette */
     'Генератор палитры – AKD Image': 'Palette generator – AKD Image',
@@ -526,7 +607,7 @@
     'Цвет': 'Color',
     'Толщина': 'Thickness',
     'Размер текста': 'Text size',
-    'Назад': 'Undo',
+    'Отменить действие': 'Undo',
     'Очистить разметку': 'Clear annotations',
     'Сохранить разметку': 'Save annotated image',
     'Копировать в буфер': 'Copy to clipboard',
@@ -568,7 +649,6 @@
     'Видео → GIF': 'Video → GIF',
     'GIF → Видео': 'GIF → Video',
     'Добавьте видео': 'Add a video',
-    'Добавьте GIF': 'Add a GIF',
     'Ограничения': 'Limits',
     'Видео до 100 МБ, GIF до 25 МБ и длительность до 60 секунд. При первом запуске браузер загрузит модуль FFmpeg размером около 31 МБ.': 'Video up to 100 MB, GIF up to 25 MB and duration up to 60 seconds. On first use, the browser will load an FFmpeg module of about 31 MB.',
     'Частота кадров': 'Frame rate',
@@ -602,6 +682,7 @@
     'Что делает сервис': 'What the service does',
     'Как обрабатываются изображения': 'How images are processed',
     'Технологии проекта': 'Project technologies',
+    'Transformers.js и ONNX Runtime Web': 'Transformers.js and ONNX Runtime Web',
     'Библиотеки и компоненты': 'Libraries and components',
     'Конфиденциальность и хранение данных': 'Privacy and data storage',
     'Совместимость и ограничения': 'Compatibility and limitations',
@@ -661,7 +742,6 @@
     'Поиск по названию и описанию инструмента': 'Search by tool name or description',
     'Обрабатывайте JPG, PNG, WebP, AVIF, HEIC/HEIF, SVG, BMP и анимированные GIF локально в браузере с помощью AKD Image.': 'Process JPG, PNG, WebP, AVIF, HEIC/HEIF, SVG, BMP and animated GIF files locally in your browser with AKD Image.',
     'Как устроен AKD Image: локальная обработка изображений в браузере, технологии проекта, используемые библиотеки и условия использования исходного кода.': 'How AKD Image works: local browser processing, project technologies, bundled libraries and source code terms.',
-    'Как AKD Image обрабатывает изображения локально в браузере, хранит настройки и загружает компоненты для отдельных инструментов.': 'How AKD Image processes images locally in the browser, stores settings and downloads components for specific tools.',
     'Условия использования AKD Image и сведения о лицензиях сторонних библиотек, кодеков и шрифта, включённых в проект.': 'AKD Image terms of use and license information for the third-party libraries, codecs and font bundled with the project.',
     'Подготовить результат': 'Prepare result',
     'Применить эффекты': 'Apply effects',
@@ -837,7 +917,6 @@
     'Изображение сохранено.': 'Image saved.',
     'Не удалось сохранить изображение.': 'Could not save the image.',
     'Удаляйте метаданные из JPG, PNG, WebP, AVIF, HEIC/HEIF, SVG и BMP путём локального пересохранения в браузере.': 'Remove metadata from JPG, PNG, WebP, AVIF, HEIC/HEIF, SVG and BMP files by re-encoding them locally in your browser.',
-    'Обработка...': 'Processing...',
     'Очистка...': 'Cleaning...',
     'EXIF очищен.': 'EXIF removed.',
     'Не удалось очистить': 'Could not clean',
@@ -931,14 +1010,9 @@
 
   const PATTERNS = [
     [/^По запросу «(.+)» инструменты не найдены\.$/, 'No tools found for “$1”.'],
-    [/^В категории «(.+)» пока нет избранных инструментов\.$/, (match, category) => {
-      const categories = {
-        'Оптимизация': 'Optimization',
-        'Геометрия': 'Geometry',
-        'Творчество': 'Creative'
-      };
-      return `There are no favorite tools in the “${categories[category] || category}” category yet.`;
-    }],
+    [/^В категории «(.+)» пока нет избранных инструментов\.$/, (match, category) => (
+      `There are no favorite tools in the “${translateNormalized(category)}” category yet.`
+    )],
     [/^Предпросмотр: (.+)$/, (match, details) => {
       const translatedDetails = details
         .replace(' · показан первый кадр', ' · first frame shown')
@@ -1009,13 +1083,24 @@
     return CIS_LANGUAGES.has(browserLanguage()) ? 'ru' : 'en';
   }
 
-  function translateNormalized(value) {
-    if (language === 'ru' || !value) return value;
+  function translateDirect(value) {
     if (ENGLISH[value]) return ENGLISH[value];
     for (const [pattern, replacement] of PATTERNS) {
       if (pattern.test(value)) return value.replace(pattern, replacement);
     }
     return value;
+  }
+
+  function translateNormalized(value) {
+    if (language === 'ru' || !value) return value;
+    const direct = translateDirect(value);
+    if (direct !== value) return direct;
+
+    const composite = value.match(/^([^:]+):\s*(.+)$/);
+    if (!composite) return value;
+    const label = translateDirect(composite[1]);
+    const detail = translateDirect(composite[2]);
+    return `${label}: ${detail}`;
   }
 
   function translateValue(value) {
@@ -1038,7 +1123,7 @@
   }
 
   function localizeAttributes(element) {
-    const attributes = ['aria-label', 'title', 'placeholder', 'alt'];
+    const attributes = ['aria-label', 'aria-valuetext', 'title', 'placeholder', 'alt'];
     if (element.tagName === 'META') attributes.push('content');
     let originals = originalAttributes.get(element);
     let rendered = renderedAttributes.get(element);
@@ -1075,6 +1160,31 @@
       else localizeAttributes(node);
       node = walker.nextNode();
     }
+  }
+
+  function sourceText(element) {
+    if (!element) return '';
+    const read = node => {
+      if (node.nodeType === Node.TEXT_NODE) return originalText.get(node) ?? node.nodeValue ?? '';
+      return Array.from(node.childNodes || [], read).join('');
+    };
+    return read(element).trim().replace(/\s+/g, ' ');
+  }
+
+  function setLocalizedAttribute(element, name, sourceValue) {
+    if (!element || typeof sourceValue !== 'string') return;
+    let originals = originalAttributes.get(element);
+    let rendered = renderedAttributes.get(element);
+    if (!originals) {
+      originals = {};
+      rendered = {};
+      originalAttributes.set(element, originals);
+      renderedAttributes.set(element, rendered);
+    }
+    originals[name] = sourceValue;
+    const next = language === 'en' ? translateValue(sourceValue) : sourceValue;
+    rendered[name] = next;
+    if (element.getAttribute(name) !== next) element.setAttribute(name, next);
   }
 
   function updateDocumentLanguage() {
@@ -1120,13 +1230,15 @@
       childList: true,
       characterData: true,
       attributes: true,
-      attributeFilter: ['aria-label', 'title', 'placeholder', 'alt', 'content']
+      attributeFilter: ['aria-label', 'aria-valuetext', 'title', 'placeholder', 'alt', 'content']
     });
   }
 
   window.AKDI18n = {
     get language() { return language; },
     setLanguage,
+    sourceText,
+    setAttribute: setLocalizedAttribute,
     t(value) { return language === 'en' ? translateValue(value) : value; }
   };
 

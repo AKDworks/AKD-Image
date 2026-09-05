@@ -6,7 +6,7 @@ AKD Image is a free web service for processing static images and animated GIFs l
 
 Website: [image.akdworks.com](https://image.akdworks.com/)
 
-![AKD Image homepage](assets/screenshots/akd-image-homepage.png)
+![AKD Image homepage](assets/screenshots/akd-image-homepage-new.png)
 
 ## About
 

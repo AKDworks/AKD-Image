@@ -10,8 +10,8 @@
   "display": "standalone",
   "display_override": ["window-controls-overlay", "standalone", "minimal-ui"],
   "orientation": "any",
-  "background_color": "#101114",
-  "theme_color": "#181A20",
+  "background_color": "#111318",
+  "theme_color": "#191C20",
   "categories": ["photo", "graphics", "utilities"],
   "prefer_related_applications": false,
   "icons": [

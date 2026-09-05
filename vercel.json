@@ -1,5 +1,7 @@
 {
   "redirects": [
+    { "source": "/app", "destination": "/?install=1", "permanent": true },
+    { "source": "/pages/faq.html", "destination": "/faq", "permanent": true },
     {
       "source": "/index.html",
       "destination": "/",
@@ -132,7 +134,7 @@
     },
     {
       "source": "/pages/app.html",
-      "destination": "/app",
+      "destination": "/?install=1",
       "permanent": true
     },
     {
@@ -152,6 +154,7 @@
     }
   ],
   "rewrites": [
+    { "source": "/faq", "destination": "/pages/faq.html" },
     {
       "source": "/compress",
       "destination": "/pages/compress.html"
@@ -253,10 +256,6 @@
       "destination": "/pages/favorites.html"
     },
     {
-      "source": "/app",
-      "destination": "/pages/app.html"
-    },
-    {
       "source": "/privacy",
       "destination": "/pages/privacy.html"
     },
@@ -319,7 +318,7 @@
       "headers": [
         {
           "key": "Content-Security-Policy",
-          "value": "default-src 'self'; script-src 'self' https://www.dropbox.com blob: 'unsafe-inline' 'wasm-unsafe-eval'; script-src-attr 'none'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self'; connect-src 'self' https://huggingface.co https://*.huggingface.co https://*.hf.co https://*.xethub.hf.co https://cdn.jsdelivr.net https://*.dropbox.com https://*.dropboxusercontent.com; media-src 'self' blob:; object-src 'none'; frame-src 'none'; worker-src 'self' blob:; manifest-src 'self'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; upgrade-insecure-requests"
+          "value": "default-src 'self'; script-src 'self' https://hcaptcha.com https://*.hcaptcha.com https://www.dropbox.com blob: 'unsafe-inline' 'wasm-unsafe-eval'; script-src-attr 'none'; style-src 'self' https://hcaptcha.com https://*.hcaptcha.com 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self'; connect-src 'self' https://api.web3forms.com https://hcaptcha.com https://*.hcaptcha.com https://huggingface.co https://*.huggingface.co https://*.hf.co https://*.xethub.hf.co https://cdn.jsdelivr.net https://*.dropbox.com https://*.dropboxusercontent.com; media-src 'self' blob:; object-src 'none'; frame-src https://hcaptcha.com https://*.hcaptcha.com; worker-src 'self' blob:; manifest-src 'self'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; upgrade-insecure-requests"
         },
         {
           "key": "X-Content-Type-Options",

@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-  <script src="/js/i18n.js?v=23"></script>
+  <script src="/js/i18n.js?v=3.0.0"></script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>AKD Image – Бесплатные инструменты для изображений</title>
@@ -13,10 +13,10 @@
   <meta property="og:url" content="https://image.akdworks.com/">
   <meta property="og:type" content="website">
   <link rel="canonical" href="https://image.akdworks.com/">
-  <link rel="icon" href="/assets/icons/favicon.svg?v=2" type="image/svg+xml">
+  <link rel="icon" href="/assets/icons/favicon.svg?v=3.0.0" type="image/svg+xml">
   <link rel="manifest" href="/manifest.webmanifest">
   <link rel="apple-touch-icon" href="/assets/icons/apple-touch-icon.png">
-  <meta name="theme-color" content="#181A20">
+  <meta name="theme-color" content="#191C20">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-title" content="AKD Image">
@@ -25,7 +25,7 @@
     <link rel="preload" href="/fonts/Inter-600.woff2" as="font" type="font/woff2" crossorigin>
     <link rel="preload" href="/fonts/Inter-700.woff2" as="font" type="font/woff2" crossorigin>
     <link rel="preload" href="/fonts/Inter-800.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="stylesheet" href="css/main.css?v=94">
+<link rel="stylesheet" href="css/main.css?v=3.0.0">
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
@@ -37,11 +37,10 @@
   </script>
 </head>
 <body>
-<script src="js/layout.js?v=29"></script>
+<script src="js/layout.js?v=3.0.0"></script>
 
 <main>
   <section class="hero">
-    <span class="hero-badge">100% бесплатно · Работает в браузере</span>
     <h1>Инструменты для работы<br>с изображениями</h1>
     <p>Всё нужное для работы с изображениями в одном месте. Загружайте файл, выбирайте инструмент и получайте готовый результат.</p>
   </section>
@@ -112,7 +111,7 @@
             aria-label="Сортировка: По умолчанию"
           >
             <svg class="tool-sort__icon" viewBox="0 -960 960 960" aria-hidden="true">
-              <path d="M280-240v-80h160v80H280ZM160-440v-80h400v80H160ZM40-640v-80h640v80H40Zm680 480v-120H600v-80h120v-120h80v120h120v80H800v120h-80Z"/>
+              <path d="M400-240v-80h160v80H400ZM240-440v-80h480v80H240ZM120-640v-80h720v80H120Z"/>
             </svg>
             <span class="tool-sort__label" id="tool-sort-label">По умолчанию</span>
             <svg class="tool-sort__chevron" viewBox="0 0 20 20" aria-hidden="true">
@@ -375,40 +374,46 @@
       <div class="features-panel">
         
         <div class="feature-item">
-          <div class="feature-item__icon feature-item__icon--text">
-            100%
+          <div class="feature-item__icon">
+            <svg width="32" height="32" viewBox="0 -960 960 960" fill="currentColor" aria-hidden="true" focusable="false">
+              <path d="M480-80q-139-35-229.5-159.5T160-516v-244l320-120 320 120v244q0 152-90.5 276.5T480-80Zm0-84q104-33 172-132t68-220v-189l-240-90-240 90v189q0 121 68 220t172 132Zm0-316Zm-80 160h160q17 0 28.5-11.5T600-360v-120q0-17-11.5-28.5T560-520v-40q0-33-23.5-56.5T480-640q-33 0-56.5 23.5T400-560v40q-17 0-28.5 11.5T360-480v120q0 17 11.5 28.5T400-320Zm40-200v-40q0-17 11.5-28.5T480-600q17 0 28.5 11.5T520-560v40h-80Z"/>
+            </svg>
           </div>
-          <div class="feature-item__label">Обработка в браузере</div>
-        </div>
-
-        <div class="feature-item">
-          <div class="feature-item__icon feature-item__icon--text">
-            24
-          </div>
-          <div class="feature-item__label">Инструмента</div>
-        </div>
-
-        <div class="feature-item">
-          <div class="feature-item__icon feature-item__icon--text">
-            10+
-          </div>
-          <div class="feature-item__label">Поддерживаемых форматов</div>
+          <div class="feature-item__label">Локальная обработка</div>
         </div>
 
         <div class="feature-item">
           <div class="feature-item__icon">
-            <svg width="32" height="32" viewBox="0 -960 960 960" fill="currentColor">
-              <path d="M240-80q-33 0-56.5-23.5T160-160v-400q0-33 23.5-56.5T240-640h40v-80q0-83 58.5-141.5T480-920q83 0 141.5 58.5T680-720v80h40q33 0 56.5 23.5T800-560v400q0 33-23.5 56.5T720-80H240Zm0-80h480v-400H240v400Zm296.5-143.5Q560-327 560-360t-23.5-56.5Q513-440 480-440t-56.5 23.5Q400-393 400-360t23.5 56.5Q447-280 480-280t56.5-23.5ZM360-640h240v-80q0-50-35-85t-85-35q-50 0-85 35t-35 85v80ZM240-160v-400 400Z"/>
+            <svg width="32" height="32" viewBox="0 -960 960 960" fill="currentColor" aria-hidden="true" focusable="false">
+              <path d="M666-440 440-666l226-226 226 226-226 226Zm-546-80v-320h320v320H120Zm400 400v-320h320v320H520Zm-400 0v-320h320v320H120Zm80-480h160v-160H200v160Zm467 48 113-113-113-113-113 113 113 113Zm-67 352h160v-160H600v160Zm-400 0h160v-160H200v160Zm160-400Zm194-65ZM360-360Zm240 0Z"/>
             </svg>
           </div>
-          <div class="feature-item__label">Файлы не покидают устройство</div>
+          <div class="feature-item__label">Всё необходимое</div>
+        </div>
+
+        <div class="feature-item">
+          <div class="feature-item__icon">
+            <svg width="32" height="32" viewBox="0 -960 960 960" fill="currentColor" aria-hidden="true" focusable="false">
+              <path d="M360-400h400L622-580l-92 120-62-80-108 140Zm-40 160q-33 0-56.5-23.5T240-320v-480q0-33 23.5-56.5T320-880h480q33 0 56.5 23.5T880-800v480q0 33-23.5 56.5T800-240H320Zm0-80h480v-480H320v480ZM160-80q-33 0-56.5-23.5T80-160v-560h80v560h560v80H160Zm160-720v480-480Z"/>
+            </svg>
+          </div>
+          <div class="feature-item__label">Разные форматы</div>
+        </div>
+
+        <div class="feature-item">
+          <div class="feature-item__icon">
+            <svg width="32" height="32" viewBox="0 -960 960 960" fill="currentColor" aria-hidden="true" focusable="false">
+              <path d="M480-540ZM80-160v-80h400v80H80Zm120-120q-33 0-56.5-23.5T120-360v-360q0-33 23.5-56.5T200-800h560q33 0 56.5 23.5T840-720H200v360h280v80H200Zm600 40v-320H640v320h160Zm-180 80q-25 0-42.5-17.5T560-220v-360q0-25 17.5-42.5T620-640h200q25 0 42.5 17.5T880-580v360q0 25-17.5 42.5T820-160H620Zm100-300q13 0 21.5-9t8.5-21q0-13-8.5-21.5T720-520q-12 0-21 8.5t-9 21.5q0 12 9 21t21 9Zm0 60Z"/>
+            </svg>
+          </div>
+          <div class="feature-item__label">На всех устройствах</div>
         </div>
 
       </div>
     </div>
   </section>
 
-<script src="js/core.js?v=42"></script>
+<script src="js/core.js?v=3.0.0"></script>
 <script>
   document.addEventListener('DOMContentLoaded', () => {
     const filters = document.querySelectorAll('.filter-btn');
@@ -428,6 +433,7 @@
     const searchEmptyMessage = document.getElementById('search-empty-message');
     const allToolsButton = document.getElementById('all-tools-button');
     const favoritesButton = document.getElementById('favorites-button');
+    const catalogSwitcher = allToolsButton.closest('.catalog-switcher');
     const favoritesManageLink = document.getElementById('favorites-manage-link');
     const favoritesEmpty = document.getElementById('favorites-empty');
     const favoritesEmptyMessage = document.getElementById('favorites-empty-message');
@@ -571,7 +577,28 @@
       }
     };
 
+    const syncCatalogIndicator = () => {
+      const activeButton = catalogSwitcher.querySelector('.catalog-switcher__button.is-active');
+      if (!activeButton) return;
+
+      requestAnimationFrame(() => {
+        catalogSwitcher.style.setProperty('--catalog-indicator-x', `${activeButton.offsetLeft}px`);
+        catalogSwitcher.style.setProperty('--catalog-indicator-width', `${activeButton.offsetWidth}px`);
+        catalogSwitcher.classList.add('is-ready');
+      });
+    };
+
+
+    let searchMove = null;
+    let catalogLayoutReady = false;
+    let searchWasInEmptyFavorites = false;
+    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+    reducedMotion.addEventListener('change', () => searchMove?.cancel());
+    window.addEventListener('resize', () => searchMove?.cancel());
     const updateCatalog = () => {
+      // FLIP from the currently displayed position, including an interrupted move.
+      const previousSearch = toolSearch.getBoundingClientRect();
+      searchMove?.cancel();
       const favorites = getFavorites();
       let visibleCount = 0;
 
@@ -587,11 +614,27 @@
 
       const isSearchEmpty = Boolean(searchQuery) && visibleCount === 0;
       const isFavoritesEmpty = !isSearchEmpty && activeCatalog === 'favorites' && visibleCount === 0;
+      const isCompletelyEmptyFavorites = activeCatalog === 'favorites' && favorites.size === 0;
       favoritesEmpty.hidden = !isFavoritesEmpty;
       searchEmpty.hidden = !isSearchEmpty;
       toolsGrid.hidden = isFavoritesEmpty || isSearchEmpty;
       toolSort.hidden = activeCatalog === 'favorites';
       favoritesManageLink.hidden = activeCatalog !== 'favorites' || favorites.size === 0;
+      const nextSearch = toolSearch.getBoundingClientRect();
+      const searchDeltaX = previousSearch.left - nextSearch.left;
+      if (
+        catalogLayoutReady
+        && (searchWasInEmptyFavorites || isCompletelyEmptyFavorites)
+        && !reducedMotion.matches
+        && Math.abs(searchDeltaX) > .5
+      ) {
+        searchMove = toolSearch.animate([
+          { transform: `translateX(${searchDeltaX}px)` },
+          { transform: 'translateX(0)' }
+        ], { duration: 300, easing: 'cubic-bezier(0.2, 0, 0, 1)' });
+      }
+      searchWasInEmptyFavorites = isCompletelyEmptyFavorites;
+      catalogLayoutReady = true;
 
       if (isSearchEmpty) {
         searchEmptyMessage.textContent = `По запросу «${searchQuery.trim()}» инструменты не найдены.`;
@@ -605,6 +648,7 @@
       favoritesButton.classList.toggle('is-active', activeCatalog === 'favorites');
       allToolsButton.setAttribute('aria-pressed', String(activeCatalog === 'all'));
       favoritesButton.setAttribute('aria-pressed', String(activeCatalog === 'favorites'));
+      syncCatalogIndicator();
     };
 
     const closeSortMenu = () => {
@@ -650,7 +694,10 @@
       syncSortWidth();
     };
 
-    window.addEventListener('akd-languagechange', () => applySort(activeSort));
+    window.addEventListener('akd-languagechange', () => {
+      applySort(activeSort);
+      syncCatalogIndicator();
+    });
 
     const setSearchOpen = (isOpen, shouldFocus = false) => {
       searchPanel.hidden = !isOpen;
@@ -671,14 +718,20 @@
       searchTrigger.focus();
     };
 
-    cards.forEach(card => {
-      card.addEventListener('click', event => {
+    // Remember the catalog for every same-tab internal page, including the footer.
+    document.addEventListener('click', event => {
+        const link = event.target.closest('a[href]');
+        if (!link || link.hasAttribute('download')) return;
+        const destination = new URL(link.href, location.href);
+        if (destination.origin !== location.origin ||
+            destination.pathname === location.pathname ||
+            ['/', '/index.html'].includes(destination.pathname)) return;
         const opensInCurrentTab = event.button === 0 &&
           !event.ctrlKey &&
           !event.metaKey &&
           !event.shiftKey &&
           !event.altKey &&
-          card.target !== '_blank';
+          (!link.target || link.target === '_self');
 
         if (!opensInCurrentTab || event.defaultPrevented) return;
 
@@ -694,7 +747,6 @@
         } catch {
           /* Navigation still works if session storage is unavailable. */
         }
-      });
     });
 
     filters.forEach(btn => {
@@ -782,7 +834,11 @@
 
     updateCatalog();
     syncSortWidth();
-    document.fonts?.ready.then(syncSortWidth);
+    window.addEventListener('resize', syncCatalogIndicator);
+    document.fonts?.ready.then(() => {
+      syncSortWidth();
+      syncCatalogIndicator();
+    });
 
     if (navigationState && Number.isFinite(Number(navigationState.scrollY))) {
       const restoreScroll = () => {
