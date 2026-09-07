@@ -4,8 +4,14 @@
   const isLocalStaticHost = localHosts.includes(location.hostname);
   const homeHref = '/';
   const themeStorageKey = 'akd-image-theme';
+  const settingsStorageKey = 'akd-image-settings';
   const installAvailableStorageKey = 'akd-image-pwa-install-available';
   const systemDarkQuery = '(prefers-color-scheme: dark)';
+  const defaultSettings = Object.freeze({
+    showCategories: true,
+    showFavorites: true,
+    showSorting: true,
+  });
   const localRoutes = {
     '/compress': '/pages/compress.html',
     '/gif-optimize': '/pages/gif-optimize.html',
@@ -58,6 +64,46 @@
       return false;
     }
   }
+
+  function readSettings() {
+    try {
+      const saved = JSON.parse(localStorage.getItem(settingsStorageKey));
+      if (!saved || typeof saved !== 'object') return { ...defaultSettings };
+      return Object.fromEntries(Object.entries(defaultSettings).map(([key, fallback]) => [
+        key,
+        typeof saved[key] === 'boolean' ? saved[key] : fallback,
+      ]));
+    } catch {
+      return { ...defaultSettings };
+    }
+  }
+
+  function saveSettings(settings) {
+    try {
+      localStorage.setItem(settingsStorageKey, JSON.stringify(settings));
+    } catch {
+      /* Settings still apply for the current page if storage is unavailable. */
+    }
+  }
+
+  function applySettings(settings, notify = false) {
+    const root = document.documentElement;
+    root.dataset.catalogCategories = settings.showCategories ? 'visible' : 'hidden';
+    root.dataset.catalogFavorites = settings.showFavorites ? 'visible' : 'hidden';
+    root.dataset.catalogSorting = settings.showSorting ? 'visible' : 'hidden';
+    if (notify) {
+      window.dispatchEvent(new CustomEvent('akd-settingschange', {
+        detail: { settings: { ...settings } },
+      }));
+    }
+  }
+
+  let currentSettings = readSettings();
+  applySettings(currentSettings);
+  window.AKDSettings = {
+    defaults: { ...defaultSettings },
+    get() { return { ...currentSettings }; },
+  };
 
   function storedTheme() {
     try {
@@ -126,12 +172,67 @@
           </div>
   `;
 
+  const settingsMenuHTML = `
+          <div class="settings-menu" id="settings-menu">
+            <button class="settings-trigger" id="settings-trigger" type="button" aria-haspopup="dialog" aria-expanded="false" aria-controls="app-settings-panel" aria-label="Открыть настройки" title="Настройки">
+              <svg viewBox="0 -960 960 960" aria-hidden="true" focusable="false">
+                <path fill="currentColor" d="m370-80-16-128q-13-5-24.5-12T307-235l-119 50L78-375l103-78q-1-7-1-13.5v-27q0-6.5 1-13.5L78-585l110-190 119 50q11-8 23-15t24-12l16-128h220l16 128q13 5 24.5 12t22.5 15l119-50 110 190-103 78q1 7 1 13.5v27q0 6.5-2 13.5l103 78-110 190-118-50q-11 8-23 15t-24 12L590-80H370Zm70-80h79l14-106q31-8 57.5-23.5T639-327l99 41 39-68-86-65q5-14 7-29.5t2-31.5q0-16-2-31.5t-7-29.5l86-65-39-68-99 42q-22-23-48.5-38.5T533-694l-13-106h-79l-14 106q-31 8-57.5 23.5T321-633l-99-41-39 68 86 64q-5 15-7 30t-2 32q0 16 2 31t7 30l-86 65 39 68 99-42q22 23 48.5 38.5T427-266l13 106Zm42-180q58 0 99-41t41-99q0-58-41-99t-99-41q-59 0-99.5 41T342-480q0 58 40.5 99t99.5 41Zm-2-140Z"/>
+              </svg>
+            </button>
+            <div class="settings-panel" id="app-settings-panel" role="dialog" aria-labelledby="settings-title" hidden>
+              <div class="settings-panel__head">
+                <h2 id="settings-title">Настройки</h2>
+                <button class="settings-panel__close" type="button" data-settings-close aria-label="Закрыть настройки">
+                  <svg viewBox="0 -960 960 960" aria-hidden="true" focusable="false"><path d="m256-200-56-56 224-224-224-224 56-56 224 224 224-224 56 56-224 224 224 224-56 56-224-224-224 224Z"/></svg>
+                </button>
+              </div>
+              <div class="settings-panel__body">
+                <section class="settings-section" aria-labelledby="settings-catalog-title">
+                  <h3 id="settings-catalog-title">Каталог</h3>
+                  <button class="settings-option" type="button" role="switch" data-setting="showCategories" aria-checked="true">
+                    <span class="settings-option__copy"><strong>Показывать категории</strong><small>Фильтры «Оптимизация», «Геометрия» и «Творчество»</small></span>
+                    <span class="settings-switch" aria-hidden="true"><span></span></span>
+                  </button>
+                  <button class="settings-option" type="button" role="switch" data-setting="showFavorites" aria-checked="true">
+                    <span class="settings-option__copy"><strong>Показывать избранное</strong><small>Отдельный каталог сохранённых инструментов</small></span>
+                    <span class="settings-switch" aria-hidden="true"><span></span></span>
+                  </button>
+                  <button class="settings-option" type="button" role="switch" data-setting="showSorting" aria-checked="true">
+                    <span class="settings-option__copy"><strong>Показывать сортировку</strong><small>Сортировка по популярности, новизне и названию</small></span>
+                    <span class="settings-switch" aria-hidden="true"><span></span></span>
+                  </button>
+                </section>
+                <section class="settings-section" aria-labelledby="settings-data-title">
+                  <h3 id="settings-data-title">Данные приложения</h3>
+                  <button class="settings-action" type="button" data-settings-action="clear-favorites">
+                    <svg viewBox="0 -960 960 960" aria-hidden="true"><path d="M160-80v-560q0-33 23.5-56.5T240-720h320q33 0 56.5 23.5T640-640v560L400-200 160-80Zm80-121 160-86 160 86v-439H240v439Zm480-39v-560H280v-80h440q33 0 56.5 23.5T800-800v560h-80ZM240-640h320-320Z"/></svg>
+                    <span><strong>Очистить избранное</strong><small>Удалить список сохранённых инструментов</small></span>
+                  </button>
+                  <button class="settings-action" type="button" data-settings-action="clear-downloads">
+                    <svg viewBox="0 -960 960 960" aria-hidden="true"><path d="M580-280h80q25 0 42.5-17.5T720-340v-160h40v-60H660v-40h-80v40H480v60h40v160q0 25 17.5 42.5T580-280Zm0-220h80v160h-80v-160ZM160-160q-33 0-56.5-23.5T80-240v-480q0-33 23.5-56.5T160-800h240l80 80h320q33 0 56.5 23.5T880-640v400q0 33-23.5 56.5T800-160H160Zm0-80h640v-400H447l-80-80H160v480Zm0 0v-480 480Z"/></svg>
+                    <span><strong>Удалить данные инструментов</strong><small>Загруженные модели и другие кэшированные ресурсы будут удалены</small></span>
+                  </button>
+                  <button class="settings-action" type="button" data-settings-action="reset-settings">
+                    <svg viewBox="0 -960 960 960" aria-hidden="true"><path d="M440-122q-121-15-200.5-105.5T160-440q0-66 26-126.5T260-672l57 57q-38 34-57.5 79T240-440q0 88 56 155.5T440-202v80Zm80 0v-80q87-16 143.5-83T720-440q0-100-70-170t-170-70h-3l44 44-56 56-140-140 140-140 56 56-44 44h3q134 0 227 93t93 227q0 121-79.5 211.5T520-122Z"/></svg>
+                    <span><strong>Стандартные настройки</strong><small>Вернуть исходное отображение интерфейса</small></span>
+                  </button>
+                  <div class="settings-section__divider" role="separator"></div>
+                  <button class="settings-action settings-action--danger" type="button" data-settings-action="clear-all">
+                    <svg viewBox="0 -960 960 960" aria-hidden="true"><path d="m376-300 104-104 104 104 56-56-104-104 104-104-56-56-104 104-104-104-56 56 104 104-104 104 56 56Zm-96 180q-33 0-56.5-23.5T200-200v-520h-40v-80h200v-40h240v40h200v80h-40v520q0 33-23.5 56.5T680-120H280Zm400-600H280v520h400v-520Zm-400 0v520-520Z"/></svg>
+                    <span><strong>Очистить локальные данные</strong><small>Удалить настройки, избранное и данные инструментов</small></span>
+                  </button>
+                </section>
+              </div>
+            </div>
+          </div>
+  `;
+
   const headerHTML = `
     <header class="site-header">
       <div class="container inner">
         <div class="header-side header-side--start">
           <a href="${homeHref}" class="logo" aria-label="AKD Image">
-            <img class="logo-mark" src="/assets/icons/favicon.svg?v=3.0.0" alt="" aria-hidden="true">
+            <img class="logo-mark" src="/assets/icons/favicon.svg?v=3.2.0" alt="" aria-hidden="true">
             <span>AKD Image</span>
           </a>
         </div>
@@ -146,6 +247,7 @@
 
           <span class="header-install-divider${initialInstallHiddenClass}" data-pwa-install-divider aria-hidden="true"></span>
           <a href="${homeHref}" class="header-btn">Главная</a>
+          ${settingsMenuHTML}
         </div>
       </div>
     </header>
@@ -279,6 +381,22 @@
     </dialog>
   `;
 
+  const settingsConfirmHTML = `
+    <dialog class="modal settings-confirm-dialog" id="settings-confirm-dialog" aria-labelledby="settings-confirm-title" aria-describedby="settings-confirm-description">
+      <div class="modal__head">
+        <h3 id="settings-confirm-title">Подтвердите действие</h3>
+        <button class="modal__close" type="button" data-settings-confirm-close aria-label="Закрыть">×</button>
+      </div>
+      <div class="modal__body settings-confirm-dialog__body">
+        <p id="settings-confirm-description"></p>
+        <div class="settings-confirm-dialog__actions">
+          <button class="btn btn-secondary" type="button" data-settings-confirm-close>Отмена</button>
+          <button class="btn btn-danger" id="settings-confirm-action" type="button">Удалить</button>
+        </div>
+      </div>
+    </dialog>
+  `;
+
   function initFooterDialog(id, triggerSelector, closeSelector) {
     const dialog = document.getElementById(id);
     const overlay = id === 'contact-dialog' ? document.getElementById('contact-overlay') : null;
@@ -336,6 +454,194 @@
     // Never allow a native navigation to expose form values or bypass the handler.
     dialog.querySelector('form')?.addEventListener('submit', event => event.preventDefault());
     dialog.querySelector('[data-support-confirm], [data-website-confirm]')?.addEventListener('click', () => dialog.close());
+  }
+
+  function initSettingsMenu() {
+    const menu = document.getElementById('settings-menu');
+    const trigger = document.getElementById('settings-trigger');
+    const panel = document.getElementById('app-settings-panel');
+    const confirmDialog = document.getElementById('settings-confirm-dialog');
+    const confirmTitle = document.getElementById('settings-confirm-title');
+    const confirmDescription = document.getElementById('settings-confirm-description');
+    const confirmAction = document.getElementById('settings-confirm-action');
+    const toggles = Array.from(panel?.querySelectorAll('[data-setting]') || []);
+    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const t = value => window.AKDI18n?.t(value) || value;
+    let closeTimer = 0;
+    let pendingAction = null;
+    let actionTrigger = null;
+
+    if (!menu || !trigger || !panel || !confirmDialog || !confirmAction) return;
+
+    function syncToggles() {
+      toggles.forEach(button => {
+        button.setAttribute('aria-checked', String(Boolean(currentSettings[button.dataset.setting])));
+      });
+    }
+
+    function openSettings() {
+      window.clearTimeout(closeTimer);
+      panel.hidden = false;
+      panel.classList.remove('is-closing');
+      panel.classList.add('is-open');
+      trigger.setAttribute('aria-expanded', 'true');
+      requestAnimationFrame(() => panel.querySelector('[data-settings-close]')?.focus());
+    }
+
+    function closeSettings(restoreFocus = false) {
+      if (panel.hidden) return;
+      window.clearTimeout(closeTimer);
+      trigger.setAttribute('aria-expanded', 'false');
+      panel.classList.remove('is-open');
+
+      const finish = () => {
+        panel.hidden = true;
+        panel.classList.remove('is-closing');
+        if (restoreFocus) trigger.focus();
+      };
+
+      if (reducedMotion.matches) {
+        finish();
+        return;
+      }
+
+      panel.classList.add('is-closing');
+      closeTimer = window.setTimeout(finish, 150);
+    }
+
+    function updateSetting(key) {
+      if (!(key in defaultSettings)) return;
+      currentSettings = { ...currentSettings, [key]: !currentSettings[key] };
+      saveSettings(currentSettings);
+      applySettings(currentSettings, true);
+      syncToggles();
+    }
+
+    async function clearDownloadedResources() {
+      if (!('caches' in window)) return 0;
+      const names = await caches.keys();
+      const downloadableCaches = names.filter(name => !name.startsWith('akd-image-pwa-'));
+      const results = await Promise.all(downloadableCaches.map(name => caches.delete(name)));
+      return results.filter(Boolean).length;
+    }
+
+    function notify(message) {
+      if (window.Toast?.success) window.Toast.success(t(message));
+    }
+
+    function askForConfirmation(action, button) {
+      const confirmations = {
+        'clear-favorites': {
+          title: 'Очистить избранное?',
+          description: 'Все сохранённые инструменты будут удалены из избранного.',
+        },
+        'clear-downloads': {
+          title: 'Удалить данные инструментов?',
+          description: 'ИИ-модели и дополнительные данные инструментов будут загружены заново при следующем использовании.',
+        },
+        'clear-all': {
+          title: 'Очистить локальные данные?',
+          description: 'Настройки, избранное и данные инструментов будут удалены. Это действие нельзя отменить.',
+        },
+      };
+      const content = confirmations[action];
+      if (!content) return;
+      pendingAction = action;
+      actionTrigger = button;
+      confirmTitle.textContent = t(content.title);
+      confirmDescription.textContent = t(content.description);
+      confirmAction.textContent = t('Удалить');
+      confirmDialog.showModal();
+      document.body.classList.add('modal-open');
+      confirmAction.focus();
+    }
+
+    async function runConfirmedAction() {
+      if (!pendingAction) return;
+      const action = pendingAction;
+      confirmAction.disabled = true;
+      confirmDialog.setAttribute('aria-busy', 'true');
+
+      try {
+        if (action === 'clear-favorites') {
+          localStorage.removeItem('akd-image-favorites');
+          window.dispatchEvent(new CustomEvent('akd-favoriteschange', { detail: { favorites: [] } }));
+          notify('Избранное очищено.');
+        } else if (action === 'clear-downloads') {
+          await clearDownloadedResources();
+          notify('Данные инструментов удалены.');
+        } else if (action === 'clear-all') {
+          for (let index = localStorage.length - 1; index >= 0; index--) {
+            const key = localStorage.key(index);
+            if (key?.startsWith('akd-image-')) localStorage.removeItem(key);
+          }
+          for (let index = sessionStorage.length - 1; index >= 0; index--) {
+            const key = sessionStorage.key(index);
+            if (key?.startsWith('akd-image-')) sessionStorage.removeItem(key);
+          }
+          await clearDownloadedResources();
+          location.reload();
+          return;
+        }
+        confirmDialog.close();
+        closeSettings(true);
+      } catch (error) {
+        console.error(error);
+        window.Toast?.error?.(t('Не удалось удалить данные. Попробуйте ещё раз.'));
+      } finally {
+        confirmAction.disabled = false;
+        confirmDialog.removeAttribute('aria-busy');
+      }
+    }
+
+    trigger.addEventListener('click', event => {
+      event.stopPropagation();
+      if (panel.hidden || panel.classList.contains('is-closing')) openSettings();
+      else closeSettings(true);
+    });
+
+    panel.querySelector('[data-settings-close]')?.addEventListener('click', () => closeSettings(true));
+    toggles.forEach(button => button.addEventListener('click', () => updateSetting(button.dataset.setting)));
+    panel.querySelectorAll('[data-settings-action]').forEach(button => {
+      button.addEventListener('click', () => {
+        const action = button.dataset.settingsAction;
+        if (action === 'reset-settings') {
+          currentSettings = { ...defaultSettings };
+          saveSettings(currentSettings);
+          applySettings(currentSettings, true);
+          syncToggles();
+          notify('Стандартные настройки восстановлены.');
+          return;
+        }
+        askForConfirmation(action, button);
+      });
+    });
+
+    document.addEventListener('click', event => {
+      if (confirmDialog.contains(event.target)) return;
+      if (!panel.hidden && !menu.contains(event.target)) closeSettings();
+    });
+    document.addEventListener('keydown', event => {
+      if (event.key === 'Escape' && !panel.hidden && !confirmDialog.open) closeSettings(true);
+    });
+    confirmDialog.querySelectorAll('[data-settings-confirm-close]').forEach(button => {
+      button.addEventListener('click', () => confirmDialog.close());
+    });
+    confirmDialog.addEventListener('click', event => {
+      if (event.target !== confirmDialog) return;
+      const bounds = confirmDialog.getBoundingClientRect();
+      if (event.clientX < bounds.left || event.clientX > bounds.right ||
+          event.clientY < bounds.top || event.clientY > bounds.bottom) confirmDialog.close();
+    });
+    confirmDialog.addEventListener('close', () => {
+      document.body.classList.remove('modal-open');
+      pendingAction = null;
+      actionTrigger?.focus();
+      actionTrigger = null;
+    });
+    confirmAction.addEventListener('click', runConfirmedAction);
+    window.addEventListener('akd-languagechange', syncToggles);
+    syncToggles();
   }
 
   function initThemeControl() {
@@ -646,7 +952,7 @@
   function loadPwaController() {
     if (document.querySelector('script[data-pwa-controller]')) return;
     const script = document.createElement('script');
-    script.src = '/js/pwa.js?v=3.0.0';
+    script.src = '/js/pwa.js?v=3.2.0';
     script.defer = true;
     script.dataset.pwaController = '';
     document.body.appendChild(script);
@@ -683,8 +989,10 @@
     document.body.insertAdjacentHTML('beforeend', contactHTML);
     document.body.insertAdjacentHTML('beforeend', supportHTML);
     document.body.insertAdjacentHTML('beforeend', websiteHTML);
+    document.body.insertAdjacentHTML('beforeend', settingsConfirmHTML);
 
     initThemeControl();
+    initSettingsMenu();
     initToolModeIndicators();
     initLanguageControl();
     initFooterDialog('contact-dialog', '[data-contact-open]', '[data-contact-close]');

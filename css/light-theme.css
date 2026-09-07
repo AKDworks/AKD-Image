@@ -1,13 +1,4 @@
 /* Light-only refinements. Shared layouts and the dark palette stay unchanged. */
-html:not([data-theme="dark"]) .hero:has(+ .tools-section .tool-filters) {
-  padding-top: 48px;
-}
-html:not([data-theme="dark"]) .hero:has(+ .tools-section .tool-filters) p {
-  margin-bottom: 24px;
-}
-html:not([data-theme="dark"]) .tools-grid-toolbar {
-  margin-top: 24px;
-}
 
 /* Filled selection means the same thing in navigation and tool mode switches. */
 html:not([data-theme="dark"]) .header-btn,
@@ -82,7 +73,4 @@ html:not([data-theme="dark"]) .contact-form__actions .btn:disabled {
 }
 html:not([data-theme="dark"]) .video-gif-preview :is(video, img) {
   background: var(--workspace-bg);
-}
-@media (max-width: 768px) {
-  html:not([data-theme="dark"]) .hero:has(+ .tools-section .tool-filters) { padding-top: 36px; }
 }

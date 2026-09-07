@@ -130,6 +130,7 @@
       const source = new DOMParser().parseFromString(await response.text(), 'text/html');
       const sourceCards = Array.from(source.querySelectorAll('#tools-grid .tool-card'));
       const favorites = new Set(readFavorites());
+      const favoriteToggles = [];
 
       sourceCards.forEach(sourceCard => {
         const toolId = sourceCard.getAttribute('href');
@@ -148,6 +149,8 @@
           card.setAttribute('aria-pressed', String(isFavorite));
         }
 
+        favoriteToggles.push(updateToggle);
+
         card.addEventListener('click', () => {
           if (favorites.has(toolId)) {
             favorites.delete(toolId);
@@ -160,6 +163,11 @@
 
         updateToggle();
         picker.appendChild(card);
+      });
+
+      window.addEventListener('akd-favoriteschange', () => {
+        favorites.clear();
+        favoriteToggles.forEach(updateToggle => updateToggle());
       });
 
       cards = Array.from(picker.querySelectorAll('.favorite-picker__card'));

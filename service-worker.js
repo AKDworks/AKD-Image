@@ -1,5 +1,5 @@
 // Increment this value when the offline bundle changes materially.
-const CACHE_VERSION = 'akd-image-pwa-3.0.1';
+const CACHE_VERSION = 'akd-image-pwa-3.2.0';
 const STATIC_CACHE = `${CACHE_VERSION}-static`;
 const RUNTIME_CACHE = `${CACHE_VERSION}-runtime`;
 
@@ -40,32 +40,32 @@ function offlineDocumentUrl(route) {
 }
 
 const PRECACHE_URLS = [
-  '/css/light-theme.css?v=3.0.0',
+  '/css/light-theme.css?v=3.2.0',
   '/LICENSE.MaterialSymbols.txt',
   '/',
   ...(IS_LOCAL_STATIC_HOST ? ['/index.html'] : []),
   ...OFFLINE_ROUTE_PATHS.map(offlineDocumentUrl),
-  '/css/main.css?v=3.0.1',
-  '/css/vars.css?v=3.0.0',
-  '/css/base.css?v=3.0.0',
-  '/css/layout.css?v=3.0.0',
-  '/css/components.css?v=3.0.0',
-  '/css/pages.css?v=3.0.1',
-  '/css/remove-background.css?v=3.0.0',
-  '/js/i18n.js?v=3.0.0',
-  '/js/layout.js?v=3.0.0',
-  '/js/pwa.js?v=3.0.0',
-  '/js/core.js?v=3.0.0',
-  '/js/favorites.js?v=3.0.1',
-  '/js/image-worker.js?v=3.0.0',
-  '/js/image-formats.js?v=3.0.0',
-  '/js/gif-optimize.js?v=3.0.0',
-  '/js/gif-frames.js?v=3.0.0',
+  '/css/main.css?v=3.2.0',
+  '/css/vars.css?v=3.2.0',
+  '/css/base.css?v=3.2.0',
+  '/css/layout.css?v=3.2.0',
+  '/css/components.css?v=3.2.0',
+  '/css/pages.css?v=3.2.0',
+  '/css/remove-background.css?v=3.2.0',
+  '/js/i18n.js?v=3.2.0',
+  '/js/layout.js?v=3.2.0',
+  '/js/pwa.js?v=3.2.0',
+  '/js/core.js?v=3.2.0',
+  '/js/favorites.js?v=3.2.0',
+  '/js/image-worker.js?v=3.2.0',
+  '/js/image-formats.js?v=3.2.0',
+  '/js/gif-optimize.js?v=3.2.0',
+  '/js/gif-frames.js?v=3.2.0',
   '/js/vendor/jszip.min.js',
   '/js/vendor/jspdf.umd.min.js',
   '/js/vendor/modern-gif/index.js?v=2.1.0',
   '/js/vendor/modern-gif/worker.js?v=2.1.0',
-  '/assets/icons/favicon.svg?v=3.0.0',
+  '/assets/icons/favicon.svg?v=3.2.0',
   '/assets/icons/app-icon-192.png',
   '/assets/icons/app-icon-512.png',
   '/assets/icons/app-icon-maskable-512.png',

@@ -1521,7 +1521,7 @@ const FileUtils = {
     this.validateFile(file);
     const mime = this.getFileMime(file);
     if (!this.isHeic(file) && mime !== 'image/svg+xml') return file;
-    const formats = await import('/js/image-formats.js?v=3.0.0');
+    const formats = await import('/js/image-formats.js?v=3.2.0');
     return formats.prepareInput(file, mime);
   },
 
@@ -1581,7 +1581,7 @@ const FileUtils = {
 
     if (['image/heic', 'image/heif', 'image/bmp'].includes(mimeType)) {
       try {
-        const formats = await import('/js/image-formats.js?v=3.0.0');
+        const formats = await import('/js/image-formats.js?v=3.2.0');
         return await formats.encodeCanvas(canvas, mimeType, quality);
       } catch (err) {
         console.error(err);
@@ -2253,7 +2253,7 @@ const ImageProcessor = (() => {
   function getWorker() {
     if (worker) return worker;
 
-    worker = new Worker('/js/image-worker.js?v=3.0.0', { type: 'module' });
+    worker = new Worker('/js/image-worker.js?v=3.2.0', { type: 'module' });
     worker.addEventListener('message', event => {
       const task = pending.get(event.data.id);
       if (!task) return;
