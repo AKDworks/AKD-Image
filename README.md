@@ -119,14 +119,14 @@ AKD Image targets current versions of Chrome, Edge, Firefox and Safari. Processi
 
 General limits:
 
-- up to 50 MB per static image;
-- up to 50 files and 250 MB per upload;
+- up to 75 MB per static image;
+- up to 50 files and 500 MB per upload;
 - up to 40 megapixels and 16,384 pixels on either side;
 - up to 500 MB of source data when creating a ZIP archive.
 
 HEIC and HEIF limits:
 
-- up to 20 MB per source file;
+- up to 30 MB per source file;
 - up to 20 megapixels and 8,192 pixels on either side for HEIC export;
 - one static 8-bit frame without extended container data.
 
@@ -135,26 +135,26 @@ BMP export is limited to 20 megapixels. BMP and HEIC do not support transparency
 Background removal limits:
 
 - one static image per operation;
-- up to 25 MB per source file, within the general resolution limits;
+- up to 40 MB per source file, within the general resolution limits;
 - an initial download of about 94 MB with WebGPU or 183 MB with the WebAssembly fallback;
 - WebGPU is preferred when available, while processing speed and memory use depend on the device.
 
 Animated GIF limits:
 
-- up to 25 MB per file;
-- up to 200 frames and 60 seconds;
-- up to 1,920 pixels on either side and 2.1 megapixels per frame;
-- up to 24 million pixels across all frames;
+- up to 50 MB per file;
+- up to 300 frames and 120 seconds;
+- up to 2,560 pixels on either side and 4 megapixels per frame;
+- up to 48 million pixels across all frames;
 - at least 30 ms per frame;
-- up to 50 MB for the output GIF.
+- up to 100 MB for the output GIF.
 
-Base64 conversion is limited to 3 MB of source data in either direction. This prevents the browser from becoming unresponsive while handling very long strings. Compress or resize larger images first.
+Base64 conversion is limited to 10 MB of source data in either direction. This prevents the browser from becoming unresponsive while handling very long strings. Compress or resize larger images first.
 
 Video ↔ GIF limits:
 
 - one file per operation;
-- video up to 100 MB and GIF up to 25 MB;
-- up to 60 seconds;
+- video up to 200 MB and GIF up to 50 MB;
+- up to 120 seconds;
 - MP4 and WebM video input;
 - MP4 and WebM video output;
 - processing speed depends on the device, and the tab must remain open until conversion finishes.

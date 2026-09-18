@@ -55,7 +55,7 @@ let sourceUrl = null;
 let resultUrl = null;
 let resultBlob = null;
 let abortController = null;
-const MAX_INPUT_SIZE = 25 * 1024 * 1024;
+const MAX_INPUT_SIZE = 40 * 1024 * 1024;
 
 function revokeUrl(url) {
   if (url) URL.revokeObjectURL(url);
@@ -95,7 +95,7 @@ async function setFile(file) {
   resetResult();
   FileUtils.validateFile(file);
   if (file.size > MAX_INPUT_SIZE) {
-    throw new Error('Для удаления фона выберите файл не больше 25 МБ.');
+    throw new Error('Для удаления фона выберите файл не больше 40 МБ.');
   }
 
   activeFile = file;

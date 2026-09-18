@@ -404,6 +404,7 @@ const CustomColorPicker = (() => {
     }
 
     function open() {
+      if (input.disabled) return;
       if (!panel.hidden) return;
       if (openInstance && openInstance !== instance) openInstance.close();
       panel.hidden = false;
@@ -427,7 +428,10 @@ const CustomColorPicker = (() => {
       if (returnFocus) trigger.focus();
     }
 
-    trigger.addEventListener('click', () => panel.hidden ? open() : close());
+    trigger.addEventListener('click', () => {
+      if (input.disabled) return;
+      panel.hidden ? open() : close();
+    });
     saturation.addEventListener('pointerdown', event => {
       event.preventDefault();
       saturation.setPointerCapture(event.pointerId);
@@ -479,6 +483,12 @@ const CustomColorPicker = (() => {
     });
 
     instance.close = close;
+    const syncDisabled = () => {
+      trigger.disabled = input.disabled;
+      if (input.disabled) close();
+    };
+    new MutationObserver(syncDisabled).observe(input, { attributes: true, attributeFilter: ['disabled'] });
+    syncDisabled();
     applyHex(input.value, { notify: false });
     return instance;
   }
@@ -549,7 +559,7 @@ const ResultFlow = (() => {
     blur: { href: '/blur', label: 'Размытие области', iconClass: 'ic-orange', iconPath: 'M106-386q-6-6-6-14t6-14q6-6 14-6t14 6q6 6 6 14t-6 14q-6 6-14 6t-14-6Zm0-160q-6-6-6-14t6-14q6-6 14-6t14 6q6 6 6 14t-6 14q-6 6-14 6t-14-6Zm105.5 334.5Q200-223 200-240t11.5-28.5Q223-280 240-280t28.5 11.5Q280-257 280-240t-11.5 28.5Q257-200 240-200t-28.5-11.5Zm0-160Q200-383 200-400t11.5-28.5Q223-440 240-440t28.5 11.5Q280-417 280-400t-11.5 28.5Q257-360 240-360t-28.5-11.5Zm0-160Q200-543 200-560t11.5-28.5Q223-600 240-600t28.5 11.5Q280-577 280-560t-11.5 28.5Q257-520 240-520t-28.5-11.5Zm0-160Q200-703 200-720t11.5-28.5Q223-760 240-760t28.5 11.5Q280-737 280-720t-11.5 28.5Q257-680 240-680t-28.5-11.5Zm146 334Q340-375 340-400t17.5-42.5Q375-460 400-460t42.5 17.5Q460-425 460-400t-17.5 42.5Q425-340 400-340t-42.5-17.5Zm0-160Q340-535 340-560t17.5-42.5Q375-620 400-620t42.5 17.5Q460-585 460-560t-17.5 42.5Q425-500 400-500t-42.5-17.5Zm14 306Q360-223 360-240t11.5-28.5Q383-280 400-280t28.5 11.5Q440-257 440-240t-11.5 28.5Q417-200 400-200t-28.5-11.5Zm0-480Q360-703 360-720t11.5-28.5Q383-760 400-760t28.5 11.5Q440-737 440-720t-11.5 28.5Q417-680 400-680t-28.5-11.5ZM386-106q-6-6-6-14t6-14q6-6 14-6t14 6q6 6 6 14t-6 14q-6 6-14 6t-14-6Zm0-720q-6-6-6-14t6-14q6-6 14-6t14 6q6 6 6 14t-6 14q-6 6-14 6t-14-6Zm131.5 468.5Q500-375 500-400t17.5-42.5Q535-460 560-460t42.5 17.5Q620-425 620-400t-17.5 42.5Q585-340 560-340t-42.5-17.5Zm0-160Q500-535 500-560t17.5-42.5Q535-620 560-620t42.5 17.5Q620-585 620-560t-17.5 42.5Q585-500 560-500t-42.5-17.5Zm14 306Q520-223 520-240t11.5-28.5Q543-280 560-280t28.5 11.5Q600-257 600-240t-11.5 28.5Q577-200 560-200t-28.5-11.5Zm0-480Q520-703 520-720t11.5-28.5Q543-760 560-760t28.5 11.5Q600-737 600-720t-11.5 28.5Q577-680 560-680t-28.5-11.5ZM546-106q-6-6-6-14t6-14q6-6 14-6t14 6q6 6 6 14t-6 14q-6 6-14 6t-14-6Zm0-720q-6-6-6-14t6-14q6-6 14-6t14 6q6 6 6 14t-6 14q-6 6-14 6t-14-6Zm145.5 614.5Q680-223 680-240t11.5-28.5Q703-280 720-280t28.5 11.5Q760-257 760-240t-11.5 28.5Q737-200 720-200t-28.5-11.5Zm0-160Q680-383 680-400t11.5-28.5Q703-440 720-440t28.5 11.5Q760-417 760-400t-11.5 28.5Q737-360 720-360t-28.5-11.5Zm0-160Q680-543 680-560t11.5-28.5Q703-600 720-600t28.5 11.5Q760-577 760-560t-11.5 28.5Q737-520 720-520t-28.5-11.5Zm0-160Q680-703 680-720t11.5-28.5Q703-760 720-760t28.5 11.5Q760-737 760-720t-11.5 28.5Q737-680 720-680t-28.5-11.5ZM826-386q-6-6-6-14t6-14q6-6 14-6t14 6q6 6 6 14t-6 14q-6 6-14 6t-14-6Zm0-160q-6-6-6-14t6-14q6-6 14-6t14 6q6 6 6 14t-6 14q-6 6-14 6t-14-6Z' },
     pdf: { href: '/pdf', label: 'Изображения в PDF', iconClass: 'ic-green', iconPath: 'M360-460h40v-80h40q17 0 28.5-11.5T480-580v-40q0-17-11.5-28.5T440-660h-80v200Zm40-120v-40h40v40h-40Zm120 120h80q17 0 28.5-11.5T640-500v-120q0-17-11.5-28.5T600-660h-80v200Zm40-40v-120h40v120h-40Zm120 40h40v-80h40v-40h-40v-40h40v-40h-80v200ZM320-240q-33 0-56.5-23.5T240-320v-480q0-33 23.5-56.5T320-880h480q33 0 56.5 23.5T880-800v480q0 33-23.5 56.5T800-240H320Zm0-80h480v-480H320v480ZM160-80q-33 0-56.5-23.5T80-160v-560h80v560h560v80H160Zm160-720v480-480Z' },
     collage: { href: '/collage', label: 'Коллаж', iconClass: 'ic-orange', iconPath: 'M440-120H200q-33 0-56.5-23.5T120-200v-560q0-33 23.5-56.5T200-840h240v720Zm-80-80v-560H200v560h160Zm160-320v-320h240q33 0 56.5 23.5T840-760v240H520Zm80-80h160v-160H600v160Zm-80 480v-320h320v240q0 33-23.5 56.5T760-120H520Zm80-80h160v-160H600v160ZM360-480Zm240-120Zm0 240Z' },
-    annotate: { href: '/annotate', label: 'Пометки на изображении', iconClass: 'ic-orange', iconPath: 'M240-120q-45 0-89-22t-71-58q26 0 53-20.5t27-59.5q0-50 35-85t85-35q50 0 85 35t35 85q0 66-47 113t-113 47Zm0-80q33 0 56.5-23.5T320-280q0-17-11.5-28.5T280-320q-17 0-28.5 11.5T240-280q0 23-5.5 42T220-202q5 2 10 2h10Zm230-160L360-470l358-358q11-11 27.5-11.5T774-828l54 54q12 12 12 28t-12 28L470-360Zm-190 80Z' },
+    annotate: { href: '/annotate', label: 'Редактор изображений', iconClass: 'ic-orange', iconPath: 'M240-120q-45 0-89-22t-71-58q26 0 53-20.5t27-59.5q0-50 35-85t85-35q50 0 85 35t35 85q0 66-47 113t-113 47Zm0-80q33 0 56.5-23.5T320-280q0-17-11.5-28.5T280-320q-17 0-28.5 11.5T240-280q0 23-5.5 42T220-202q5 2 10 2h10Zm230-160L360-470l358-358q11-11 27.5-11.5T774-828l54 54q12 12 12 28t-12 28L470-360Zm-190 80Z' },
     'gif-trim': { href: '/gif-trim', label: 'Вырезать GIF', iconClass: 'ic-blue', iconPath: 'M760-120 480-400l-94 94q8 15 11 32t3 34q0 66-47 113T240-80q-66 0-113-47T80-240q0-66 47-113t113-47q17 0 34 3t32 11l94-94-94-94q-15 8-32 11t-34 3q-66 0-113-47T80-720q0-66 47-113t113-47q66 0 113 47t47 113q0 17-3 34t-11 32l494 494v40H760ZM600-520l-80-80 240-240h120v40L600-520ZM296.5-663.5Q320-687 320-720t-23.5-56.5Q273-800 240-800t-56.5 23.5Q160-753 160-720t23.5 56.5Q207-640 240-640t56.5-23.5ZM494-466q6-6 6-14t-6-14q-6-6-14-6t-14 6q-6 6-6 14t6 14q6 6 14 6t14-6ZM296.5-183.5Q320-207 320-240t-23.5-56.5Q273-320 240-320t-56.5 23.5Q160-273 160-240t23.5 56.5Q207-160 240-160t56.5-23.5Z' },
     'video-gif': { href: '/video-gif', label: 'Видео ↔ GIF', iconClass: 'ic-orange', iconPath: 'm480-420 240-160-240-160v320Zm28 220h224q-7 26-24 42t-44 20L228-85q-33 5-59.5-15.5T138-154L85-591q-4-33 16-59t53-30l46-6v80l-36 5 54 437 290-36Zm-148-80q-33 0-56.5-23.5T280-360v-440q0-33 23.5-56.5T360-880h440q33 0 56.5 23.5T880-800v440q0 33-23.5 56.5T800-280H360Zm0-80h440v-440H360v440Zm220-220ZM218-164Z' },
     'gif-frames': { href: '/gif-frames', label: 'GIF в кадры', iconClass: 'ic-orange', iconPath: 'M360-400h400L622-580l-92 120-62-80-108 140Zm-40 160q-33 0-56.5-23.5T240-320v-480q0-33 23.5-56.5T320-880h480q33 0 56.5 23.5T880-800v480q0 33-23.5 56.5T800-240H320Zm0-80h480v-480H320v480ZM160-80q-33 0-56.5-23.5T80-160v-560h80v560h560v80H160Zm160-720v480-480Z' },
@@ -1299,11 +1309,11 @@ const UIUtils = {
 
 /* Files */
 const FileUtils = {
-  MAX_FILE_SIZE: 50 * 1024 * 1024,
-  MAX_GIF_FILE_SIZE: 25 * 1024 * 1024,
-  MAX_HEIC_FILE_SIZE: 20 * 1024 * 1024,
+  MAX_FILE_SIZE: 75 * 1024 * 1024,
+  MAX_GIF_FILE_SIZE: 50 * 1024 * 1024,
+  MAX_HEIC_FILE_SIZE: 30 * 1024 * 1024,
   MAX_BATCH_FILES: 50,
-  MAX_BATCH_SIZE: 250 * 1024 * 1024,
+  MAX_BATCH_SIZE: 500 * 1024 * 1024,
   MAX_ZIP_SIZE: 500 * 1024 * 1024,
   MAX_IMAGE_PIXELS: 40 * 1000 * 1000,
   MAX_IMAGE_SIDE: 16384,
@@ -1521,7 +1531,7 @@ const FileUtils = {
     this.validateFile(file);
     const mime = this.getFileMime(file);
     if (!this.isHeic(file) && mime !== 'image/svg+xml') return file;
-    const formats = await import('/js/image-formats.js?v=3.2.0');
+    const formats = await import('/js/image-formats.js?v=3.3.0');
     return formats.prepareInput(file, mime);
   },
 
@@ -1581,7 +1591,7 @@ const FileUtils = {
 
     if (['image/heic', 'image/heif', 'image/bmp'].includes(mimeType)) {
       try {
-        const formats = await import('/js/image-formats.js?v=3.2.0');
+        const formats = await import('/js/image-formats.js?v=3.3.0');
         return await formats.encodeCanvas(canvas, mimeType, quality);
       } catch (err) {
         console.error(err);
@@ -1704,13 +1714,13 @@ const FileUtils = {
 const GifProcessor = (() => {
   const WORKER_URL = '/js/vendor/modern-gif/worker.js?v=2.1.0';
   const limits = Object.freeze({
-    maxFrames: 200,
-    maxDuration: 60 * 1000,
+    maxFrames: 300,
+    maxDuration: 120 * 1000,
     minFrameDelay: 30,
-    maxSide: 1920,
-    maxPixelsPerFrame: 1920 * 1080,
-    maxTotalPixels: 24 * 1000 * 1000,
-    maxOutputSize: 50 * 1024 * 1024,
+    maxSide: 2560,
+    maxPixelsPerFrame: 4 * 1000 * 1000,
+    maxTotalPixels: 48 * 1000 * 1000,
+    maxOutputSize: 100 * 1024 * 1024,
   });
   const inspectionCache = new WeakMap();
   let libraryPromise = null;
@@ -1770,7 +1780,7 @@ const GifProcessor = (() => {
       throw new Error(`GIF содержит больше ${limits.maxFrames} кадров`);
     }
     if (duration > limits.maxDuration) {
-      throw new Error('Длительность GIF не должна превышать 60 секунд');
+      throw new Error('Длительность GIF не должна превышать 120 секунд');
     }
     if (gif.frames.some(frame => frame.delay < limits.minFrameDelay)) {
       throw new Error('Задержка кадра GIF не должна быть меньше 30 мс');
@@ -1786,7 +1796,7 @@ const GifProcessor = (() => {
       throw new Error(`Сторона GIF не должна превышать ${limits.maxSide} px`);
     }
     if (width * height > limits.maxPixelsPerFrame) {
-      throw new Error('Один кадр GIF не должен превышать 2,1 мегапикселя');
+      throw new Error('Один кадр GIF не должен превышать 4 мегапикселя');
     }
     if (width * height * frameCount > limits.maxTotalPixels) {
       throw new Error('GIF слишком большой для безопасной обработки в браузере');
@@ -2253,7 +2263,7 @@ const ImageProcessor = (() => {
   function getWorker() {
     if (worker) return worker;
 
-    worker = new Worker('/js/image-worker.js?v=3.2.0', { type: 'module' });
+    worker = new Worker('/js/image-worker.js?v=3.3.0', { type: 'module' });
     worker.addEventListener('message', event => {
       const task = pending.get(event.data.id);
       if (!task) return;

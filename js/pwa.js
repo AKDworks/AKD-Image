@@ -160,7 +160,7 @@
       <section class="modal pwa-install-modal" role="dialog" aria-modal="true" aria-labelledby="pwa-install-title">
         <div class="modal__head">
           <div class="pwa-install-modal__title-wrap">
-            <img src="/assets/icons/favicon.svg?v=3.2.0" alt="" aria-hidden="true">
+            <img src="/assets/icons/favicon.svg?v=3.3.0" alt="" aria-hidden="true">
             <h3 id="pwa-install-title">Установить AKD Image</h3>
           </div>
           <button class="modal__close" type="button" data-pwa-close aria-label="Закрыть">×</button>
@@ -230,7 +230,7 @@
       <section class="modal pwa-install-modal" role="dialog" aria-modal="true" aria-labelledby="pwa-remove-title">
         <div class="modal__head">
           <div class="pwa-install-modal__title-wrap">
-            <img src="/assets/icons/favicon.svg?v=3.2.0" alt="" aria-hidden="true">
+            <img src="/assets/icons/favicon.svg?v=3.3.0" alt="" aria-hidden="true">
             <h3 id="pwa-remove-title">${t('Удалить AKD Image')}</h3>
           </div>
           <button class="modal__close" type="button" data-pwa-close aria-label="${t('Закрыть')}">×</button>
@@ -268,7 +268,7 @@
       <section class="modal pwa-install-modal pwa-update-modal" role="dialog" aria-modal="true" aria-labelledby="pwa-update-title" tabindex="-1" data-pwa-update-modal>
         <div class="modal__head">
           <div class="pwa-install-modal__title-wrap">
-            <img src="/assets/icons/favicon.svg?v=3.2.0" alt="" aria-hidden="true">
+            <img src="/assets/icons/favicon.svg?v=3.3.0" alt="" aria-hidden="true">
             <h3 id="pwa-update-title">${t('Обновление AKD Image')}</h3>
           </div>
         </div>

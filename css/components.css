@@ -428,6 +428,14 @@ input[type="number"]::-webkit-outer-spin-button {
 .custom-color__trigger:hover {
   border-color: var(--border-hover);
 }
+.custom-color__trigger:disabled {
+  cursor: default;
+  opacity: .45;
+}
+.custom-color__trigger:disabled:hover {
+  border-color: var(--md-sys-color-outline);
+  background: var(--md-sys-color-surface-container-lowest);
+}
 .custom-color__trigger[aria-expanded="true"] {
   border-color: var(--accent);
 }

@@ -232,7 +232,7 @@
       <div class="container inner">
         <div class="header-side header-side--start">
           <a href="${homeHref}" class="logo" aria-label="AKD Image">
-            <img class="logo-mark" src="/assets/icons/favicon.svg?v=3.2.0" alt="" aria-hidden="true">
+            <img class="logo-mark" src="/assets/icons/favicon.svg?v=3.3.0" alt="" aria-hidden="true">
             <span>AKD Image</span>
           </a>
         </div>
@@ -952,7 +952,7 @@
   function loadPwaController() {
     if (document.querySelector('script[data-pwa-controller]')) return;
     const script = document.createElement('script');
-    script.src = '/js/pwa.js?v=3.2.0';
+    script.src = '/js/pwa.js?v=3.3.0';
     script.defer = true;
     script.dataset.pwaController = '';
     document.body.appendChild(script);

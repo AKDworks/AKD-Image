@@ -1,7 +1,7 @@
 /* Local video and GIF conversion */
 (() => {
-  const MAX_FILE_SIZE = 100 * 1024 * 1024;
-  const MAX_DURATION = 60;
+  const MAX_FILE_SIZE = 200 * 1024 * 1024;
+  const MAX_DURATION = 120;
   const MIN_FRAGMENT_SECONDS = 0.1;
   const TIMELINE_HEIGHT = 64;
   const CORE_URL = '/js/vendor/ffmpeg/ffmpeg-core.js';
@@ -381,7 +381,7 @@
     if (!file) throw new Error('Файл не выбран');
     const maxSize = mode === 'gif' ? FileUtils.MAX_GIF_FILE_SIZE : MAX_FILE_SIZE;
     if (file.size > maxSize) {
-      throw new Error(`Размер ${mode === 'gif' ? 'GIF' : 'видео'} не должен превышать ${mode === 'gif' ? '25' : '100'} МБ`);
+      throw new Error(`Размер ${mode === 'gif' ? 'GIF' : 'видео'} не должен превышать ${mode === 'gif' ? '50' : '200'} МБ`);
     }
     const rules = validModes[mode];
     const validExtension = rules.extensions.includes(extension(file));
@@ -472,7 +472,7 @@
       activeFile = file;
       metadata = await inspectFile(file);
       if (!Number.isFinite(metadata.duration) || metadata.duration <= 0) throw new Error('Не удалось определить длительность файла');
-      if (metadata.duration > MAX_DURATION) throw new Error('Длительность файла не должна превышать 60 секунд');
+      if (metadata.duration > MAX_DURATION) throw new Error('Длительность файла не должна превышать 120 секунд');
       if (mode === 'video' && metadata.duration + Number.EPSILON < MIN_FRAGMENT_SECONDS) {
         throw new Error('Видео должно быть не короче 0,1 секунды');
       }
