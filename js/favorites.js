@@ -42,7 +42,7 @@
 
     const normalizeSearchValue = value => String(value || '')
       .trim()
-      .toLocaleLowerCase(window.AKDI18n?.language === 'en' ? 'en' : 'ru')
+      .toLocaleLowerCase(window.AKDI18n?.language || 'ru')
       .replaceAll('ё', 'е');
 
     const getSearchText = card => normalizeSearchValue([
@@ -94,7 +94,9 @@
         /* The main page will open the full catalog if session storage is unavailable. */
       }
 
-      location.href = ['localhost', '127.0.0.1'].includes(location.hostname) ? '../index.html' : '/';
+      location.href = ['localhost', '127.0.0.1'].includes(location.hostname) &&
+        !/^\/(ru|en|es)(?:\/|$)/.test(location.pathname)
+        ? '../index.html' : (window.AKDI18n?.routeHref('/') || '/');
     }
 
     backButton.addEventListener('click', openFavoritesOnHome);

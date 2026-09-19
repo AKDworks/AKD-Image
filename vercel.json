@@ -1,5 +1,19 @@
 {
+  "buildCommand": "node scripts/build-locales.mjs",
+  "outputDirectory": "dist",
   "redirects": [
+    { "source": "/ru", "destination": "/ru/", "permanent": true },
+    { "source": "/en", "destination": "/en/", "permanent": true },
+    { "source": "/es", "destination": "/es/", "permanent": true },
+    { "source": "/ru/:slug/", "destination": "/ru/:slug", "permanent": true },
+    { "source": "/en/:slug/", "destination": "/en/:slug", "permanent": true },
+    { "source": "/es/:slug/", "destination": "/es/:slug", "permanent": true },
+    { "source": "/ru/index.html", "destination": "/ru/", "permanent": true },
+    { "source": "/en/index.html", "destination": "/en/", "permanent": true },
+    { "source": "/es/index.html", "destination": "/es/", "permanent": true },
+    { "source": "/ru/:slug.html", "destination": "/ru/:slug", "permanent": true },
+    { "source": "/en/:slug.html", "destination": "/en/:slug", "permanent": true },
+    { "source": "/es/:slug.html", "destination": "/es/:slug", "permanent": true },
     { "source": "/app", "destination": "/?install=1", "permanent": true },
     { "source": "/pages/faq.html", "destination": "/faq", "permanent": true },
     {
@@ -154,6 +168,12 @@
     }
   ],
   "rewrites": [
+    { "source": "/ru/", "destination": "/ru/index.html" },
+    { "source": "/en/", "destination": "/en/index.html" },
+    { "source": "/es/", "destination": "/es/index.html" },
+    { "source": "/ru/([a-z0-9-]+)", "destination": "/ru/$1.html" },
+    { "source": "/en/([a-z0-9-]+)", "destination": "/en/$1.html" },
+    { "source": "/es/([a-z0-9-]+)", "destination": "/es/$1.html" },
     { "source": "/faq", "destination": "/pages/faq.html" },
     {
       "source": "/compress",
@@ -284,6 +304,19 @@
     },
     {
       "source": "/manifest.webmanifest",
+      "headers": [
+        {
+          "key": "Content-Type",
+          "value": "application/manifest+json; charset=utf-8"
+        },
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=3600"
+        }
+      ]
+    },
+    {
+      "source": "/(ru|en|es)/manifest.webmanifest",
       "headers": [
         {
           "key": "Content-Type",

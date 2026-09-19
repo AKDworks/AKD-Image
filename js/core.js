@@ -64,6 +64,7 @@ const CustomSelect = (() => {
     wrapper.appendChild(select);
     select.classList.add('custom-select__native');
     select.tabIndex = -1;
+    select.setAttribute('aria-hidden', 'true');
 
     const trigger = document.createElement('button');
     trigger.className = 'custom-select__trigger';
@@ -73,7 +74,9 @@ const CustomSelect = (() => {
     trigger.innerHTML = '<span class="custom-select__value"></span><svg class="custom-select__chevron" viewBox="0 0 20 20" aria-hidden="true"><path d="m6 8 4 4 4-4"/></svg>';
 
     const label = select.labels?.[0] || select.closest('.form-group')?.querySelector('label');
-    const labelSource = I18nBridge.sourceText(label);
+    const labelClone = label?.cloneNode(true);
+    labelClone?.querySelectorAll('select, input, textarea, button').forEach(control => control.remove());
+    const labelSource = labelClone?.textContent?.trim().replace(/\s+/g, ' ') || I18nBridge.sourceText(label);
 
     const menu = document.createElement('div');
     menu.className = 'custom-select__menu';

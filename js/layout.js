@@ -2,7 +2,7 @@
 (function () {
   const localHosts = ['localhost', '127.0.0.1'];
   const isLocalStaticHost = localHosts.includes(location.hostname);
-  const homeHref = '/';
+  const homeHref = window.AKDI18n?.routeHref('/') || '/';
   const themeStorageKey = 'akd-image-theme';
   const settingsStorageKey = 'akd-image-settings';
   const installAvailableStorageKey = 'akd-image-pwa-install-available';
@@ -45,7 +45,8 @@
   };
 
   function routeHref(href, page) {
-    return isLocalStaticHost ? page : href;
+    if (isLocalStaticHost && !/^\/(ru|en|es)(?:\/|$)/.test(location.pathname)) return page;
+    return window.AKDI18n?.routeHref(href) || href;
   }
 
   function initialInstallControlsVisible() {
@@ -302,6 +303,10 @@
           <div class="language-menu" role="menu" aria-label="Язык интерфейса">
             <button class="language-option" type="button" role="menuitemradio" data-language="en" aria-checked="false">
               <span>English</span>
+              <svg viewBox="0 0 20 20" aria-hidden="true" focusable="false"><path d="m5 10 3 3 7-7"></path></svg>
+            </button>
+            <button class="language-option" type="button" role="menuitemradio" data-language="es" aria-checked="false">
+              <span>Español</span>
               <svg viewBox="0 0 20 20" aria-hidden="true" focusable="false"><path d="m5 10 3 3 7-7"></path></svg>
             </button>
             <button class="language-option" type="button" role="menuitemradio" data-language="ru" aria-checked="false">
@@ -905,7 +910,7 @@
     const buttons = Array.from(control?.querySelectorAll('.language-option[data-language]') || []);
     if (!control || !trigger || !currentLabel || !buttons.length || !window.AKDI18n) return;
 
-    const languageNames = { en: 'English', ru: 'Русский' };
+    const languageNames = { en: 'English', es: 'Español', ru: 'Русский' };
 
     function setOpen(isOpen) {
       control.classList.toggle('is-open', isOpen);

@@ -99,7 +99,7 @@ When exporting to JPG, transparent areas receive a white background. PNG, WebP a
 
 ## Interface
 
-- automatic browser-language detection with English and Russian interfaces;
+- automatic browser-language detection with English, Russian, and Spanish interfaces;
 - manual language switching with the preference stored locally;
 - light, dark and system themes;
 - responsive desktop and mobile layouts;

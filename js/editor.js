@@ -473,7 +473,7 @@
   }
 
   function addText() {
-    const text = new fabric.IText('Текст', {
+    const text = new fabric.IText(translate('Текст'), {
       fill: colorInput.value,
       fontFamily: 'Inter, Arial, sans-serif',
       fontSize: 48,

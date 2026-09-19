@@ -1,10 +1,11 @@
 // Increment this value when the offline bundle changes materially.
-const CACHE_VERSION = 'akd-image-pwa-3.3.18';
+const CACHE_VERSION = 'akd-image-pwa-3.5.1';
 const STATIC_CACHE = `${CACHE_VERSION}-static`;
 const RUNTIME_CACHE = `${CACHE_VERSION}-runtime`;
 
 const LOCAL_STATIC_HOSTS = new Set(['localhost', '127.0.0.1']);
 const IS_LOCAL_STATIC_HOST = LOCAL_STATIC_HOSTS.has(self.location.hostname);
+const LANGUAGES = ['ru', 'en', 'es'];
 const OFFLINE_ROUTE_PATHS = [
   '/faq',
   '/about',
@@ -42,9 +43,15 @@ function offlineDocumentUrl(route) {
 const PRECACHE_URLS = [
   '/css/light-theme.css?v=3.3.0',
   '/LICENSE.MaterialSymbols.txt',
+  '/manifest.webmanifest',
   '/',
   ...(IS_LOCAL_STATIC_HOST ? ['/index.html'] : []),
   ...OFFLINE_ROUTE_PATHS.map(offlineDocumentUrl),
+  ...(!IS_LOCAL_STATIC_HOST ? LANGUAGES.flatMap(language => [
+    `/${language}/`,
+    `/${language}/manifest.webmanifest`,
+    ...OFFLINE_ROUTE_PATHS.map(route => `/${language}${route}`)
+  ]) : []),
   '/css/main.css?v=3.3.15',
   '/css/main.css?v=3.3.0',
   '/css/vars.css?v=3.3.0',
@@ -53,16 +60,16 @@ const PRECACHE_URLS = [
   '/css/components.css?v=3.3.8',
   '/css/pages.css?v=3.3.15',
   '/css/remove-background.css?v=3.3.0',
-  '/js/i18n.js?v=3.3.13',
-  '/js/layout.js?v=3.3.0',
+  '/js/i18n.js?v=3.5.1',
+  '/js/layout.js?v=3.5.1',
   '/js/pwa.js?v=3.3.0',
-  '/js/core.js?v=3.3.0',
-  '/js/favorites.js?v=3.3.0',
+  '/js/core.js?v=3.4.0',
+  '/js/favorites.js?v=3.5.1',
   '/js/image-worker.js?v=3.3.0',
   '/js/image-formats.js?v=3.3.0',
   '/js/gif-optimize.js?v=3.3.0',
   '/js/gif-frames.js?v=3.3.0',
-  '/js/editor.js?v=1.2.8',
+  '/js/editor.js?v=1.2.9',
   '/js/vendor/fabric.min.js?v=6.4.3',
   '/js/vendor/LICENSE.Fabric.md',
   '/js/vendor/jszip.min.js',
@@ -82,7 +89,13 @@ const PRECACHE_URLS = [
 ];
 
 const OFFLINE_ROUTES = Object.fromEntries(
-  OFFLINE_ROUTE_PATHS.map(route => [route, offlineDocumentUrl(route)])
+  [
+    ...OFFLINE_ROUTE_PATHS.map(route => [route, offlineDocumentUrl(route)]),
+    ...LANGUAGES.flatMap(language => OFFLINE_ROUTE_PATHS.map(route => [
+      `/${language}${route}`,
+      IS_LOCAL_STATIC_HOST ? offlineDocumentUrl(route) : `/${language}${route}`
+    ]))
+  ]
 );
 
 async function precache() {
@@ -137,7 +150,11 @@ async function networkFirstNavigation(request) {
       if (fallback) return fallback;
     }
 
-    const homeFallback = await caches.match('/', { ignoreSearch: true });
+    const language = url.pathname.match(/^\/(ru|en|es)(?:\/|$)/)?.[1];
+    const homeFallback = await caches.match(
+      language && !IS_LOCAL_STATIC_HOST ? `/${language}/` : '/',
+      { ignoreSearch: true }
+    );
     return homeFallback || new Response('AKD Image is unavailable offline.', {
       status: 503,
       headers: { 'Content-Type': 'text/plain; charset=utf-8' }
