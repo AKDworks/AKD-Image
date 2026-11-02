@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-  <script src="/js/i18n.js?v=3.5.4"></script>
+  <script src="/js/i18n.js?v=3.5.5"></script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Конвертер изображений онлайн – AKD Image</title>
@@ -19,7 +19,7 @@
   <link rel="preload" href="/fonts/Inter-600.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="preload" href="/fonts/Inter-700.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="preload" href="/fonts/Inter-800.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="stylesheet" href="/css/main.css?v=3.4.1">
+<link rel="stylesheet" href="/css/main.css?v=3.4.2">
     <style>
 @media (max-width: 600px) {
     main :where(div, section):has(select):has(input[type="range"]) {
@@ -120,24 +120,6 @@
       <div class="result-stats" id="result-stats"></div>
       <button class="btn btn-success hidden" id="download-all-btn">Скачать всё (ZIP)</button>
     </div>
-
-    <section class="tool-guide" aria-labelledby="convert-guide-title">
-      <h2 id="convert-guide-title">Как конвертировать изображение</h2>
-      <p>Добавьте один или несколько файлов, выберите целевой формат и при необходимости настройте качество. Нажмите «Конвертировать всё», затем скачайте результат для каждого файла или общий ZIP-архив.</p>
-      <p>Файлы обрабатываются на вашем устройстве: изображения не отправляются на сервер AKD Image. Доступные входные и выходные форматы указаны в форме инструмента.</p>
-      <h3>Какой формат выбрать</h3>
-      <ul>
-        <li>JPG подходит для фотографий, если прозрачность не нужна.</li>
-        <li>PNG удобен для графики с прозрачным фоном и чёткими краями.</li>
-        <li>WebP и AVIF подходят для публикации в интернете, если площадка поддерживает выбранный формат.</li>
-      </ul>
-      <h3>Если нужна другая обработка</h3>
-      <ul>
-        <li><a href="/compress">Сжать изображение</a></li>
-        <li><a href="/resize">Изменить размер</a></li>
-        <li><a href="/exif">Удаление метаданных (EXIF)</a></li>
-      </ul>
-    </section>
 
   </div>
 </main>

@@ -81,7 +81,7 @@ for (const language of languages) {
       if (!live) assert.ok(fs.existsSync(publicFile(`${target}${target.endsWith('/') ? 'index' : ''}.html`)), href);
     }
     const guide = /class="tool-guide"/.test(html);
-    if (!live && slug) assert.ok(guide, `Missing tool guide: ${pathname}`);
+    if (!live && slug) assert.ok(!guide, `Unexpected tool guide: ${pathname}`);
     report.pages.push({ path: pathname, title, description, guide, internalLinks: anchors.length });
   }
 }

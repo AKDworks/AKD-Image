@@ -152,11 +152,11 @@ function localizedHtml(source, language, slug, legacy = false) {
   }
   html = html.replace(/(\bsrc=["'])js\//g, '$1/js/');
   html = html.replace(/(\/js\/i18n\.js\?v=)[^"']+/g,
-    (match, prefix) => `${prefix}3.5.4`);
+    (match, prefix) => `${prefix}3.5.5`);
   html = html.replace(/(\/js\/core\.js\?v=)[^"']+/g,
     (match, prefix) => `${prefix}3.4.1`);
   html = html.replace(/(\/css\/main\.css\?v=)[^"']+/g,
-    (match, prefix) => `${prefix}3.4.1`);
+    (match, prefix) => `${prefix}3.4.2`);
   html = html.replace(/(\/js\/(?:layout|favorites)\.js\?v=)[^"']+/g,
     (match, prefix) => `${prefix}3.5.1`);
   if (slug === 'index') {
