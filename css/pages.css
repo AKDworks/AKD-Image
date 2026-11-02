@@ -1016,6 +1016,34 @@ html[data-catalog-sorting="hidden"] .tool-search:not(.is-open) .tool-search__lab
   font-size: .95rem;
   color: var(--muted);
 }
+.tool-guide {
+  margin-top: 48px;
+  padding-top: 28px;
+  border-top: 1px solid var(--border);
+  color: var(--muted);
+}
+.tool-guide h2,
+.tool-guide h3 {
+  color: var(--text);
+  line-height: 1.35;
+}
+.tool-guide h2 {
+  font-size: 1.2rem;
+  margin-bottom: 12px;
+}
+.tool-guide h3 {
+  font-size: 1rem;
+  margin: 24px 0 10px;
+}
+.tool-guide p + p { margin-top: 12px; }
+.tool-guide ul {
+  padding-left: 22px;
+}
+.tool-guide li + li { margin-top: 6px; }
+.tool-guide a {
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
 
 /* Base64 tool */
 .base64-tabs {

@@ -151,7 +151,13 @@ function localizedHtml(source, language, slug, legacy = false) {
       `href="/${language}/manifest.webmanifest"`);
   }
   html = html.replace(/(\bsrc=["'])js\//g, '$1/js/');
-  html = html.replace(/(\/js\/(?:i18n|layout|favorites)\.js\?v=)[^"']+/g,
+  html = html.replace(/(\/js\/i18n\.js\?v=)[^"']+/g,
+    (match, prefix) => `${prefix}3.5.4`);
+  html = html.replace(/(\/js\/core\.js\?v=)[^"']+/g,
+    (match, prefix) => `${prefix}3.4.1`);
+  html = html.replace(/(\/css\/main\.css\?v=)[^"']+/g,
+    (match, prefix) => `${prefix}3.4.1`);
+  html = html.replace(/(\/js\/(?:layout|favorites)\.js\?v=)[^"']+/g,
     (match, prefix) => `${prefix}3.5.1`);
   if (slug === 'index') {
     html = html.replace(/("url":\s*)"https:\/\/image\.akdworks\.com\/"/,

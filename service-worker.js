@@ -1,5 +1,5 @@
 // Increment this value when the offline bundle changes materially.
-const CACHE_VERSION = 'akd-image-pwa-3.5.1';
+const CACHE_VERSION = 'akd-image-pwa-3.5.4';
 const STATIC_CACHE = `${CACHE_VERSION}-static`;
 const RUNTIME_CACHE = `${CACHE_VERSION}-runtime`;
 
@@ -54,16 +54,21 @@ const PRECACHE_URLS = [
   ]) : []),
   '/css/main.css?v=3.3.15',
   '/css/main.css?v=3.3.0',
+  '/css/main.css?v=3.4.0',
+  '/css/main.css?v=3.4.1',
   '/css/vars.css?v=3.3.0',
   '/css/base.css?v=3.3.0',
   '/css/layout.css?v=3.3.0',
   '/css/components.css?v=3.3.8',
+  '/css/components.css?v=3.3.9',
   '/css/pages.css?v=3.3.15',
+  '/css/pages.css?v=3.3.16',
   '/css/remove-background.css?v=3.3.0',
-  '/js/i18n.js?v=3.5.1',
+  '/js/i18n.js?v=3.5.4',
   '/js/layout.js?v=3.5.1',
   '/js/pwa.js?v=3.3.0',
   '/js/core.js?v=3.4.0',
+  '/js/core.js?v=3.4.1',
   '/js/favorites.js?v=3.5.1',
   '/js/image-worker.js?v=3.3.0',
   '/js/image-formats.js?v=3.3.0',

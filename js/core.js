@@ -1172,11 +1172,15 @@ const UIUtils = {
   },
 
   setBatchLocked(manager, elements, locked) {
-    const pickerButtons = manager
+    const uploadControls = manager
       ? Array.from((manager.container.closest('main') || document)
-        .querySelectorAll('[data-open-file-picker]'))
+        .querySelectorAll('[data-open-file-picker], .dropzone input[type="file"]'))
       : [];
-    this.setDisabled([...elements, ...pickerButtons], locked);
+    this.setDisabled([...elements, ...uploadControls], locked);
+    if (locked && manager) {
+      (manager.container.closest('main') || document)
+        .querySelectorAll('.drag-over').forEach(el => el.classList.remove('drag-over'));
+    }
     if (manager) manager.setLocked(locked);
   },
 
@@ -2613,22 +2617,33 @@ class Dropzone {
 
   _bind() {
     const el = this.el;
+    const scope = el.closest('main') || document;
+    this.input = el.querySelector('input[type="file"]');
+    this.dropTargets = [el, ...(this.opts.multiple
+      ? scope.querySelectorAll('[data-dropzone-add]') : [])];
     const sources = this._createUploadSources();
     const dropboxButton = sources.querySelector('.upload-source__button--dropbox');
     el.insertAdjacentElement('afterend', sources);
-    el.addEventListener('dragover', e => {
-      e.preventDefault();
-      el.classList.add('drag-over');
+    this.dropTargets.forEach(target => this._bindDropTarget(target));
+
+    // A missed or blocked file drop must not navigate away from the current work.
+    document.addEventListener('dragover', event => {
+      if (this._isFileDrag(event)) event.preventDefault();
     });
-    el.addEventListener('dragleave', e => {
-      if (!el.contains(e.relatedTarget)) el.classList.remove('drag-over');
+    document.addEventListener('drop', event => {
+      if (this._isFileDrag(event)) event.preventDefault();
+      this._resetDrag();
     });
-    el.addEventListener('drop', e => {
-      e.preventDefault();
-      el.classList.remove('drag-over');
-      const files = e.dataTransfer.files;
-      if (files.length) this._handle(files);
+    document.addEventListener('dragend', () => this._resetDrag());
+    document.addEventListener('keydown', event => {
+      if (event.key === 'Escape') this._resetDrag();
     });
+    window.addEventListener('blur', () => this._resetDrag());
+    if (this.input) {
+      new MutationObserver(() => {
+        if (this._isDisabled()) this._resetDrag();
+      }).observe(this.input, { attributes: true, attributeFilter: ['disabled'] });
+    }
 
     document.addEventListener('paste', e => {
       if (this._isTextTarget(e.target)) return;
@@ -2638,7 +2653,7 @@ class Dropzone {
       this._handle(files);
     });
 
-    const input = el.querySelector('input[type="file"]');
+    const input = this.input;
     if (input) {
       input.multiple = this.opts.multiple;
       if (this.opts.accept.length) input.accept = this.opts.accept.join(',');
@@ -2661,6 +2676,64 @@ class Dropzone {
       event.preventDefault();
       event.stopPropagation();
       await this._chooseDropbox(dropboxButton);
+    });
+  }
+
+  _isDisabled() {
+    return Boolean(this.input?.disabled);
+  }
+
+  _isFileDrag(event) {
+    return Array.from(event.dataTransfer?.types || []).includes('Files');
+  }
+
+  _resetDrag() {
+    clearTimeout(this.dragResetTimer);
+    this.dropTargets.forEach(target => {
+      target.classList.remove('drag-over');
+      target._dragDepth = 0;
+    });
+  }
+
+  _scheduleDragReset() {
+    clearTimeout(this.dragResetTimer);
+    // External drags may end outside the browser without a dragend event.
+    this.dragResetTimer = setTimeout(() => this._resetDrag(), 600);
+  }
+
+  _bindDropTarget(target) {
+    target._dragDepth = 0;
+    const canDrop = () => !this._isDisabled() && !target.disabled;
+    target.addEventListener('dragenter', event => {
+      if (!this._isFileDrag(event)) return;
+      event.preventDefault();
+      event.stopPropagation();
+      target._dragDepth++;
+      target.classList.toggle('drag-over', canDrop());
+      this._scheduleDragReset();
+    });
+    target.addEventListener('dragover', event => {
+      if (!this._isFileDrag(event)) return;
+      event.preventDefault();
+      event.stopPropagation();
+      event.dataTransfer.dropEffect = canDrop() ? 'copy' : 'none';
+      target.classList.toggle('drag-over', canDrop());
+      this._scheduleDragReset();
+    });
+    target.addEventListener('dragleave', event => {
+      event.stopPropagation();
+      target._dragDepth = Math.max(0, target._dragDepth - 1);
+      if (!target._dragDepth || (event.relatedTarget && !target.contains(event.relatedTarget))) {
+        target._dragDepth = 0;
+        target.classList.remove('drag-over');
+      }
+    });
+    target.addEventListener('drop', event => {
+      if (!this._isFileDrag(event)) return;
+      event.preventDefault();
+      event.stopPropagation();
+      this._resetDrag();
+      if (canDrop() && event.dataTransfer.files.length) this._handle(event.dataTransfer.files);
     });
   }
 
@@ -2779,6 +2852,7 @@ class Dropzone {
   }
 
   async _handle(files) {
+    if (this._isDisabled()) return;
     let list = Array.from(files);
     if (!this.opts.multiple) list = list.slice(0, 1);
 
@@ -2828,13 +2902,14 @@ class Dropzone {
         Toast.error(error.message || 'Не удалось проверить GIF.');
       }
     }
-    if (accepted.length) await this.opts.onFiles(accepted);
+    // GIF inspection can finish after the user has started processing the batch.
+    if (accepted.length && !this._isDisabled()) await this.opts.onFiles(accepted);
   }
 }
 
 document.addEventListener('click', event => {
   const trigger = event.target.closest('[data-open-file-picker]');
-  if (!trigger) return;
+  if (!trigger || trigger.disabled) return;
 
   const scope = trigger.closest('main') || document;
   const input = scope.querySelector('.dropzone input[type="file"]');
